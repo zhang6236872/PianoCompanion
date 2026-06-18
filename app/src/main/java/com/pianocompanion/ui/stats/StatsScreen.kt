@@ -45,10 +45,23 @@ fun StatsScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("📊 练习统计", fontWeight = FontWeight.Bold) })
+            TopAppBar(
+                title = { Text("📊 练习统计", fontWeight = FontWeight.Bold) },
+                actions = {
+                    if (uiState.sessions.isNotEmpty()) {
+                        IconButton(onClick = {
+                            val report = com.pianocompanion.util.ReportExporter.generateReport(uiState.sessions)
+                            com.pianocompanion.util.ReportExporter.shareAsText(context, report)
+                        }) {
+                            Icon(Icons.Filled.Share, "分享报告")
+                        }
+                    }
+                }
+            )
         }
     ) { padding ->
         if (uiState.sessions.isEmpty()) {
