@@ -1,6 +1,7 @@
 package com.pianocompanion.ui.library
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pianocompanion.data.model.Score
@@ -9,15 +10,22 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class LibraryUiState(
-    val scores: List<ScoreItem> = emptyList(),
+    val importedScores: List<ScoreItem> = emptyList(),
     val isLoading: Boolean = false,
     val message: String? = null
 )
 
+/**
+ * A single row in the library. [fileName] is the on-disk filename for imported
+ * scores (empty for built-in demo scores, which have no backing file).
+ */
 data class ScoreItem(
-    val fileName: String,
     val title: String,
-    val isSelected: Boolean = false
+    val composer: String,
+    val noteCount: Int,
+    val fileName: String = "",
+    val isImported: Boolean = fileName.isNotEmpty(),
+    val parseFailed: Boolean = false
 )
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
@@ -31,27 +39,30 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun refreshScores() {
-        val files = repository.listScores()
-        val items = files.map { fileName ->
+        val items = repository.listImportedScores().map { info ->
             ScoreItem(
-                fileName = fileName,
-                title = fileName.removeSuffix(".xml").removeSuffix(".mid"),
-                isSelected = false
+                title = info.title,
+                composer = info.composer,
+                noteCount = info.noteCount,
+                fileName = info.fileName,
+                isImported = true,
+                parseFailed = info.parseFailed
             )
         }
-        _uiState.update { it.copy(scores = items) }
+        _uiState.update { it.copy(importedScores = items) }
     }
 
-    fun importScore(uri: android.net.Uri) {
+    /** Import a MusicXML file selected via the Storage Access Framework. */
+    fun importScore(uri: Uri) {
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             val result = repository.importScore(uri)
             if (result.isSuccess) {
-                val score = result.getOrThrow()!!
+                val score = result.getOrThrow()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = "导入成功: ${score.title}"
+                        message = "导入成功: ${score.title}（${score.notes.size} 个音符）"
                     )
                 }
                 refreshScores()
@@ -59,13 +70,25 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        message = "导入失败: ${result.exceptionOrNull()?.message}"
+                        message = "导入失败: ${result.exceptionOrNull()?.message ?: "未知错误"}"
                     )
                 }
             }
         }
     }
 
+    /** Delete a previously imported score file. */
+    fun deleteScore(fileName: String) {
+        viewModelScope.launch {
+            val deleted = repository.deleteScore(fileName)
+            refreshScores()
+            _uiState.update {
+                it.copy(message = if (deleted) "已删除乐谱" else "删除失败")
+            }
+        }
+    }
+
+    /** Load an imported [Score] by its stored filename (used when starting practice). */
     fun loadScore(fileName: String): Result<Score> {
         return repository.loadScore(fileName)
     }

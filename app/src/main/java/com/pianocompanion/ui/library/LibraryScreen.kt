@@ -1,6 +1,11 @@
 package com.pianocompanion.ui.library
 
+import android.app.Application
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,16 +20,60 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.Score
+import com.pianocompanion.ui.components.EmptyState
 import com.pianocompanion.ui.components.SectionHeader
 import com.pianocompanion.ui.navigation.Screen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(navController: NavController) {
-    val scores = remember { DemoScores.getAll() }
+fun LibraryScreen(
+    navController: NavController,
+    viewModel: LibraryViewModel = run {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        viewModel(
+            factory = object : ViewModelProvider.Factory {
+                override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return LibraryViewModel(context.applicationContext as Application) as T
+                }
+            }
+        )
+    }
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val builtInScores = remember { DemoScores.getAll() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // SAF document picker — only *.xml / *.musicxml MusicXML files.
+    val pickFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importScore(uri)
+        }
+    }
+
+    // Surface import/delete messages via a snackbar.
+    LaunchedEffect(uiState.message) {
+        val msg = uiState.message
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearMessage()
+        }
+    }
+
+    fun launchImportPicker() {
+        // MusicXML has no universally registered mime type, so we offer the
+        // common xml/text types plus a catch-all so users can pick any file.
+        pickFileLauncher.launch(arrayOf("application/xml", "text/xml", "*/*"))
+    }
 
     Scaffold(
         topBar = {
@@ -32,11 +81,22 @@ fun LibraryScreen(navController: NavController) {
                 title = { Text("🎼 乐谱库", fontWeight = FontWeight.Bold) }
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { /* TODO: MusicXML import */ },
-                icon = { Icon(Icons.Filled.FileUpload, "导入") },
-                text = { Text("导入乐谱") },
+                onClick = { launchImportPicker() },
+                icon = {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    } else {
+                        Icon(Icons.Filled.FileUpload, "导入乐谱")
+                    }
+                },
+                text = { Text(if (uiState.isLoading) "导入中…" else "导入乐谱") },
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         }
@@ -49,11 +109,12 @@ fun LibraryScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
+            // === Built-in scores ===
             item {
                 SectionHeader(title = "内置乐谱", icon = Icons.Filled.MusicNote)
             }
 
-            items(scores) { score ->
+            items(builtInScores) { score ->
                 EnhancedScoreCard(
                     score = score,
                     onClick = {
@@ -64,35 +125,60 @@ fun LibraryScreen(navController: NavController) {
                 )
             }
 
+            // === Imported scores ===
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                SectionHeader(title = "更多功能")
+                SectionHeader(
+                    title = "我的乐谱",
+                    icon = Icons.Filled.FileUpload
+                )
             }
 
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("📋", fontSize = 36.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("MusicXML / MIDI 导入", style = MaterialTheme.typography.titleSmall,
-                             fontWeight = FontWeight.Medium)
-                        Text("支持从文件导入自定义乐谱", fontSize = 12.sp,
-                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+            if (uiState.importedScores.isEmpty()) {
+                item {
+                    EmptyState(
+                        emoji = "📁",
+                        title = "还没有导入的乐谱",
+                        subtitle = "点击右下角「导入乐谱」按钮，选择 MusicXML 文件",
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            } else {
+                items(uiState.importedScores, key = { it.fileName }) { item ->
+                    var showDeleteDialog by remember { mutableStateOf(false) }
+                    ImportedScoreCard(
+                        item = item,
+                        onClick = {
+                            navController.navigate(Screen.Practice.route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onLongClick = { showDeleteDialog = true }
+                    )
+                    if (showDeleteDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteDialog = false },
+                            title = { Text("删除乐谱") },
+                            text = { Text("确定要删除「${item.title}」吗？此操作无法撤销。") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.deleteScore(item.fileName)
+                                        showDeleteDialog = false
+                                    }
+                                ) { Text("删除", color = MaterialTheme.colorScheme.error) }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDeleteDialog = false }) { Text("取消") }
+                            }
+                        )
                     }
                 }
             }
 
             item {
                 Spacer(modifier = Modifier.height(4.dp))
+                HelpCard()
             }
         }
     }
@@ -106,8 +192,7 @@ private fun EnhancedScoreCard(
     val difficulty = when {
         score.notes.size <= 10 -> Triple("⭐", "入门", Color(0xFF4CAF50))
         score.notes.size <= 15 -> Triple("⭐⭐", "初级", Color(0xFFFFA726))
-        else -> Triple("⭐⭐⭐", "中级", Color(0xFFEF5350)
-        )
+        else -> Triple("⭐⭐⭐", "中级", Color(0xFFEF5350))
     }
 
     Card(
@@ -153,6 +238,80 @@ private fun EnhancedScoreCard(
                 }
             }
             Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ImportedScoreCard(
+    item: ScoreItem,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(52.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("📄", fontSize = 24.sp)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (item.parseFailed) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurface
+                )
+                Text(item.composer, fontSize = 12.sp,
+                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(4.dp))
+                if (item.parseFailed) {
+                    Text("⚠️ 解析失败，请检查文件格式", fontSize = 11.sp,
+                         color = MaterialTheme.colorScheme.error)
+                } else {
+                    Text("${item.noteCount} 个音符 · 长按可删除", fontSize = 11.sp,
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                }
+            }
+            Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun HelpCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("📋", fontSize = 36.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("支持导入 MusicXML 文件", style = MaterialTheme.typography.titleSmall,
+                 fontWeight = FontWeight.Medium)
+            Text("用 MuseScore / Finale 等导出 .xml 格式，通过 SAF 选择即可导入",
+                 fontSize = 12.sp,
+                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
         }
     }
 }
