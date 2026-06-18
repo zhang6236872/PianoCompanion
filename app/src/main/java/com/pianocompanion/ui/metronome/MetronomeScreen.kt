@@ -13,189 +13,198 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pianocompanion.audio.Metronome
+import android.app.Application
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import com.pianocompanion.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MetronomeScreen() {
-    val metronome = remember { Metronome() }
-    var bpm by remember { mutableStateOf(120) }
-    var beatsPerMeasure by remember { mutableStateOf(4) }
-    var currentBeat by remember { mutableStateOf(-1) }
-    var isPlaying by remember { mutableStateOf(false) }
-
-    LaunchedEffect(metronome) {
-        metronome.onBeat = { beat ->
-            currentBeat = beat
+fun MetronomeScreen(
+    context: android.content.Context = androidx.compose.ui.platform.LocalContext.current,
+    viewModel: MetronomeViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return MetronomeViewModel(context.applicationContext as Application) as T
+            }
         }
-    }
-
-    // Pulse animation for current beat
-    val pulseScale by animateFloatAsState(
-        targetValue = if (currentBeat >= 0 && isPlaying) 1f else 0.8f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
-        label = "pulse"
     )
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("⏱️ 节拍器", fontWeight = FontWeight.Bold) }
-            )
+            TopAppBar(title = { Text("⏱️ 节拍器", fontWeight = FontWeight.Bold) })
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             // === Beat indicator dots ===
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                for (i in 0 until beatsPerMeasure) {
-                    val isActive = i == currentBeat && isPlaying
-                    val color = if (i == 0) Color(0xFFEF5350) else Color(0xFF42A5F5)
+                repeat(uiState.beatsPerMeasure) { index ->
+                    val isActive = uiState.isPlaying && index == uiState.currentBeat
+                    val isAccent = index == 0
+                    val targetColor = if (isAccent) Color(0xFFEF5350) else Color(0xFF6750A4)
+                    val color by animateColorAsState(
+                        targetValue = if (isActive) targetColor else targetColor.copy(alpha = 0.2f),
+                        animationSpec = tween(100),
+                        label = "beat_$index"
+                    )
+                    val scale by animateFloatAsState(
+                        targetValue = if (isActive) 1.3f else 1f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                        label = "beat_scale_$index"
+                    )
                     Box(
                         modifier = Modifier
-                            .size(if (isActive) 28.dp else 20.dp)
+                            .size((if (isAccent) 36.dp else 30.dp) * scale)
                             .clip(CircleShape)
-                            .background(if (isActive) color else color.copy(alpha = 0.2f))
-                            .animateContentSize()
+                            .background(color)
                     )
                 }
             }
 
             // === BPM display ===
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = bpm.toString(),
-                    fontSize = 72.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
-                Text("BPM", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "${uiState.bpm}",
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text("BPM", fontSize = 16.sp,
+                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(tempoName(uiState.bpm), fontSize = 14.sp, fontWeight = FontWeight.Medium,
+                         color = MaterialTheme.colorScheme.primary)
+                }
             }
 
-            // === Tempo markings ===
-            Text(
-                text = getTempoMarking(bpm),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                fontWeight = FontWeight.Medium
-            )
-
             // === BPM slider ===
-            Column(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("40", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                    Text("240", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                IconButton(onClick = { viewModel.decreaseBpm() }) {
+                    Icon(Icons.Filled.Remove, "减速")
                 }
                 Slider(
-                    value = bpm.toFloat(),
-                    onValueChange = {
-                        bpm = it.toInt()
-                        metronome.setBpm(bpm)
-                    },
+                    value = uiState.bpm.toFloat(),
+                    onValueChange = { viewModel.setBpm(it.toInt()) },
                     valueRange = 40f..240f,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    modifier = Modifier.weight(1f)
                 )
-
-                // Quick presets
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    listOf(60 to "慢板", 90 to "行板", 120 to "中板", 144 to "快板", 180 to "急板").forEach { (presetBpm, label) ->
-                        FilterChip(
-                            selected = bpm == presetBpm,
-                            onClick = {
-                                bpm = presetBpm
-                                metronome.setBpm(bpm)
-                            },
-                            label = { Text(label, fontSize = 11.sp) }
-                        )
-                    }
+                IconButton(onClick = { viewModel.increaseBpm() }) {
+                    Icon(Icons.Filled.Add, "加速")
                 }
             }
 
             // === Time signature selector ===
+            SectionHeader(title = "拍号", icon = Icons.Filled.MusicNote)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("拍号:", style = MaterialTheme.typography.bodyMedium)
                 listOf(2, 3, 4, 6).forEach { beats ->
                     FilterChip(
-                        selected = beatsPerMeasure == beats,
-                        onClick = {
-                            beatsPerMeasure = beats
-                            metronome.setBeatsPerMeasure(beats)
-                        },
-                        label = { Text("\$beats/4") }
+                        selected = uiState.beatsPerMeasure == beats,
+                        onClick = { viewModel.setBeatsPerMeasure(beats) },
+                        label = { Text("$beats/4") },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            // === Play/Stop button ===
-            Button(
-                onClick = {
-                    if (isPlaying) {
-                        metronome.stop()
-                        isPlaying = false
-                        currentBeat = -1
-                    } else {
-                        metronome.setBpm(bpm)
-                        metronome.setBeatsPerMeasure(beatsPerMeasure)
-                        metronome.start()
-                        isPlaying = true
-                    }
-                },
-                modifier = Modifier.size(80.dp),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isPlaying) Color(0xFFEF5350) else MaterialTheme.colorScheme.primary
-                )
+            // === Tempo presets ===
+            SectionHeader(title = "速度预设", icon = Icons.Filled.Speed)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(
-                    if (isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "停止" else "开始",
-                    modifier = Modifier.size(40.dp)
-                )
+                TempoPreset("慢板", 60, viewModel, uiState.bpm)
+                TempoPreset("行板", 80, viewModel, uiState.bpm)
+                TempoPreset("中板", 100, viewModel, uiState.bpm)
+                TempoPreset("快板", 140, viewModel, uiState.bpm)
+                TempoPreset("急板", 180, viewModel, uiState.bpm)
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // === Play/Stop button ===
+            Box(
+                modifier = Modifier.padding(bottom = 16.dp).shadow(8.dp, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                FilledIconButton(
+                    onClick = {
+                        if (uiState.isPlaying) viewModel.stop() else viewModel.start()
+                    },
+                    modifier = Modifier.size(72.dp),
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = if (uiState.isPlaying)
+                            MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        if (uiState.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                        if (uiState.isPlaying) "停止" else "开始",
+                        Modifier.size(36.dp)
+                    )
+                }
             }
         }
     }
 }
 
-private fun getTempoMarking(bpm: Int): String {
-    return when {
-        bpm < 60 -> " Grave (庄板)"
-        bpm < 72 -> " Largo (广板)"
-        bpm < 76 -> " Lento (慢板)"
-        bpm < 90 -> " Andante (行板)"
-        bpm < 110 -> " Moderato (中板)"
-        bpm < 132 -> " Allegro (快板)"
-        bpm < 160 -> " Vivace (活泼)"
-        bpm < 200 -> " Presto (急板)"
-        else -> " Prestissimo (最急板)"
-    }
+@Composable
+private fun RowScope.TempoPreset(
+    name: String,
+    bpm: Int,
+    viewModel: MetronomeViewModel,
+    currentBpm: Int
+) {
+    val selected = currentBpm == bpm
+    FilterChip(
+        selected = selected,
+        onClick = { viewModel.setBpm(bpm) },
+        label = { Text(name, fontSize = 11.sp) },
+        modifier = Modifier.weight(1f)
+    )
+}
+
+private fun tempoName(bpm: Int): String = when {
+    bpm < 60 -> "极慢板 (Largo)"
+    bpm < 76 -> "慢板 (Adagio)"
+    bpm < 108 -> "行板 (Andante)"
+    bpm < 120 -> "中板 (Moderato)"
+    bpm < 156 -> "快板 (Allegro)"
+    bpm < 200 -> "很快板 (Vivace)"
+    else -> "急板 (Presto)"
 }
