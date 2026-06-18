@@ -1,7 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">Piano Companion</string>
+
+    <!-- Tabs -->
     <string name="tab_library">乐谱库</string>
     <string name="tab_practice">练习</string>
+    <string name="tab_metronome">节拍器</string>
+    <string name="tab_stats">统计</string>
     <string name="tab_settings">设置</string>
+
+    <!-- Library -->
+    <string name="library_built_in">内置乐谱</string>
+    <string name="library_my_scores">我的乐谱</string>
+    <string name="library_import">导入乐谱</string>
+    <string name="library_omr">拍照识谱</string>
+    <string name="library_search_hint">搜索乐谱…</string>
+    <string name="library_importing">导入中…</string>
+    <string name="library_import_success">乐谱导入成功</string>
+    <string name="library_import_failed">导入失败</string>
+    <string name="library_empty">还没有导入的乐谱</string>
+    <string name="library_import_hint">用 MuseScore / Finale 导出 .xml，或 .mid/.midi 文件</string>
+    <string name="library_notes_count">个音符</string>
+    <string name="library_no_results">没有找到匹配的乐谱</string>
+
+    <!-- Practice -->
+    <string name="practice_start">开始练习</string>
+    <string name="practice_stop">停止</string>
+    <string name="practice_recording">正在录音…</string>
+    <string name="practice_accuracy">准确率</string>
+    <string name="practice_current_note">当前音符</string>
+    <string name="practice_progress">进度</string>
+    <string name="practice_correct">正确</string>
+    <string name="practice_wrong">错误</string>
+    <string name="practice_missed">漏弹</string>
+    <string name="practice_extra">多弹</string>
+    <string name="practice_mode_normal">自由练习</string>
+    <string name="practice_mode_follow">跟谱模式</string>
+    <string name="practice_mode_exam">考试模式</string>
+    <string name="practice_right_hand">右手</string>
+    <string name="practice_left_hand">左手</string>
+    <string name="practice_metronome">节拍器</string>
+    <string name="practice_session_saved">练习已保存</string>
+
+    <!-- Metronome -->
+    <string name="metronome_bpm">BPM</string>
+    <string name="metronome_beats">拍号</string>
+    <string name="metronome_start">开始</string>
+    <string name="metronome_stop">停止</string>
+    <string name="metronome_preset_largo">极板</string>
+    <string name="metronome_preset_andante">行板</string>
+    <string name="metronome_preset_allegro">快板</string>
+    <string name="metronome_preset_presto">急板</string>
+
+    <!-- Stats -->
+    <string name="stats_overview">总览</string>
+    <string name="stats_sessions">练习次数</string>
+    <string name="stats_duration">总时长</string>
+    <string name="stats_avg_accuracy">平均准确率</string>
+    <string name="stats_streak">连续天数</string>
+    <string name="stats_recent">最近练习</string>
+    <string name="stats_empty">还没有练习记录</string>
+    <string name="stats_share">分享报告</string>
+
+    <!-- Settings -->
+    <string name="settings_dtw">DTW 参数</string>
+    <string name="settings_search_window">搜索窗口</string>
+    <string name="settings_pitch_tolerance">音高容差</string>
+    <string name="settings_insert_cost">插入代价</string>
+    <string name="settings_delete_cost">删除代价</string>
+    <string name="settings_sub_cost">替换代价</string>
+    <string name="settings_preset_default">默认</string>
+    <string name="settings_preset_beginner">初学者</string>
+    <string name="settings_preset_expert">专家</string>
+    <string name="settings_backup">数据备份</string>
+    <string name="settings_export">导出备份</string>
+    <string name="settings_restore">恢复数据</string>
+    <string name="settings_language">语言</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_version">版本</string>
+
+    <!-- OMR -->
+    <string name="omr_title">拍照识谱</string>
+    <string name="omr_select_image">选择乐谱图片</string>
+    <string name="omr_recognizing">正在识别乐谱…</string>
+    <string name="omr_success">识别成功</string>
+    <string name="omr_partial">识别完成（部分结果）</string>
+    <string name="omr_error">识别失败</string>
+    <string name="omr_start_practice">开始练习</string>
+
+    <!-- Splash -->
+    <string name="splash_subtitle">智能钢琴练习助手</string>
+
+    <!-- Permissions -->
     <string name="permission_mic_rationale">需要麦克风权限来实时识别您的弹奏</string>
+    <string name="permission_mic_title">需要麦克风权限</string>
+
+    <!-- Backup -->
+    <string name="backup_success">备份成功</string>
+    <string name="backup_failed">备份失败</string>
+    <string name="restore_success">导入成功</string>
+    <string name="restore_failed">导入失败</string>
+    <string name="cloud_sync_hint">云端同步功能开发中，当前仅支持本地备份</string>
 </resources>

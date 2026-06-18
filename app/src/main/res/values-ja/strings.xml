@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">Piano Companion</string>
+
+    <!-- Tabs -->
+    <string name="tab_library">楽譜</string>
+    <string name="tab_practice">練習</string>
+    <string name="tab_metronome">メトロノーム</string>
+    <string name="tab_stats">統計</string>
+    <string name="tab_settings">設定</string>
+
+    <!-- Library -->
+    <string name="library_built_in">内蔵楽譜</string>
+    <string name="library_my_scores">マイ楽譜</string>
+    <string name="library_import">楽譜をインポート</string>
+    <string name="library_omr">楽譜スキャン</string>
+    <string name="library_search_hint">楽譜を検索…</string>
+    <string name="library_importing">インポート中…</string>
+    <string name="library_import_success">楽譜のインポートに成功しました</string>
+    <string name="library_import_failed">インポートに失敗しました</string>
+    <string name="library_empty">インポートした楽譜はまだありません</string>
+    <string name="library_import_hint">MuseScore / Finale から .xml または .mid をエクスポート</string>
+    <string name="library_notes_count">音符</string>
+    <string name="library_no_results">該当する楽譜が見つかりません</string>
+
+    <!-- Practice -->
+    <string name="practice_start">練習開始</string>
+    <string name="practice_stop">停止</string>
+    <string name="practice_recording">録音中…</string>
+    <string name="practice_accuracy">正確率</string>
+    <string name="practice_current_note">現在の音符</string>
+    <string name="practice_progress">進捗</string>
+    <string name="practice_correct">正解</string>
+    <string name="practice_wrong">不正解</string>
+    <string name="practice_missed">聞き逃し</string>
+    <string name="practice_extra">余分</string>
+    <string name="practice_mode_normal">フリー練習</string>
+    <string name="practice_mode_follow">楽譜追従</string>
+    <string name="practice_mode_exam">テストモード</string>
+    <string name="practice_right_hand">右手</string>
+    <string name="practice_left_hand">左手</string>
+    <string name="practice_metronome">メトロノーム</string>
+    <string name="practice_session_saved">練習を保存しました</string>
+
+    <!-- Metronome -->
+    <string name="metronome_bpm">BPM</string>
+    <string name="metronome_beats">拍子</string>
+    <string name="metronome_start">開始</string>
+    <string name="metronome_stop">停止</string>
+    <string name="metronome_preset_largo">ラルゴ</string>
+    <string name="metronome_preset_andante">アンダンテ</string>
+    <string name="metronome_preset_allegro">アレグロ</string>
+    <string name="metronome_preset_presto">プレスト</string>
+
+    <!-- Stats -->
+    <string name="stats_overview">概要</string>
+    <string name="stats_sessions">練習回数</string>
+    <string name="stats_duration">総時間</string>
+    <string name="stats_avg_accuracy">平均正確率</string>
+    <string name="stats_streak">連続日数</string>
+    <string name="stats_recent">最近の練習</string>
+    <string name="stats_empty">練習記録はまだありません</string>
+    <string name="stats_share">レポートを共有</string>
+
+    <!-- Settings -->
+    <string name="settings_dtw">DTW パラメータ</string>
+    <string name="settings_search_window">検索ウィンドウ</string>
+    <string name="settings_pitch_tolerance">音高許容範囲</string>
+    <string name="settings_insert_cost">挿入コスト</string>
+    <string name="settings_delete_cost">削除コスト</string>
+    <string name="settings_sub_cost">置換コスト</string>
+    <string name="settings_preset_default">デフォルト</string>
+    <string name="settings_preset_beginner">初心者</string>
+    <string name="settings_preset_expert">エキスパート</string>
+    <string name="settings_backup">データバックアップ</string>
+    <string name="settings_export">バックアップをエクスポート</string>
+    <string name="settings_restore">データを復元</string>
+    <string name="settings_language">言語</string>
+    <string name="settings_about">について</string>
+    <string name="settings_version">バージョン</string>
+
+    <!-- OMR -->
+    <string name="omr_title">楽譜スキャン</string>
+    <string name="omr_select_image">楽譜画像を選択</string>
+    <string name="omr_recognizing">認識中…</string>
+    <string name="omr_success">認識成功</string>
+    <string name="omr_partial">認識完了（部分結果）</string>
+    <string name="omr_error">認識失敗</string>
+    <string name="omr_start_practice">練習開始</string>
+
+    <!-- Splash -->
+    <string name="splash_subtitle">スマートピアノ練習アシスタント</string>
+
+    <!-- Permissions -->
+    <string name="permission_mic_rationale">リアルタイムで演奏を認識するためにマイクの権限が必要です</string>
+    <string name="permission_mic_title">マイクの権限が必要です</string>
+
+    <!-- Backup -->
+    <string name="backup_success">バックアップ成功</string>
+    <string name="backup_failed">バックアップ失敗</string>
+    <string name="restore_success">インポート成功</string>
+    <string name="restore_failed">インポート失敗</string>
+    <string name="cloud_sync_hint">クラウド同期は開発中、現在はローカルバックアップのみ</string>
+</resources>
