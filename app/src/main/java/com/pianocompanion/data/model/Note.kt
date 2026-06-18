@@ -1,5 +1,7 @@
 package com.pianocompanion.data.model
 
+import com.pianocompanion.util.MusicUtils
+
 /**
  * Represents a single musical note with pitch, timing, and duration.
  *

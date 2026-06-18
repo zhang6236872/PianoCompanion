@@ -28,7 +28,7 @@ fun PracticeScreen() {
     var totalPages by remember { mutableStateOf(3) }
     var currentMeasure by remember { mutableStateOf(1) }
     var lastNoteStatus by remember { mutableStateOf<String?>(null) }
-    var lastNoteColor by remember { mutableStateOf<Color>(MaterialTheme.colorScheme.surface) }
+    var lastNoteColor by remember { mutableStateOf(Color.LightGray) }
     var correctCount by remember { mutableStateOf(0) }
     var wrongCount by remember { mutableStateOf(0) }
     var accuracy by remember { mutableFloatStateOf(0f) }

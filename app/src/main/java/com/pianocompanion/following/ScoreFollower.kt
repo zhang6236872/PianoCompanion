@@ -4,6 +4,7 @@ import com.pianocompanion.audio.NoteDetector
 import com.pianocompanion.audio.PitchDetector
 import com.pianocompanion.data.model.*
 import com.pianocompanion.util.MusicUtils
+import kotlin.math.abs
 
 /**
  * High-level score following coordinator.
@@ -19,13 +20,11 @@ class ScoreFollower(
     private val noteDetector = NoteDetector(pitchDetector, sampleRate)
     private val dtw: OnlineDTW
 
-    // Current following state
-    private var isRunning: Boolean = false
+    private var running: Boolean = false
     private var currentMeasure: Int = 0
     private var currentPage: Int = 0
-    private val notesPerPage: Int = 32  // Approximate notes per page (configurable)
+    private val notesPerPage: Int = 32
 
-    // Error tracking
     private val errorPositions = mutableListOf<ErrorPosition>()
     private var correctCount: Int = 0
     private var wrongCount: Int = 0
@@ -37,66 +36,62 @@ class ScoreFollower(
         setupCallbacks()
     }
 
-    // === Event callbacks for UI ===
-    var onPositionUpdate: ((Int, Int, Int) -> Unit)? = null  // (noteIdx, measureIdx, pageIdx)
-    var onPageTurn: ((Int) -> Unit)? = null  // newPageIndex
+    var onPositionUpdate: ((Int, Int, Int) -> Unit)? = null
+    var onPageTurn: ((Int) -> Unit)? = null
     var onNoteMatch: ((MatchResult) -> Unit)? = null
     var onErrorDetected: ((ErrorPosition) -> Unit)? = null
 
     private fun setupCallbacks() {
         noteDetector.onNoteOnset = { midi, freq, timeMs ->
-            if (!isRunning) return@onNoteOnset
+            if (running) {
+                val detected = DetectedNote(
+                    midiNumber = midi,
+                    frequency = freq.toDouble(),
+                    startTime = timeMs,
+                    confidence = 0.8f
+                )
 
-            val detected = DetectedNote(
-                midiNumber = midi,
-                frequency = freq.toDouble(),
-                startTime = timeMs,
-                confidence = 0.8f
-            )
+                val state = dtw.processNote(detected)
+                val scoreIdx = state.scorePosition
 
-            val state = dtw.processNote(detected)
-            val scoreIdx = state.scorePosition
+                if (scoreIdx < score.notes.size) {
+                    val newMeasure = score.notes[scoreIdx].measureIndex
+                    if (newMeasure != currentMeasure) {
+                        currentMeasure = newMeasure
+                    }
 
-            // Update measure tracking
-            if (scoreIdx < score.notes.size) {
-                val newMeasure = score.notes[scoreIdx].measureIndex
-                if (newMeasure != currentMeasure) {
-                    currentMeasure = newMeasure
+                    val newPage = scoreIdx / notesPerPage
+                    if (newPage != currentPage) {
+                        currentPage = newPage
+                        onPageTurn?.invoke(newPage)
+                    }
+
+                    val expected = score.notes.getOrNull(scoreIdx)
+                    val result = checkNote(detected, expected)
+                    onNoteMatch?.invoke(result)
+
+                    when (result.status) {
+                        MatchStatus.CORRECT -> correctCount++
+                        MatchStatus.WRONG_PITCH -> {
+                            wrongCount++
+                            recordError(result, expected, detected)
+                        }
+                        MatchStatus.EXTRA_NOTE -> {
+                            extraCount++
+                            recordError(result, null, detected)
+                        }
+                        MatchStatus.MISSING_NOTE -> {
+                            missedCount++
+                            recordError(result, expected, null)
+                        }
+                        MatchStatus.RHYTHM_ERROR -> {
+                            wrongCount++
+                            recordError(result, expected, detected)
+                        }
+                    }
+
+                    onPositionUpdate?.invoke(scoreIdx, currentMeasure, currentPage)
                 }
-
-                // Check for page turn
-                val newPage = scoreIdx / notesPerPage
-                if (newPage != currentPage) {
-                    currentPage = newPage
-                    onPageTurn?.invoke(newPage)
-                }
-
-                // Error detection
-                val expected = score.notes.getOrNull(scoreIdx)
-                val result = checkNote(detected, expected)
-                onNoteMatch?.invoke(result)
-
-                when (result.status) {
-                    MatchStatus.CORRECT -> correctCount++
-                    MatchStatus.WRONG_PITCH -> {
-                        wrongCount++
-                        recordError(result, expected, detected)
-                    }
-                    MatchStatus.EXTRA_NOTE -> {
-                        extraCount++
-                        recordError(result, null, detected)
-                    }
-                    MatchStatus.MISSING_NOTE -> {
-                        missedCount++
-                        recordError(result, expected, null)
-                    }
-                    MatchStatus.RHYTHM_ERROR -> {
-                        wrongCount++
-                        recordError(result, expected, detected)
-                    }
-                }
-
-                onPositionUpdate?.invoke(scoreIdx, currentMeasure, currentPage)
             }
         }
     }
@@ -106,13 +101,14 @@ class ScoreFollower(
             return MatchResult(null, detected, MatchStatus.EXTRA_NOTE)
         }
 
-        val pitchDiff = Math.abs(detected.midiNumber - expected.midiNumber)
-        return when {
-            pitchDiff == 0 -> MatchResult(expected, detected, MatchStatus.CORRECT)
-            pitchDiff <= 1 -> MatchResult(expected, detected, MatchStatus.CORRECT)  // Near match
-            pitchDiff == 12 -> MatchResult(expected, detected, MatchStatus.WRONG_PITCH) // Octave error
-            else -> MatchResult(expected, detected, MatchStatus.WRONG_PITCH)
+        val pitchDiff = abs(detected.midiNumber - expected.midiNumber)
+        val status = when {
+            pitchDiff == 0 -> MatchStatus.CORRECT
+            pitchDiff <= 1 -> MatchStatus.CORRECT
+            pitchDiff == 12 -> MatchStatus.WRONG_PITCH
+            else -> MatchStatus.WRONG_PITCH
         }
+        return MatchResult(expected, detected, status)
     }
 
     private fun recordError(
@@ -131,15 +127,14 @@ class ScoreFollower(
         onErrorDetected?.invoke(error)
     }
 
-    /** Process raw audio samples from the microphone. */
     fun processAudio(samples: FloatArray) {
-        if (isRunning) {
+        if (running) {
             noteDetector.process(samples)
         }
     }
 
     fun start() {
-        isRunning = true
+        running = true
         noteDetector.reset()
         dtw.reset()
         correctCount = 0
@@ -150,10 +145,10 @@ class ScoreFollower(
     }
 
     fun stop() {
-        isRunning = false
+        running = false
     }
 
-    fun isRunning(): Boolean = isRunning
+    fun isRunning(): Boolean = running
 
     fun getStats(): PracticeStats {
         val total = correctCount + wrongCount + missedCount + extraCount

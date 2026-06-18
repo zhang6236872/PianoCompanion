@@ -25,7 +25,7 @@ object MusicUtils {
     fun midiToNoteName(midi: Int): String {
         val octave = (midi / 12) - 1
         val noteIndex = midi % 12
-        return "\${NOTE_NAMES[noteIndex]}\$octave"
+        return NOTE_NAMES[noteIndex] + octave.toString()
     }
 
     /** Convert note name to MIDI number (e.g., "C4" -> 60). */

@@ -74,7 +74,7 @@ class OnlineDTW(
         }
 
         currentPos = minIdx
-        cumulativeCosts.copyOfInto(newCosts, 0, 0, n + 1)
+        cumulativeCosts.copyInto(newCosts, 0, 0, n + 1)
 
         val confidence = 1f - (minCost / (abs(minIdx - currentPos) + 1))
         return FollowState(
