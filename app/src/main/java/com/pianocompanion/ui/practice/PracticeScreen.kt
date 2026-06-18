@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.pianocompanion.data.model.PracticeMode
 import com.pianocompanion.ui.components.AccuracyRing
 import com.pianocompanion.ui.components.InfoChip
 import com.pianocompanion.ui.components.PulseIndicator
@@ -160,6 +161,33 @@ fun PracticeScreen(
                         }
                     }
                 }
+            }
+
+            // === Practice mode selector ===
+            if (!uiState.isPracticing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PracticeMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = uiState.practiceMode == mode,
+                            onClick = { viewModel.setPracticeMode(mode) },
+                            label = { Text(mode.displayName, fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            // === Mode description ===
+            if (!uiState.isPracticing) {
+                Text(
+                    uiState.practiceMode.description,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             // === Staff notation ===
