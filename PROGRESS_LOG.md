@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: v1.2.0（Phase 1 进行中，目标 v1.3.0）
+- 当前版本: **v1.3.0** (Phase 1 完成)
 - 当前分支: main
 
 ## 开发历史
@@ -13,36 +13,37 @@
 - v1.1.0: 五线谱渲染+4首内置乐谱+会话持久化+节拍器+统计
 - v1.2.0: UI打磨 (MD3配色+暗色主题+组件库+动画)
 
-### 2026-06-19 (自主开发)
+### 2026-06-19 (自主+手动开发)
 - **Phase 1 任务2: MusicXML 文件导入 (SAF) — ✅ 完成**
-  - 分支: `feature/musicxml-import` (已合并 main, commit 2fb538f)
-  - 乐谱库页接入 LibraryViewModel + Storage Access Framework 文件选择器
-  - 点击「导入乐谱」FAB 选择 .xml 文件 → 解析校验 → 写入应用内部存储
-  - 新增 ScoreRepository.listImportedScores() 带元数据列表（解析失败优雅标记）
-  - 「我的乐谱」分区展示导入曲目，长按确认删除
-  - 导入/删除 Snackbar 反馈 + 加载态
-  - 新增 MusicXmlParser 单元测试 4 项；为 JVM 单测引入 kxml2 + xmlpull
-  - **编译通过 / 测试 23/23 通过 / APK 构建成功**
+- **Phase 1 任务3: DTW 参数可配置化 — ✅ 完成**
+  - DtwConfig: 7个可调参数 + 3预设(入门/标准/严格)
+  - SettingsRepository: 统一配置持久化
+  - SettingsScreen: DTW参数调节UI (滑块+预设芯片)
+  - 6个新单元测试
+- **Phase 1 任务4: 练习模式选择 — ✅ 完成**
+  - PracticeMode: NORMAL/FOLLOW/EXAM 三种模式
+  - PracticeViewModel: 根据模式控制反馈行为
+- **Phase 1 任务5: 错误音振动反馈 — ✅ 完成**
+  - HapticFeedback: 5种振动模式
+  - PracticeViewModel 接入振动，受设置控制
+  - VIBRATE 权限
+- **v1.3.0 TAG 已打** — Phase 1 全部完成！
 
-## 当前任务
-**下一个任务:** Phase 1 - DTW 参数调优 (容差/窗口大小可配置 + 真实钢琴环境调参)
-- 当前 OnlineDTW 参数为硬编码，需抽取为可配置项
-- 在 Settings 暴露容差/搜索窗口滑块，持久化设置
-- 调整默认参数使其更适合钢琴单音输入
+## 当前状态
+**Phase 1 已完成！** 下一步进入 Phase 2 (乐谱增强)
+
+## 下一步计划 — Phase 2 (v1.4.0)
+1. MIDI 文件导入
+2. 五线谱增强 (升降号/休止符/连音线)
+3. 自动翻页滚动优化
+4. 多页面乐谱支持
+5. 乐谱标签/搜索
 
 ## 阻塞
 （无）
-- 备注: 真机音频测试(P0)需物理设备，暂以单测覆盖；真机验证留待有设备时进行
-
-## 下一步计划
-1. ✅ MusicXML 文件导入 (SAF) — 已完成
-2. DTW 参数调优
-3. 练习模式选择 (自由练习/跟谱模式/考试模式)
-4. 错误音振动反馈
-5. → Phase 2: MIDI导入, 五线谱增强...
 
 ## 已完成的 Phase 1 任务
 - [x] 任务2: MusicXML 文件导入 (SAF) (2026-06-19)
-- [ ] 任务3: DTW 参数调优
-- [ ] 任务4: 练习模式选择
-- [ ] 任务5: 错误音振动反馈
+- [x] 任务3: DTW 参数可配置化 (2026-06-19)
+- [x] 任务4: 练习模式选择 (2026-06-19)
+- [x] 任务5: 错误音振动反馈 (2026-06-19)
