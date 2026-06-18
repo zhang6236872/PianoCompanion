@@ -36,7 +36,8 @@ class PracticeViewModel(
         val lastDetectedNote: String = "",
         val score: Score? = null,
         val errorMessage: String? = null,
-        val sessionSaved: Boolean = false
+        val sessionSaved: Boolean = false,
+        val practiceMode: PracticeMode = PracticeMode.NORMAL
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -153,12 +154,18 @@ class PracticeViewModel(
     }
 
     private fun handleMatchResult(result: MatchResult) {
+        // FOLLOW mode: only track position, no error feedback
+        if (_uiState.value.practiceMode == PracticeMode.FOLLOW) return
+
+        // EXAM mode: accumulate stats but no real-time feedback
+        val showFeedback = _uiState.value.practiceMode == PracticeMode.NORMAL
+
         when (result.status) {
             MatchStatus.CORRECT -> {
                 _uiState.update {
                     it.copy(
                         correctCount = it.correctCount + 1,
-                        lastFeedback = FeedbackType.CORRECT,
+                        lastFeedback = if (showFeedback) FeedbackType.CORRECT else FeedbackType.NONE,
                         lastExpectedNote = result.expectedNote?.noteName ?: "",
                         lastDetectedNote = result.detectedNote?.noteName ?: "",
                         accuracy = calcAccuracy(it.correctCount + 1, it.wrongCount)
@@ -169,7 +176,7 @@ class PracticeViewModel(
                 _uiState.update {
                     it.copy(
                         wrongCount = it.wrongCount + 1,
-                        lastFeedback = FeedbackType.WRONG_PITCH,
+                        lastFeedback = if (showFeedback) FeedbackType.WRONG_PITCH else FeedbackType.NONE,
                         lastExpectedNote = result.expectedNote?.noteName ?: "",
                         lastDetectedNote = result.detectedNote?.noteName ?: "",
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
@@ -180,7 +187,7 @@ class PracticeViewModel(
                 _uiState.update {
                     it.copy(
                         wrongCount = it.wrongCount + 1,
-                        lastFeedback = FeedbackType.EXTRA_NOTE,
+                        lastFeedback = if (showFeedback) FeedbackType.EXTRA_NOTE else FeedbackType.NONE,
                         lastDetectedNote = result.detectedNote?.noteName ?: "",
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
@@ -190,7 +197,7 @@ class PracticeViewModel(
                 _uiState.update {
                     it.copy(
                         wrongCount = it.wrongCount + 1,
-                        lastFeedback = FeedbackType.MISSING_NOTE,
+                        lastFeedback = if (showFeedback) FeedbackType.MISSING_NOTE else FeedbackType.NONE,
                         lastExpectedNote = result.expectedNote?.noteName ?: "",
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
@@ -200,12 +207,16 @@ class PracticeViewModel(
                 _uiState.update {
                     it.copy(
                         wrongCount = it.wrongCount + 1,
-                        lastFeedback = FeedbackType.WRONG_PITCH,
+                        lastFeedback = if (showFeedback) FeedbackType.WRONG_PITCH else FeedbackType.NONE,
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
                 }
             }
         }
+    }
+
+    fun setPracticeMode(mode: PracticeMode) {
+        _uiState.update { it.copy(practiceMode = mode) }
     }
 
     private fun calcAccuracy(correct: Int, wrong: Int): Float {
