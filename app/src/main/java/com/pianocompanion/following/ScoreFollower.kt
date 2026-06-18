@@ -32,6 +32,9 @@ class ScoreFollower(
     private var missedCount: Int = 0
     private var extraCount: Int = 0
 
+    // === Hand separation ===
+    val handTracker = HandTracker(score.notes)
+
     init {
         dtw = OnlineDTW(score.notes, dtwConfig)
         setupCallbacks()
@@ -72,21 +75,28 @@ class ScoreFollower(
                     onNoteMatch?.invoke(result)
 
                     when (result.status) {
-                        MatchStatus.CORRECT -> correctCount++
+                        MatchStatus.CORRECT -> {
+                            correctCount++
+                            handTracker.recordMatch(detected.midiNumber, expected, true)
+                        }
                         MatchStatus.WRONG_PITCH -> {
                             wrongCount++
+                            handTracker.recordMatch(detected.midiNumber, expected, false)
                             recordError(result, expected, detected)
                         }
                         MatchStatus.EXTRA_NOTE -> {
                             extraCount++
+                            handTracker.recordMatch(detected.midiNumber, null, false)
                             recordError(result, null, detected)
                         }
                         MatchStatus.MISSING_NOTE -> {
                             missedCount++
+                            handTracker.recordMatch(expected?.midiNumber ?: 0, expected, false)
                             recordError(result, expected, null)
                         }
                         MatchStatus.RHYTHM_ERROR -> {
                             wrongCount++
+                            handTracker.recordMatch(detected.midiNumber, expected, false)
                             recordError(result, expected, detected)
                         }
                     }

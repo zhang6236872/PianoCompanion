@@ -42,7 +42,11 @@ class PracticeViewModel(
         val practiceMode: PracticeMode = PracticeMode.NORMAL,
         val metronomeEnabled: Boolean = false,
         val metronomeBpm: Int = 120,
-        val metronomeBeat: Int = -1
+        val metronomeBeat: Int = -1,
+        val rightHandAccuracy: Float = 0f,
+        val leftHandAccuracy: Float = 0f,
+        val rightHandCorrect: Int = 0,
+        val leftHandCorrect: Int = 0
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -199,6 +203,10 @@ class PracticeViewModel(
         val showFeedback = _uiState.value.practiceMode == PracticeMode.NORMAL
         haptic.enabled = settingsRepo.hapticFeedback
 
+        // Update hand tracker stats
+        val follower = scoreFollower
+        val handStats = follower?.handTracker?.stats
+
         when (result.status) {
             MatchStatus.CORRECT -> {
                 _uiState.update {
@@ -255,6 +263,18 @@ class PracticeViewModel(
                     )
                 }
                 if (showFeedback) haptic.wrongPitch()
+            }
+        }
+
+        // Update hand separation stats
+        if (handStats != null) {
+            _uiState.update {
+                it.copy(
+                    rightHandAccuracy = handStats.rightAccuracy,
+                    leftHandAccuracy = handStats.leftAccuracy,
+                    rightHandCorrect = handStats.rightCorrect,
+                    leftHandCorrect = handStats.leftCorrect
+                )
             }
         }
     }
