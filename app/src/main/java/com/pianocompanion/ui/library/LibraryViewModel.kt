@@ -25,7 +25,8 @@ data class ScoreItem(
     val noteCount: Int,
     val fileName: String = "",
     val isImported: Boolean = fileName.isNotEmpty(),
-    val parseFailed: Boolean = false
+    val parseFailed: Boolean = false,
+    val source: String = "MusicXML"
 )
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,7 +47,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 noteCount = info.noteCount,
                 fileName = info.fileName,
                 isImported = true,
-                parseFailed = info.parseFailed
+                parseFailed = info.parseFailed,
+                source = info.source
             )
         }
         _uiState.update { it.copy(importedScores = items) }
