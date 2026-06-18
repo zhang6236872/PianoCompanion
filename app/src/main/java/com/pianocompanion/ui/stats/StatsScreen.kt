@@ -16,232 +16,198 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pianocompanion.data.model.PracticeRating
+import android.app.Application
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
 import com.pianocompanion.data.model.SessionRecord
-import com.pianocompanion.data.repository.StatsRepository
+import com.pianocompanion.ui.components.EmptyState
+import com.pianocompanion.ui.components.GradientStatCard
+import com.pianocompanion.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatsScreen() {
-    val context = LocalContext.current
-    val repository = remember { StatsRepository(context) }
-    val aggregated = remember { repository.getAggregatedStats() }
-    val sessions = remember { repository.getRecentSessions(20) }
+fun StatsScreen(
+    context: android.content.Context = androidx.compose.ui.platform.LocalContext.current,
+    viewModel: StatsViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return StatsViewModel(context.applicationContext as Application) as T
+            }
+        }
+    )
+) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("📊 练习统计", fontWeight = FontWeight.Bold) }
-            )
+            TopAppBar(title = { Text("📊 练习统计", fontWeight = FontWeight.Bold) })
         }
     ) { padding ->
-        if (sessions.isEmpty()) {
-            // Empty state
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🎵", fontSize = 64.sp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("还没有练习记录", style = MaterialTheme.typography.titleMedium)
-                    Text("开始你的第一次练习吧！", style = MaterialTheme.typography.bodyMedium,
-                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                }
+        if (uiState.sessions.isEmpty()) {
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                EmptyState(
+                    emoji = "📊",
+                    title = "还没有练习记录",
+                    subtitle = "完成一次练习后这里会显示你的数据",
+                    modifier = Modifier.padding(top = 80.dp)
+                )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
-            ) {
-                // === Overview cards ===
-                item {
-                    OverviewCards(aggregated)
-                }
+            return@Scaffold
+        }
 
-                // === Streak banner ===
-                item {
-                    StreakBanner(aggregated.currentStreak)
-                }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            // === Overview cards ===
+            item {
+                SectionHeader(title = "总览", icon = Icons.Filled.Insights)
+            }
 
-                // === Accuracy trend chart ===
-                item {
-                    AccuracyTrendChart(sessions.takeLast(minOf(15, sessions.size)))
-                }
-
-                // === Session history ===
-                item {
-                    Text(
-                        "最近练习记录",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GradientStatCard(
+                        icon = "🎵",
+                        value = "${uiState.totalSessions}",
+                        label = "练习次数",
+                        gradientColors = listOf(Color(0xFF667EEA), Color(0xFF764BA2)),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GradientStatCard(
+                        icon = "⏱️",
+                        value = formatDuration(uiState.totalDurationMs),
+                        label = "总时长",
+                        gradientColors = listOf(Color(0xFF11998E), Color(0xFF38EF7D)),
+                        modifier = Modifier.weight(1f)
                     )
                 }
+            }
 
-                items(sessions) { session ->
-                    SessionCard(session)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    GradientStatCard(
+                        icon = "🎯",
+                        value = "${(uiState.avgAccuracy * 100).toInt()}%",
+                        label = "平均准确率",
+                        gradientColors = listOf(Color(0xFFFC466B), Color(0xFF3F5EFB)),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GradientStatCard(
+                        icon = "🔥",
+                        value = "${uiState.streak}天",
+                        label = "连续练习",
+                        gradientColors = listOf(Color(0xFFFF6B35), Color(0xFFFFA726)),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+            }
+
+            // === Accuracy trend ===
+            item {
+                SectionHeader(title = "准确率趋势", icon = Icons.Filled.TrendingUp)
+            }
+
+            item {
+                AccuracyChart(
+                    sessions = uiState.sessions.takeLast(10),
+                    modifier = Modifier.fillMaxWidth().height(140.dp)
+                )
+            }
+
+            // === Session history ===
+            item {
+                SectionHeader(title = "最近练习", icon = Icons.Filled.History)
+            }
+
+            items(uiState.sessions.takeLast(10).asReversed()) { session ->
+                SessionHistoryItem(session)
             }
         }
     }
 }
 
 @Composable
-private fun OverviewCards(aggregated: com.pianocompanion.data.model.AggregatedStats) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        StatCard(
-            title = "总练习",
-            value = "\${aggregated.totalSessions}",
-            subtitle = "次",
-            color = Color(0xFF42A5F5),
-            modifier = Modifier.weight(1f)
-        )
-        StatCard(
-            title = "总时长",
-            value = aggregated.getFormattedTotalTime(),
-            subtitle = "",
-            color = Color(0xFF66BB6A),
-            modifier = Modifier.weight(1f)
-        )
-        StatCard(
-            title = "平均准确率",
-            value = "\${(aggregated.averageAccuracy * 100).toInt()}%",
-            subtitle = "最佳 \${(aggregated.bestAccuracy * 100).toInt()}%",
-            color = Color(0xFFFFA726),
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun StatCard(
-    title: String,
-    value: String,
-    subtitle: String,
-    color: Color,
+private fun AccuracyChart(
+    sessions: List<SessionRecord>,
     modifier: Modifier = Modifier
 ) {
+    if (sessions.isEmpty()) return
+
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f))
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(title, fontSize = 11.sp, color = color, fontWeight = FontWeight.Medium)
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
-            if (subtitle.isNotEmpty()) {
-                Text(subtitle, fontSize = 10.sp, color = color.copy(alpha = 0.7f))
+        Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            val w = size.width
+            val h = size.height
+
+            // Grid lines
+            val gridColor = Color(0xFFE0E0E0)
+            for (i in 0..4) {
+                val y = h * i / 4f
+                drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1f)
             }
-        }
-    }
-}
 
-@Composable
-private fun StreakBanner(streak: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFF6B35)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text("🔥", fontSize = 32.sp)
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("连续练习", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
-                Text("\${streak} 天", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            // Accuracy line
+            val points = sessions.mapIndexed { idx, s ->
+                Offset(
+                    x = if (sessions.size > 1) idx.toFloat() / (sessions.size - 1) * w else w / 2,
+                    y = h - (s.accuracy * h)
+                )
             }
-            Text("💪", fontSize = 32.sp)
-        }
-    }
-}
 
-@Composable
-private fun AccuracyTrendChart(sessions: List<SessionRecord>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("📈 准确率趋势", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (sessions.size >= 2) {
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                ) {
-                    val w = size.width
-                    val h = size.height
-                    val stepX = w / (sessions.size - 1)
+            // Draw filled area under curve
+            if (points.size > 1) {
+                val areaPath = Path().apply {
+                    moveTo(points.first().x, h)
+                    points.forEach { lineTo(it.x, it.y) }
+                    lineTo(points.last().x, h)
+                    close()
+                }
+                drawPath(areaPath, Color(0xFF6750A4).copy(alpha = 0.1f))
+            }
 
-                    val path = Path()
-                    val fillPath = Path()
-
-                    sessions.forEachIndexed { i, session ->
-                        val x = i * stepX
-                        val y = h - session.accuracy * h
-                        if (i == 0) {
-                            path.moveTo(x, y)
-                            fillPath.moveTo(x, h)
-                            fillPath.lineTo(x, y)
-                        } else {
-                            path.lineTo(x, y)
-                            fillPath.lineTo(x, y)
-                        }
-                        if (i == sessions.size - 1) {
-                            fillPath.lineTo(x, h)
-                            fillPath.close()
-                        }
-                    }
-
-                    drawPath(fillPath, color = Color(0xFF42A5F5).copy(alpha = 0.2f))
-                    drawPath(path, color = Color(0xFF42A5F5), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f))
-
-                    // Draw dots
-                    sessions.forEachIndexed { i, session ->
-                        val x = i * stepX
-                        val y = h - session.accuracy * h
-                        drawCircle(
-                            color = if (session.accuracy >= 0.8f) Color(0xFF4CAF50) else Color(0xFFEF5350),
-                            radius = 5f,
-                            center = androidx.compose.ui.geometry.Offset(x, y)
-                        )
+            // Draw line
+            val linePath = Path().apply {
+                if (points.isNotEmpty()) {
+                    moveTo(points[0].x, points[0].y)
+                    for (i in 1 until points.size) {
+                        lineTo(points[i].x, points[i].y)
                     }
                 }
-            } else {
-                Text("需要至少2次练习记录", fontSize = 12.sp,
-                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+            }
+            drawPath(linePath, Color(0xFF6750A4), style = Stroke(
+                width = 3f,
+                cap = StrokeCap.Round
+            ))
+
+            // Draw points
+            points.forEach { point ->
+                drawCircle(Color(0xFF6750A4), radius = 5f, center = point)
+                drawCircle(Color.White, radius = 2f, center = point)
             }
         }
     }
 }
 
 @Composable
-private fun SessionCard(session: SessionRecord) {
-    val rating = session.getRating()
+private fun SessionHistoryItem(session: SessionRecord) {
     val accuracyColor = when {
         session.accuracy >= 0.8f -> Color(0xFF4CAF50)
         session.accuracy >= 0.5f -> Color(0xFFFFA726)
@@ -250,52 +216,59 @@ private fun SessionCard(session: SessionRecord) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(10.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rating circle
+            // Accuracy circle
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(accuracyColor.copy(alpha = 0.15f)),
+                    .background(accuracyColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(rating.emoji, fontSize = 24.sp)
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Session info
-            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    session.scoreTitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1
-                )
-                Text(
-                    "\${session.getFormattedDate()} · \${session.getFormattedDuration()} · \${session.totalNotes}个音",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-
-            // Accuracy
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "\${(session.accuracy * 100).toInt()}%",
-                    style = MaterialTheme.typography.titleLarge,
+                    "${(session.accuracy * 100).toInt()}",
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = accuracyColor
                 )
-                Text(rating.label, fontSize = 10.sp, color = accuracyColor)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(session.scoreTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text(
+                    "${formatDuration(session.durationMs)} · ✅${session.correctNotes} ❌${session.wrongNotes}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(formatRelativeTime(session.startTime), fontSize = 11.sp,
+                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
         }
+    }
+}
+
+// Helpers
+private fun formatDuration(ms: Long): String {
+    val mins = ms / 60000
+    val secs = (ms % 60000) / 1000
+    return if (mins > 0) "${mins}m" else "${secs}s"
+}
+
+private fun formatRelativeTime(timestamp: Long): String {
+    val diff = System.currentTimeMillis() - timestamp
+    val mins = diff / 60000
+    return when {
+        mins < 1 -> "刚刚"
+        mins < 60 -> "${mins}分钟前"
+        mins < 1440 -> "${mins / 60}小时前"
+        else -> "${mins / 1440}天前"
     }
 }
