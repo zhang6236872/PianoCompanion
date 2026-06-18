@@ -31,7 +31,7 @@ import com.pianocompanion.data.model.PracticeMode
 import com.pianocompanion.ui.components.AccuracyRing
 import com.pianocompanion.ui.components.InfoChip
 import com.pianocompanion.ui.components.PulseIndicator
-import com.pianocompanion.ui.score.ScoreRenderer
+import com.pianocompanion.ui.score.AutoScrollScoreRenderer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,7 +199,7 @@ fun PracticeScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    ScoreRenderer(
+                    AutoScrollScoreRenderer(
                         notes = score.notes,
                         currentPosition = uiState.currentNoteIndex,
                         modifier = Modifier.fillMaxSize()
