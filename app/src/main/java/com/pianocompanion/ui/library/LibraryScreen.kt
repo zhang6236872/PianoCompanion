@@ -50,6 +50,7 @@ fun LibraryScreen(
     val builtInScores = remember { DemoScores.getAll() }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
 
     // SAF document picker — MusicXML (.xml/.musicxml) and MIDI (.mid/.midi).
     val pickFileLauncher = rememberLauncherForActivityResult(
@@ -70,9 +71,21 @@ fun LibraryScreen(
     }
 
     fun launchImportPicker() {
-        // MusicXML has no universally registered mime type, so we offer the
-        // common xml/text types plus a catch-all so users can pick any file.
         pickFileLauncher.launch(arrayOf("application/xml", "text/xml", "audio/midi", "audio/x-midi", "*/*"))
+    }
+
+    // Filter scores by search query
+    val filteredBuiltIn = remember(searchQuery) {
+        if (searchQuery.isBlank()) builtInScores
+        else builtInScores.filter {
+            it.title.contains(searchQuery, true) || it.composer.contains(searchQuery, true)
+        }
+    }
+    val filteredImported = remember(searchQuery, uiState.importedScores) {
+        if (searchQuery.isBlank()) uiState.importedScores
+        else uiState.importedScores.filter {
+            it.title.contains(searchQuery, true) || it.composer.contains(searchQuery, true)
+        }
     }
 
     Scaffold(
@@ -109,12 +122,34 @@ fun LibraryScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // === Built-in scores ===
+            // === Search bar ===
             item {
-                SectionHeader(title = "内置乐谱", icon = Icons.Filled.MusicNote)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("搜索乐谱名称或作曲家…", fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Filled.Search, "搜索", modifier = Modifier.size(20.dp)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Filled.Clear, "清除", modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
             }
 
-            items(builtInScores) { score ->
+            // === Built-in scores ===
+            if (filteredBuiltIn.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "内置乐谱", icon = Icons.Filled.MusicNote)
+                }
+            }
+
+            items(filteredBuiltIn) { score ->
                 EnhancedScoreCard(
                     score = score,
                     onClick = {
@@ -126,25 +161,36 @@ fun LibraryScreen(
             }
 
             // === Imported scores ===
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SectionHeader(
-                    title = "我的乐谱",
-                    icon = Icons.Filled.FileUpload
-                )
+            if (filteredImported.isNotEmpty() || searchQuery.isBlank()) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SectionHeader(
+                        title = "我的乐谱",
+                        icon = Icons.Filled.FileUpload
+                    )
+                }
             }
 
-            if (uiState.importedScores.isEmpty()) {
+            if (filteredImported.isEmpty() && searchQuery.isBlank()) {
                 item {
                     EmptyState(
                         emoji = "📁",
                         title = "还没有导入的乐谱",
-                        subtitle = "点击右下角「导入乐谱」按钮，选择 MusicXML 文件",
+                        subtitle = "点击右下角「导入乐谱」按钮，选择 MusicXML 或 MIDI 文件",
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            } else if (filteredImported.isEmpty() && searchQuery.isNotBlank()) {
+                item {
+                    EmptyState(
+                        emoji = "🔍",
+                        title = "没有找到匹配的乐谱",
+                        subtitle = "试试其他关键词",
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             } else {
-                items(uiState.importedScores, key = { it.fileName }) { item ->
+                items(filteredImported, key = { it.fileName }) { item ->
                     var showDeleteDialog by remember { mutableStateOf(false) }
                     ImportedScoreCard(
                         item = item,
@@ -283,8 +329,23 @@ private fun ImportedScoreCard(
                     Text("⚠️ 解析失败，请检查文件格式", fontSize = 11.sp,
                          color = MaterialTheme.colorScheme.error)
                 } else {
-                    Text("${item.noteCount} 个音符 · 长按可删除", fontSize = 11.sp,
-                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        ) {
+                            Text(
+                                item.source,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        Text("${item.noteCount} 个音符 · 长按可删除", fontSize = 11.sp,
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    }
                 }
             }
             Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
@@ -307,9 +368,9 @@ private fun HelpCard() {
         ) {
             Text("📋", fontSize = 36.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("支持导入 MusicXML 文件", style = MaterialTheme.typography.titleSmall,
+            Text("支持导入 MusicXML 和 MIDI 文件", style = MaterialTheme.typography.titleSmall,
                  fontWeight = FontWeight.Medium)
-            Text("用 MuseScore / Finale 等导出 .xml 格式，通过 SAF 选择即可导入",
+            Text("用 MuseScore / Finale 导出 .xml，或任何 .mid/.midi 文件，通过 SAF 选择即可导入",
                  fontSize = 12.sp,
                  color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
         }
