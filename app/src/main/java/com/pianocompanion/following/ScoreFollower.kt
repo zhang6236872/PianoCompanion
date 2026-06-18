@@ -14,7 +14,8 @@ import kotlin.math.abs
  */
 class ScoreFollower(
     private val score: Score,
-    private val sampleRate: Int = 44100
+    private val sampleRate: Int = 44100,
+    private val dtwConfig: DtwConfig = DtwConfig.DEFAULT
 ) {
     private val pitchDetector = PitchDetector(sampleRate)
     private val noteDetector = NoteDetector(pitchDetector, sampleRate)
@@ -32,7 +33,7 @@ class ScoreFollower(
     private var extraCount: Int = 0
 
     init {
-        dtw = OnlineDTW(score.notes)
+        dtw = OnlineDTW(score.notes, dtwConfig)
         setupCallbacks()
     }
 
