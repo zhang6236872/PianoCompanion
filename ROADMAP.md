@@ -1,6 +1,6 @@
 # 🎹 Piano Companion — 开发路线图
 
-> 最后更新: v1.2.0 (UI Polish)
+> 最后更新: Phase 1 任务2 完成 (MusicXML 导入)
 > GitHub: https://github.com/zhang6236872/PianoCompanion
 
 ---
@@ -46,7 +46,7 @@
 | # | 任务 | 优先级 | 说明 |
 |---|------|--------|------|
 | 1 | **真机音频测试** | 🔴 P0 | 连接 Android 手机，验证麦克风→音高检测→翻页全链路 |
-| 2 | **MusicXML 文件导入** | 🔴 P0 | SAF 文件选择器 + MusicXmlParser 集成 |
+| 2 | **MusicXML 文件导入** | 🔴 P0 | SAF 文件选择器 + MusicXmlParser 集成 ✅ (2026-06-19) |
 | 3 | **DTW 参数调优** | 🟡 P1 | 在真实钢琴环境下调整容差/窗口大小 |
 | 4 | **练习模式选择** | 🟡 P1 | 自由练习/跟谱模式/考试模式 |
 | 5 | **错误音振动反馈** | 🟡 P1 | 弹错音时触觉反馈 |
