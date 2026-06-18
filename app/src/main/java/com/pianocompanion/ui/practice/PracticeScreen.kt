@@ -190,6 +190,15 @@ fun PracticeScreen(
                 )
             }
 
+            // === Metronome control ===
+            MetronomeControlBar(
+                enabled = uiState.metronomeEnabled,
+                bpm = uiState.metronomeBpm,
+                currentBeat = uiState.metronomeBeat,
+                onToggle = { viewModel.toggleMetronome() },
+                onBpmChange = { viewModel.setMetronomeBpm(it) }
+            )
+
             // === Staff notation ===
             uiState.score?.let { score ->
                 Card(
@@ -380,6 +389,79 @@ private fun FeedbackCard(
                 Text(icon, fontSize = 24.sp)
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(message, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = bgColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetronomeControlBar(
+    enabled: Boolean,
+    bpm: Int,
+    currentBeat: Int,
+    onToggle: () -> Unit,
+    onBpmChange: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Toggle button
+            FilterChip(
+                selected = enabled,
+                onClick = onToggle,
+                label = { Text("🎵 节拍器", fontSize = 12.sp) },
+                leadingIcon = {
+                    Icon(
+                        if (enabled) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        null,
+                        Modifier.size(16.dp)
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // BPM display + steppers
+            if (enabled) {
+                // Beat indicator dots
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(4) { i ->
+                        Box(
+                            modifier = Modifier
+                                .size(if (i == currentBeat) 10.dp else 7.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(
+                                    if (i == currentBeat) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // BPM steppers
+            IconButton(onClick = { onBpmChange(bpm - 5) }, modifier = Modifier.size(32.dp)) {
+                Text("−", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                "$bpm",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            IconButton(onClick = { onBpmChange(bpm + 5) }, modifier = Modifier.size(32.dp)) {
+                Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
