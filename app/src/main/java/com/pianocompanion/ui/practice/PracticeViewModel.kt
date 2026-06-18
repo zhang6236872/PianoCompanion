@@ -5,24 +5,22 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pianocompanion.audio.AudioRecorder
-import com.pianocompanion.data.model.MatchResult
-import com.pianocompanion.data.model.MatchStatus
-import com.pianocompanion.data.model.Score
+import com.pianocompanion.data.DemoScores
+import com.pianocompanion.data.model.*
+import com.pianocompanion.data.repository.StatsRepository
 import com.pianocompanion.following.ScoreFollower
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the Practice screen.
- *
  * Bridges the AudioRecorder, ScoreFollower engine, and the Compose UI.
- * Manages practice state, permissions, and real-time note feedback.
+ * Saves practice sessions to StatsRepository.
  */
 class PracticeViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    // === UI State ===
     data class PracticeUiState(
         val isPracticing: Boolean = false,
         val hasMicPermission: Boolean = false,
@@ -37,7 +35,8 @@ class PracticeViewModel(
         val lastExpectedNote: String = "",
         val lastDetectedNote: String = "",
         val score: Score? = null,
-        val errorMessage: String? = null
+        val errorMessage: String? = null,
+        val sessionSaved: Boolean = false
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -45,13 +44,14 @@ class PracticeViewModel(
     private val _uiState = MutableStateFlow(PracticeUiState())
     val uiState: StateFlow<PracticeUiState> = _uiState.asStateFlow()
 
-    // === Engine ===
+    // Available scores for selection
+    val availableScores = DemoScores.getAll()
+
     private var audioRecorder: AudioRecorder? = null
     private var scoreFollower: ScoreFollower? = null
+    private val statsRepository = StatsRepository(application)
+    private var practiceStartTime: Long = 0
 
-    /**
-     * Check if the app has microphone permission.
-     */
     fun checkMicPermission(): Boolean {
         val granted = getApplication<Application>().checkSelfPermission(
             android.Manifest.permission.RECORD_AUDIO
@@ -60,9 +60,6 @@ class PracticeViewModel(
         return granted
     }
 
-    /**
-     * Set the current score to practice.
-     */
     fun setScore(score: Score) {
         scoreFollower = ScoreFollower(score)
         scoreFollower?.let { follower ->
@@ -83,12 +80,9 @@ class PracticeViewModel(
                 handleMatchResult(result)
             }
         }
-        _uiState.update { it.copy(score = score) }
+        _uiState.update { it.copy(score = score, sessionSaved = false) }
     }
 
-    /**
-     * Start practicing — begins audio capture and score following.
-     */
     fun startPractice() {
         if (!checkMicPermission()) {
             _uiState.update { it.copy(errorMessage = "需要麦克风权限") }
@@ -96,11 +90,14 @@ class PracticeViewModel(
         }
 
         val follower = scoreFollower ?: run {
-            _uiState.update { it.copy(errorMessage = "请先选择乐谱") }
-            return
+            // Auto-select first demo score if none selected
+            val score = availableScores.first()
+            setScore(score)
+            scoreFollower ?: return
         }
 
         follower.start()
+        practiceStartTime = System.currentTimeMillis()
 
         audioRecorder = AudioRecorder { samples ->
             follower.processAudio(samples)
@@ -115,7 +112,8 @@ class PracticeViewModel(
                     wrongCount = 0,
                     accuracy = 0f,
                     lastFeedback = FeedbackType.NONE,
-                    errorMessage = null
+                    errorMessage = null,
+                    sessionSaved = false
                 )
             }
         } catch (e: SecurityException) {
@@ -123,13 +121,34 @@ class PracticeViewModel(
         }
     }
 
-    /**
-     * Stop practicing.
-     */
     fun stopPractice() {
         audioRecorder?.stop()
         audioRecorder = null
         scoreFollower?.stop()
+
+        // Save session to stats
+        val duration = System.currentTimeMillis() - practiceStartTime
+        val score = _uiState.value.score
+        if (score != null && _uiState.value.correctCount + _uiState.value.wrongCount > 0) {
+            val stats = scoreFollower?.getStats()
+            val total = _uiState.value.correctCount + _uiState.value.wrongCount
+            val accuracy = if (total > 0) _uiState.value.correctCount.toFloat() / total else 0f
+
+            val record = SessionRecord(
+                scoreTitle = score.title,
+                startTime = practiceStartTime,
+                durationMs = duration,
+                totalNotes = total,
+                correctNotes = _uiState.value.correctCount,
+                wrongNotes = _uiState.value.wrongCount,
+                missedNotes = stats?.missedNotes ?: 0,
+                extraNotes = stats?.extraNotes ?: 0,
+                accuracy = accuracy
+            )
+            statsRepository.saveSession(record)
+            _uiState.update { it.copy(sessionSaved = true) }
+        }
+
         _uiState.update { it.copy(isPracticing = false) }
     }
 

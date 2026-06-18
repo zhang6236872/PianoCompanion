@@ -1,0 +1,276 @@
+package com.pianocompanion.ui.score
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.unit.dp
+import com.pianocompanion.data.model.ScoreNote
+import com.pianocompanion.data.model.Staff
+import com.pianocompanion.util.MusicUtils
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+
+/**
+ * Compose-based staff notation renderer.
+ * Draws treble & bass clefs staves with notes, highlights current position.
+ */
+@Composable
+fun ScoreRenderer(
+    notes: List<ScoreNote>,
+    currentPosition: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        // Treble staff
+        StaffView(
+            notes = notes.filter { it.staff == Staff.TREBLE || it.staff == Staff.BOTH },
+            currentPosition = currentPosition,
+            isTreble = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        // Bass staff
+        StaffView(
+            notes = notes.filter { it.staff == Staff.BASS || it.staff == Staff.BOTH },
+            currentPosition = currentPosition,
+            isTreble = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StaffView(
+    notes: List<ScoreNote>,
+    currentPosition: Int,
+    isTreble: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFFFFEF7))  // warm paper color
+    ) {
+        val w = size.width
+        val h = size.height
+
+        // Staff parameters
+        val staffTop = h * 0.2f
+        val staffBottom = h * 0.8f
+        val lineSpacing = (staffBottom - staffTop) / 4f
+        val leftMargin = 60f
+        val rightMargin = 20f
+        val drawableWidth = w - leftMargin - rightMargin
+
+        // Draw 5 staff lines
+        val staffColor = Color(0xFF333333)
+        for (i in 0..4) {
+            val y = staffTop + i * lineSpacing
+            drawLine(
+                color = staffColor,
+                start = Offset(leftMargin, y),
+                end = Offset(w - rightMargin, y),
+                strokeWidth = 1.5f
+            )
+        }
+
+        // Draw bar line at start and end
+        drawLine(staffColor, Offset(leftMargin, staffTop), Offset(leftMargin, staffBottom), 2f)
+        drawLine(staffColor, Offset(w - rightMargin, staffTop), Offset(w - rightMargin, staffBottom), 2f)
+
+        // Draw clef
+        drawClef(isTreble, leftMargin - 45f, staffTop, lineSpacing)
+
+        // Draw notes
+        if (notes.isEmpty()) return@Canvas
+
+        val visibleCount = minOf(notes.size, 16)
+        val startPos = maxOf(0, currentPosition - 4)
+        val endPos = minOf(startPos + visibleCount, notes.size)
+        val noteSpacing = drawableWidth / visibleCount
+
+        // Reference MIDI for staff position
+        // Treble: middle C (60) sits one ledger line below the staff
+        //         top line F5 (77), bottom line E4 (64) -> going down E4(64) F4(65) G4(67) A4(69) B4(71) C5(72) D5(74) E5(76) F5(77)
+        // Bass: top line A5(81)->no... Bass: bottom line G2(43), top line A3(57)
+
+        val referenceMidi = if (isTreble) 64 else 43  // bottom line of each staff
+        // Each staff line/space = 1 step = 2 MIDI semitones (diatonic)
+        // We need to convert MIDI to staff position (diatonic steps)
+
+        for (i in startPos until endPos) {
+            val note = notes[i]
+            if (note.staff != Staff.BOTH && note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)) continue
+
+            val displayIdx = i - startPos
+            val x = leftMargin + displayIdx * noteSpacing + noteSpacing / 2
+
+            // Convert MIDI to staff position
+            val stepFromBottom = midiToStaffSteps(note.midiNumber, isTreble)
+            val y = staffBottom - stepFromBottom * (lineSpacing / 2f)
+
+            val isCurrent = i == currentPosition
+            val isPast = i < currentPosition
+
+            // Draw ledger lines if needed
+            drawLedgerLines(x, y, staffTop, staffBottom, lineSpacing, staffColor)
+
+            // Draw note head
+            val noteColor = when {
+                isCurrent -> Color(0xFF4CAF50)
+                isPast -> Color(0xFF999999)
+                else -> Color(0xFF1A1A1A)
+            }
+            val noteRadius = lineSpacing * 0.35f
+
+            drawOval(
+                color = noteColor,
+                topLeft = Offset(x - noteRadius, y - noteRadius * 0.7f),
+                size = Size(noteRadius * 2, noteRadius * 1.4f)
+            )
+
+            // Draw stem
+            val stemHeight = lineSpacing * 2.5f
+            val stemX = x + noteRadius * 0.8f
+            drawLine(
+                color = noteColor,
+                start = Offset(stemX, y),
+                end = Offset(stemX, y - stemHeight),
+                strokeWidth = 2f
+            )
+
+            // Highlight current note with a circle
+            if (isCurrent) {
+                drawOval(
+                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+                    topLeft = Offset(x - noteRadius * 2, y - noteRadius * 2),
+                    size = Size(noteRadius * 4, noteRadius * 4)
+                )
+            }
+
+            // Draw note name below (for beginners)
+            if (isCurrent) {
+                drawContext.canvas.nativeCanvas.drawText(
+                    note.noteName,
+                    x - 15,
+                    staffBottom + 25,
+                    android.graphics.Paint().apply {
+                        color = android.graphics.Color.parseColor("#4CAF50")
+                        textSize = 28f
+                        isFakeBoldText = true
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Convert MIDI note number to staff position (steps from bottom line).
+ * Treble bottom line = E4 (MIDI 64)
+ * Bass bottom line = G2 (MIDI 43)
+ * Each diatonic step = going up/down by one line or space
+ */
+private fun midiToStaffSteps(midi: Int, isTreble: Boolean): Float {
+    // Map MIDI to diatonic steps (ignoring accidentals for staff position)
+    // Steps are counted from the bottom line of the staff
+    val NOTE_TO_DIATONIC = mapOf(
+        0 to 0, 1 to 0,   // C, C#
+        2 to 1, 3 to 1,   // D, D#
+        4 to 2,            // E
+        5 to 3, 6 to 3,   // F, F#
+        7 to 4, 8 to 4,   // G, G#
+        9 to 5, 10 to 5,  // A, A#
+        11 to 6            // B
+    )
+
+    val baseMidi = if (isTreble) 64 else 43  // E4 or G2
+    val basePitchClass = baseMidi % 12
+    val baseOctave = baseMidi / 12
+    val baseDiatonic = NOTE_TO_DIATONIC[basePitchClass]!! + baseOctave * 7
+
+    val pitchClass = midi % 12
+    val octave = midi / 12
+    val noteDiatonic = NOTE_TO_DIATONIC[pitchClass]!! + octave * 7
+
+    return (noteDiatonic - baseDiatonic).toFloat()
+}
+
+/**
+ * Draw ledger lines for notes above or below the staff.
+ */
+private fun DrawScope.drawLedgerLines(
+    x: Float,
+    y: Float,
+    staffTop: Float,
+    staffBottom: Float,
+    lineSpacing: Float,
+    color: Color
+) {
+    // Above staff
+    if (y < staffTop - lineSpacing / 2) {
+        var ledgerY = staffTop - lineSpacing
+        while (ledgerY >= y - lineSpacing / 2) {
+            drawLine(
+                color = color.copy(alpha = 0.5f),
+                start = Offset(x - 12, ledgerY),
+                end = Offset(x + 12, ledgerY),
+                strokeWidth = 1f
+            )
+            ledgerY -= lineSpacing
+        }
+    }
+    // Below staff
+    if (y > staffBottom + lineSpacing / 2) {
+        var ledgerY = staffBottom + lineSpacing
+        while (ledgerY <= y + lineSpacing / 2) {
+            drawLine(
+                color = color.copy(alpha = 0.5f),
+                start = Offset(x - 12, ledgerY),
+                end = Offset(x + 12, ledgerY),
+                strokeWidth = 1f
+            )
+            ledgerY += lineSpacing
+        }
+    }
+}
+
+/**
+ * Draw a simple clef symbol (treble or bass) using text.
+ */
+private fun DrawScope.drawClef(
+    isTreble: Boolean,
+    x: Float,
+    staffTop: Float,
+    lineSpacing: Float
+) {
+    val symbol = if (isTreble) "𝄞" else "𝄢"
+    val fontSize = lineSpacing * 4.5f
+    drawContext.canvas.nativeCanvas.drawText(
+        symbol,
+        x,
+        staffTop + lineSpacing * 3.5f,
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#333333")
+            textSize = fontSize
+            isFakeBoldText = true
+        }
+    )
+}

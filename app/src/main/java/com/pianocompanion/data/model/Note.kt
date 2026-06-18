@@ -37,7 +37,7 @@ data class DetectedNote(
     val endTime: Long get() = startTime + duration
 }
 
-enum class Staff { TREBLE, BASS }
+enum class Staff { TREBLE, BASS, BOTH }
 
 /**
  * Represents a complete musical score.
