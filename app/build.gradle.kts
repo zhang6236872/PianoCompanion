@@ -59,4 +59,9 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.0.0")
+
+    // Real XmlPullParser implementation so MusicXmlParser can be unit-tested
+    // on the JVM (Android's org.xmlpull.v1.* is a "not mocked" stub in tests).
+    testImplementation("net.sf.kxml:kxml2:2.3.0")
+    testImplementation("xmlpull:xmlpull:1.1.3.1")
 }
