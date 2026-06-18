@@ -9,6 +9,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +25,7 @@ import com.pianocompanion.ui.metronome.MetronomeScreen
 import com.pianocompanion.ui.practice.PracticeScreen
 import com.pianocompanion.ui.settings.SettingsScreen
 import com.pianocompanion.ui.omr.OmrScreen
+import com.pianocompanion.ui.splash.SplashScreen
 import com.pianocompanion.ui.stats.StatsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -43,6 +47,12 @@ fun AppScaffold() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        SplashScreen(onNavigate = { showSplash = false })
+        return
+    }
 
     Scaffold(
         bottomBar = {
