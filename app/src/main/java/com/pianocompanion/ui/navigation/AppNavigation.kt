@@ -21,6 +21,7 @@ import com.pianocompanion.ui.library.LibraryScreen
 import com.pianocompanion.ui.metronome.MetronomeScreen
 import com.pianocompanion.ui.practice.PracticeScreen
 import com.pianocompanion.ui.settings.SettingsScreen
+import com.pianocompanion.ui.omr.OmrScreen
 import com.pianocompanion.ui.stats.StatsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -29,6 +30,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object Metronome : Screen("metronome", "节拍器", Icons.Filled.Timer)
     data object Stats : Screen("stats", "统计", Icons.Filled.BarChart)
     data object Settings : Screen("settings", "设置", Icons.Filled.Settings)
+    data object Omr : Screen("omr", "拍照识谱", Icons.Filled.PhotoCamera)
 }
 
 private val screens = listOf(
@@ -130,6 +132,14 @@ fun AppScaffold() {
             composable(Screen.Metronome.route) { MetronomeScreen() }
             composable(Screen.Stats.route) { StatsScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Omr.route) {
+                OmrScreen(
+                    onScoreRecognized = { score ->
+                        navController.navigate(Screen.Practice.route)
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

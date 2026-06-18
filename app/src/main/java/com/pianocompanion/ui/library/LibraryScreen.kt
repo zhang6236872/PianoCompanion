@@ -96,8 +96,17 @@ fun LibraryScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { launchImportPicker() },
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        navController.navigate(Screen.Omr.route)
+                    },
+                    icon = { Icon(Icons.Filled.PhotoCamera, "拍照识谱") },
+                    text = { Text("拍照识谱") },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+                ExtendedFloatingActionButton(
+                    onClick = { launchImportPicker() },
                 icon = {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
@@ -111,7 +120,8 @@ fun LibraryScreen(
                 },
                 text = { Text(if (uiState.isLoading) "导入中…" else "导入乐谱") },
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+                )
+            }
         }
     ) { padding ->
         LazyColumn(
