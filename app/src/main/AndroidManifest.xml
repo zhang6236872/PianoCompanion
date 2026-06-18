@@ -41,6 +41,18 @@
                 android:resource="@xml/widget_practice_info" />
         </receiver>
 
+        <!-- Wear OS Metronome -->
+        <activity
+            android:name=".wear.WearMetronomeActivity"
+            android:exported="true"
+            android:label="节拍器"
+            android:theme="@style/Theme.PianoCompanion">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.WATCH" />
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
