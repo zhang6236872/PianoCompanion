@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pianocompanion.audio.AudioRecorder
 import com.pianocompanion.audio.HapticFeedback
+import com.pianocompanion.audio.Metronome
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.*
 import com.pianocompanion.data.repository.StatsRepository
@@ -38,7 +39,10 @@ class PracticeViewModel(
         val score: Score? = null,
         val errorMessage: String? = null,
         val sessionSaved: Boolean = false,
-        val practiceMode: PracticeMode = PracticeMode.NORMAL
+        val practiceMode: PracticeMode = PracticeMode.NORMAL,
+        val metronomeEnabled: Boolean = false,
+        val metronomeBpm: Int = 120,
+        val metronomeBeat: Int = -1
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -55,6 +59,31 @@ class PracticeViewModel(
     private val haptic = HapticFeedback(application)
     private val settingsRepo = com.pianocompanion.data.repository.SettingsRepository(application)
     private var practiceStartTime: Long = 0
+
+    // === Metronome ===
+    private val metronome = Metronome()
+
+    init {
+        metronome.onBeat = { beat ->
+            _uiState.update { it.copy(metronomeBeat = beat) }
+        }
+    }
+
+    fun toggleMetronome() {
+        val enabled = !_uiState.value.metronomeEnabled
+        if (enabled) {
+            metronome.start()
+        } else {
+            metronome.stop()
+            _uiState.update { it.copy(metronomeBeat = -1) }
+        }
+        _uiState.update { it.copy(metronomeEnabled = enabled) }
+    }
+
+    fun setMetronomeBpm(bpm: Int) {
+        metronome.setBpm(bpm)
+        _uiState.update { it.copy(metronomeBpm = metronome.getBpm()) }
+    }
 
     fun checkMicPermission(): Boolean {
         val granted = getApplication<Application>().checkSelfPermission(
@@ -129,6 +158,8 @@ class PracticeViewModel(
         audioRecorder?.stop()
         audioRecorder = null
         scoreFollower?.stop()
+        metronome.stop()
+        _uiState.update { it.copy(metronomeBeat = -1) }
 
         // Haptic feedback for completion
         haptic.enabled = settingsRepo.hapticFeedback
