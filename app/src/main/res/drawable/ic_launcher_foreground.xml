@@ -4,11 +4,26 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Piano keys icon -->
+
+    <!-- Piano keyboard background circle -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,30 L78,30 L78,78 L30,78 Z M34,34 L34,74 L42,74 L42,34 Z M50,34 L50,74 L58,74 L58,34 Z M66,34 L66,74 L74,74 L74,34 Z"/>
+        android:pathData="M54,54m-32,0a32,32 0,1 1,64 0a32,32 0,1 1,-64 0" />
+
+    <!-- White keys -->
     <path
-        android:fillColor="#FF6200EE"
-        android:pathData="M36,34 L40,34 L40,50 L36,50 Z M52,34 L56,34 L56,50 L52,50 Z M68,34 L72,34 L72,50 L68,50 Z"/>
+        android:fillColor="#F5F5F5"
+        android:strokeColor="#333333"
+        android:strokeWidth="1.2"
+        android:pathData="M38,42 L38,68 L43,68 L43,42 Z M45,42 L45,68 L50,68 L50,42 Z M52,42 L52,68 L57,68 L57,42 Z M59,42 L59,68 L64,68 L64,42 Z M66,42 L66,68 L71,68 L71,42 Z" />
+
+    <!-- Black keys -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M42,42 L42,58 L44,58 L44,42 Z M49,42 L49,58 L51,58 L51,42 Z M56,42 L56,58 L58,58 L58,42 Z M63,42 L63,58 L65,58 L65,42 Z" />
+
+    <!-- Music note -->
+    <path
+        android:fillColor="#6750A4"
+        android:pathData="M62,30 C62,30 65,28 65,33 L65,44 C64.5,43.8 63.8,43.7 63,43.7 C60.8,43.7 59,45 59,46.8 C59,48.6 60.8,49.5 63,49.5 C65.2,49.5 67,48.6 67,46.8 L67,36 L70,34 L70,31 L67,33 L67,30 C67,27 65,28 62,30 Z" />
 </vector>
