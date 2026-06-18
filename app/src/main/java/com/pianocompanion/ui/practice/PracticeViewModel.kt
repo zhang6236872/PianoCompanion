@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pianocompanion.audio.AudioRecorder
+import com.pianocompanion.audio.HapticFeedback
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.*
 import com.pianocompanion.data.repository.StatsRepository
@@ -51,6 +52,8 @@ class PracticeViewModel(
     private var audioRecorder: AudioRecorder? = null
     private var scoreFollower: ScoreFollower? = null
     private val statsRepository = StatsRepository(application)
+    private val haptic = HapticFeedback(application)
+    private val settingsRepo = com.pianocompanion.data.repository.SettingsRepository(application)
     private var practiceStartTime: Long = 0
 
     fun checkMicPermission(): Boolean {
@@ -127,6 +130,10 @@ class PracticeViewModel(
         audioRecorder = null
         scoreFollower?.stop()
 
+        // Haptic feedback for completion
+        haptic.enabled = settingsRepo.hapticFeedback
+        haptic.practiceComplete()
+
         // Save session to stats
         val duration = System.currentTimeMillis() - practiceStartTime
         val score = _uiState.value.score
@@ -159,6 +166,7 @@ class PracticeViewModel(
 
         // EXAM mode: accumulate stats but no real-time feedback
         val showFeedback = _uiState.value.practiceMode == PracticeMode.NORMAL
+        haptic.enabled = settingsRepo.hapticFeedback
 
         when (result.status) {
             MatchStatus.CORRECT -> {
@@ -171,6 +179,7 @@ class PracticeViewModel(
                         accuracy = calcAccuracy(it.correctCount + 1, it.wrongCount)
                     )
                 }
+                if (showFeedback) haptic.correctNote()
             }
             MatchStatus.WRONG_PITCH -> {
                 _uiState.update {
@@ -182,6 +191,7 @@ class PracticeViewModel(
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
                 }
+                if (showFeedback) haptic.wrongPitch()
             }
             MatchStatus.EXTRA_NOTE -> {
                 _uiState.update {
@@ -192,6 +202,7 @@ class PracticeViewModel(
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
                 }
+                if (showFeedback) haptic.extraNote()
             }
             MatchStatus.MISSING_NOTE -> {
                 _uiState.update {
@@ -202,6 +213,7 @@ class PracticeViewModel(
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
                 }
+                if (showFeedback) haptic.missingNote()
             }
             MatchStatus.RHYTHM_ERROR -> {
                 _uiState.update {
@@ -211,6 +223,7 @@ class PracticeViewModel(
                         accuracy = calcAccuracy(it.correctCount, it.wrongCount + 1)
                     )
                 }
+                if (showFeedback) haptic.wrongPitch()
             }
         }
     }
