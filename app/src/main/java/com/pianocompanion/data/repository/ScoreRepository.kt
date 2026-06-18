@@ -3,6 +3,7 @@ package com.pianocompanion.data.repository
 import android.content.Context
 import android.net.Uri
 import com.pianocompanion.data.model.Score
+import com.pianocompanion.data.parser.MidiParser
 import com.pianocompanion.data.parser.MusicXmlParser
 import java.io.File
 
@@ -15,12 +16,13 @@ data class ImportedScoreInfo(
     val title: String,
     val composer: String,
     val noteCount: Int,
+    val source: String = "MusicXML",
     val parseFailed: Boolean = false
 )
 
 /**
  * Manages score file storage and retrieval.
- * Scores are stored in app's internal storage as MusicXML files.
+ * Supports both MusicXML (.xml) and MIDI (.mid) files.
  */
 class ScoreRepository(private val context: Context) {
 
@@ -28,28 +30,38 @@ class ScoreRepository(private val context: Context) {
         File(context.filesDir, "scores").apply { mkdirs() }
     }
 
-    private val parser = MusicXmlParser()
+    private val xmlParser = MusicXmlParser()
+    private val midiParser = MidiParser()
+
+    private fun isMidiFile(fileName: String) =
+        fileName.endsWith(".mid", true) || fileName.endsWith(".midi", true)
+
+    private fun parseFile(file: File): Score {
+        return if (isMidiFile(file.name)) {
+            file.inputStream().use { midiParser.parse(it) }
+        } else {
+            file.inputStream().use { xmlParser.parse(it) }
+        }
+    }
 
     /**
-     * Import a MusicXML file from a [uri] (typically returned by the Storage
-     * Access Framework) into the app's internal storage.
+     * Import a MusicXML or MIDI file from a [uri] (typically returned by the
+     * Storage Access Framework) into the app's internal storage.
      *
-     * The file is first parsed to validate it and extract its metadata, then
-     * copied to [scoresDir] under a sanitized filename derived from the score
-     * title. If a file with the same name already exists it is overwritten.
-     *
-     * @return the parsed [Score] on success, or a failure wrapping the cause.
+     * The file type is auto-detected from the URI's file extension.
      */
     fun importScore(uri: Uri): Result<Score> {
         return try {
+            val fileName = getFileName(uri)
+            val isMidi = isMidiFile(fileName)
+            val ext = if (isMidi) ".mid" else ".xml"
+
             val score = context.contentResolver.openInputStream(uri)?.use { stream ->
-                parser.parse(stream)
+                if (isMidi) midiParser.parse(stream) else xmlParser.parse(stream)
             } ?: return Result.failure(Exception("无法打开所选文件"))
 
-            // Sanitize a stable filename from the score title. Re-importing the
-            // same score overwrites the previous copy instead of duplicating it.
             val baseName = sanitizeFileName(score.title).ifEmpty { "score" }
-            val outFile = File(scoresDir, "$baseName.xml")
+            val outFile = File(scoresDir, "$baseName$ext")
             context.contentResolver.openInputStream(uri)?.use { input ->
                 outFile.outputStream().use { output -> input.copyTo(output) }
             }
@@ -64,9 +76,7 @@ class ScoreRepository(private val context: Context) {
         return try {
             val file = File(scoresDir, fileName)
             if (!file.exists()) return Result.failure(Exception("Score not found: $fileName"))
-            file.inputStream().use { stream ->
-                Result.success(parser.parse(stream))
-            }
+            Result.success(parseFile(file))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -78,21 +88,22 @@ class ScoreRepository(private val context: Context) {
     }
 
     /**
-     * List all imported scores together with parsed metadata (title, composer,
-     * note count). Files that fail to parse are still returned but flagged with
-     * [ImportedScoreInfo.parseFailed] so the UI can surface them gracefully.
+     * List all imported scores together with parsed metadata.
+     * Supports both .xml and .mid/.midi files.
      */
     fun listImportedScores(): List<ImportedScoreInfo> {
-        return scoresDir.listFiles { file -> file.isFile && file.name.endsWith(".xml") }
-            ?.sortedBy { it.name }
+        return scoresDir.listFiles { file ->
+            file.isFile && (file.name.endsWith(".xml") || file.name.endsWith(".mid") || file.name.endsWith(".midi"))
+        }?.sortedBy { it.name }
             ?.map { file ->
                 try {
-                    val score = file.inputStream().use { stream -> parser.parse(stream) }
+                    val score = parseFile(file)
                     ImportedScoreInfo(
                         fileName = file.name,
                         title = score.title.ifBlank { file.nameWithoutExtension },
                         composer = score.composer,
-                        noteCount = score.notes.size
+                        noteCount = score.notes.size,
+                        source = if (isMidiFile(file.name)) "MIDI" else "MusicXML"
                     )
                 } catch (e: Exception) {
                     ImportedScoreInfo(
@@ -100,6 +111,7 @@ class ScoreRepository(private val context: Context) {
                         title = file.nameWithoutExtension,
                         composer = "—",
                         noteCount = 0,
+                        source = if (isMidiFile(file.name)) "MIDI" else "MusicXML",
                         parseFailed = true
                     )
                 }
@@ -113,6 +125,15 @@ class ScoreRepository(private val context: Context) {
     }
 
     private fun sanitizeFileName(name: String): String {
-        return name.replace(Regex("[^A-Za-z0-9_\u4e00-\u9fa5]"), "_").take(50)
+        return name.replace(Regex("[^A-Za-z0-9_\\u4e00-\\u9fa5]"), "_").take(50)
+    }
+
+    private fun getFileName(uri: Uri): String {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            val nameIdx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (nameIdx >= 0 && it.moveToFirst()) return it.getString(nameIdx)
+        }
+        return uri.lastPathSegment ?: "unknown"
     }
 }
