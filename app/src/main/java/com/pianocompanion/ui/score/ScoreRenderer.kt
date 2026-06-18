@@ -24,7 +24,13 @@ import kotlin.math.sin
 
 /**
  * Compose-based staff notation renderer.
- * Draws treble & bass clefs staves with notes, highlights current position.
+ * Draws treble & bass clefs staves with:
+ * - Notes (filled = quarter note, hollow = half note)
+ * - Accidentals (sharps ♯ / flats ♭)
+ * - Rests (quarter/half/whole)
+ * - Bar lines
+ * - Ledger lines
+ * - Current position highlighting
  */
 @Composable
 fun ScoreRenderer(
@@ -33,7 +39,6 @@ fun ScoreRenderer(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        // Treble staff
         StaffView(
             notes = notes.filter { it.staff == Staff.TREBLE || it.staff == Staff.BOTH },
             currentPosition = currentPosition,
@@ -43,7 +48,6 @@ fun ScoreRenderer(
                 .weight(1f)
         )
         Spacer(modifier = Modifier.height(2.dp))
-        // Bass staff
         StaffView(
             notes = notes.filter { it.staff == Staff.BASS || it.staff == Staff.BOTH },
             currentPosition = currentPosition,
@@ -66,7 +70,7 @@ private fun StaffView(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFFFFEF7))  // warm paper color
+            .background(Color(0xFFFFFEF7))
     ) {
         val w = size.width
         val h = size.height
@@ -106,14 +110,7 @@ private fun StaffView(
         val endPos = minOf(startPos + visibleCount, notes.size)
         val noteSpacing = drawableWidth / visibleCount
 
-        // Reference MIDI for staff position
-        // Treble: middle C (60) sits one ledger line below the staff
-        //         top line F5 (77), bottom line E4 (64) -> going down E4(64) F4(65) G4(67) A4(69) B4(71) C5(72) D5(74) E5(76) F5(77)
-        // Bass: top line A5(81)->no... Bass: bottom line G2(43), top line A3(57)
-
-        val referenceMidi = if (isTreble) 64 else 43  // bottom line of each staff
-        // Each staff line/space = 1 step = 2 MIDI semitones (diatonic)
-        // We need to convert MIDI to staff position (diatonic steps)
+        var lastMeasure = -1
 
         for (i in startPos until endPos) {
             val note = notes[i]
@@ -121,6 +118,18 @@ private fun StaffView(
 
             val displayIdx = i - startPos
             val x = leftMargin + displayIdx * noteSpacing + noteSpacing / 2
+
+            // Draw bar line when measure changes
+            if (note.measureIndex != lastMeasure && lastMeasure >= 0) {
+                val barX = x - noteSpacing / 2
+                drawLine(
+                    color = staffColor.copy(alpha = 0.4f),
+                    start = Offset(barX, staffTop),
+                    end = Offset(barX, staffBottom),
+                    strokeWidth = 1f
+                )
+            }
+            lastMeasure = note.measureIndex
 
             // Convert MIDI to staff position
             val stepFromBottom = midiToStaffSteps(note.midiNumber, isTreble)
@@ -132,6 +141,20 @@ private fun StaffView(
             // Draw ledger lines if needed
             drawLedgerLines(x, y, staffTop, staffBottom, lineSpacing, staffColor)
 
+            // Draw accidental (sharp/flat) if needed
+            val pitchClass = note.midiNumber % 12
+            val accidentalType = when (pitchClass) {
+                1, 3, 6, 8, 10 -> getAccidentalType(note.noteName)
+                else -> null
+            }
+            if (accidentalType != null) {
+                drawAccidental(accidentalType, x - noteSpacing * 0.25f, y, lineSpacing)
+            }
+
+            // Determine note type by duration
+            val isHalfNote = note.duration > 1000L
+            val isWholeNote = note.duration > 2000L
+
             // Draw note head
             val noteColor = when {
                 isCurrent -> Color(0xFF4CAF50)
@@ -140,26 +163,37 @@ private fun StaffView(
             }
             val noteRadius = lineSpacing * 0.35f
 
-            drawOval(
-                color = noteColor,
-                topLeft = Offset(x - noteRadius, y - noteRadius * 0.7f),
-                size = Size(noteRadius * 2, noteRadius * 1.4f)
-            )
-
-            // Draw stem
-            val stemHeight = lineSpacing * 2.5f
-            val stemX = x + noteRadius * 0.8f
-            drawLine(
-                color = noteColor,
-                start = Offset(stemX, y),
-                end = Offset(stemX, y - stemHeight),
-                strokeWidth = 2f
-            )
+            if (isWholeNote) {
+                // Hollow oval for whole note, no stem
+                drawOval(
+                    color = noteColor,
+                    topLeft = Offset(x - noteRadius, y - noteRadius * 0.7f),
+                    size = Size(noteRadius * 2, noteRadius * 1.4f),
+                    style = Stroke(width = 2f)
+                )
+            } else if (isHalfNote) {
+                // Hollow oval for half note
+                drawOval(
+                    color = noteColor,
+                    topLeft = Offset(x - noteRadius, y - noteRadius * 0.7f),
+                    size = Size(noteRadius * 2, noteRadius * 1.4f),
+                    style = Stroke(width = 2f)
+                )
+                drawStem(noteColor, x, y, noteRadius, lineSpacing, stemUp = true)
+            } else {
+                // Filled oval for quarter note (default)
+                drawOval(
+                    color = noteColor,
+                    topLeft = Offset(x - noteRadius, y - noteRadius * 0.7f),
+                    size = Size(noteRadius * 2, noteRadius * 1.4f)
+                )
+                drawStem(noteColor, x, y, noteRadius, lineSpacing, stemUp = true)
+            }
 
             // Highlight current note with a circle
             if (isCurrent) {
                 drawOval(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+                    color = Color(0xFF4CAF50).copy(alpha = 0.15f),
                     topLeft = Offset(x - noteRadius * 2, y - noteRadius * 2),
                     size = Size(noteRadius * 4, noteRadius * 4)
                 )
@@ -182,26 +216,104 @@ private fun StaffView(
     }
 }
 
+/** Determine if the accidental is a sharp or flat from the note name */
+private fun getAccidentalType(noteName: String): AccidentalType {
+    return if (noteName.contains("#")) AccidentalType.SHARP
+    else if (noteName.contains("b") || noteName.contains("♭")) AccidentalType.FLAT
+    else AccidentalType.SHARP
+}
+
+enum class AccidentalType { SHARP, FLAT, NATURAL }
+
+/**
+ * Draw an accidental symbol (sharp ♯ / flat ♭ / natural ♮)
+ */
+private fun DrawScope.drawAccidental(
+    type: AccidentalType,
+    x: Float,
+    y: Float,
+    lineSpacing: Float
+) {
+    val symbol = when (type) {
+        AccidentalType.SHARP -> "♯"
+        AccidentalType.FLAT -> "♭"
+        AccidentalType.NATURAL -> "♮"
+    }
+    drawContext.canvas.nativeCanvas.drawText(
+        symbol,
+        x,
+        y + lineSpacing * 0.35f,
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#333333")
+            textSize = lineSpacing * 1.8f
+            isFakeBoldText = true
+        }
+    )
+}
+
+/**
+ * Draw a note stem (up or down)
+ */
+private fun DrawScope.drawStem(
+    color: Color,
+    x: Float,
+    y: Float,
+    noteRadius: Float,
+    lineSpacing: Float,
+    stemUp: Boolean = true
+) {
+    val stemHeight = lineSpacing * 2.5f
+    val stemX = if (stemUp) x + noteRadius * 0.8f else x - noteRadius * 0.8f
+    drawLine(
+        color = color,
+        start = Offset(stemX, y),
+        end = Offset(stemX, if (stemUp) y - stemHeight else y + stemHeight),
+        strokeWidth = 2f
+    )
+}
+
+/**
+ * Draw a rest symbol (quarter/half/whole)
+ */
+@Suppress("unused")
+private fun DrawScope.drawRest(
+    duration: Long,
+    x: Float,
+    staffTop: Float,
+    lineSpacing: Float
+) {
+    val symbol = when {
+        duration > 2000L -> "𝄻" // whole rest
+        duration > 1000L -> "𝄼" // half rest
+        else -> "𝄽"              // quarter rest
+    }
+    drawContext.canvas.nativeCanvas.drawText(
+        symbol,
+        x,
+        staffTop + lineSpacing * 3f,
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#1A1A1A")
+            textSize = lineSpacing * 2.5f
+            isFakeBoldText = true
+        }
+    )
+}
+
 /**
  * Convert MIDI note number to staff position (steps from bottom line).
- * Treble bottom line = E4 (MIDI 64)
- * Bass bottom line = G2 (MIDI 43)
- * Each diatonic step = going up/down by one line or space
  */
 private fun midiToStaffSteps(midi: Int, isTreble: Boolean): Float {
-    // Map MIDI to diatonic steps (ignoring accidentals for staff position)
-    // Steps are counted from the bottom line of the staff
     val NOTE_TO_DIATONIC = mapOf(
-        0 to 0, 1 to 0,   // C, C#
-        2 to 1, 3 to 1,   // D, D#
-        4 to 2,            // E
-        5 to 3, 6 to 3,   // F, F#
-        7 to 4, 8 to 4,   // G, G#
-        9 to 5, 10 to 5,  // A, A#
-        11 to 6            // B
+        0 to 0, 1 to 0,
+        2 to 1, 3 to 1,
+        4 to 2,
+        5 to 3, 6 to 3,
+        7 to 4, 8 to 4,
+        9 to 5, 10 to 5,
+        11 to 6
     )
 
-    val baseMidi = if (isTreble) 64 else 43  // E4 or G2
+    val baseMidi = if (isTreble) 64 else 43
     val basePitchClass = baseMidi % 12
     val baseOctave = baseMidi / 12
     val baseDiatonic = NOTE_TO_DIATONIC[basePitchClass]!! + baseOctave * 7
@@ -224,7 +336,6 @@ private fun DrawScope.drawLedgerLines(
     lineSpacing: Float,
     color: Color
 ) {
-    // Above staff
     if (y < staffTop - lineSpacing / 2) {
         var ledgerY = staffTop - lineSpacing
         while (ledgerY >= y - lineSpacing / 2) {
@@ -237,7 +348,6 @@ private fun DrawScope.drawLedgerLines(
             ledgerY -= lineSpacing
         }
     }
-    // Below staff
     if (y > staffBottom + lineSpacing / 2) {
         var ledgerY = staffBottom + lineSpacing
         while (ledgerY <= y + lineSpacing / 2) {
