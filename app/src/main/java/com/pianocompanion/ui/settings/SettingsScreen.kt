@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -125,11 +127,76 @@ fun SettingsScreen(
                 ) { viewModel.updateDtwConfig { c -> c.copy(deleteCost = it) } }
             }
 
+            // === 数据备份 ===
+            SettingsSection("☁️ 数据备份") {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val scope = rememberCoroutineScope()
+                val snackbarHost = remember { SnackbarHostState() }
+                val syncManager = remember { com.pianocompanion.data.sync.SyncManager(context) }
+
+                val createBackupLauncher = rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json")
+                ) { uri ->
+                    if (uri != null) {
+                        scope.launch {
+                            val success = syncManager.exportToFile(uri)
+                            snackbarHost.showSnackbar(if (success) "备份成功" else "备份失败")
+                        }
+                    }
+                }
+
+                val restoreLauncher = rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    if (uri != null) {
+                        scope.launch {
+                            val result = syncManager.importFromFile(uri)
+                            val msg = when (result) {
+                                is com.pianocompanion.data.sync.SyncResult.Success ->
+                                    "导入成功: ${result.imported}/${result.total} 条记录"
+                                is com.pianocompanion.data.sync.SyncResult.Error ->
+                                    "导入失败: ${result.message}"
+                            }
+                            snackbarHost.showSnackbar(msg)
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("导出练习记录到 JSON 文件，用于备份或迁移到其他设备", fontSize = 12.sp,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { createBackupLauncher.launch(syncManager.generateBackupFileName()) }
+                        ) {
+                            Icon(Icons.Filled.FileDownload, null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("导出备份")
+                        }
+                        OutlinedButton(
+                            onClick = { restoreLauncher.launch(arrayOf("application/json", "*/*")) }
+                        ) {
+                            Icon(Icons.Filled.FileUpload, null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("恢复数据")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("云端同步功能开发中，当前仅支持本地备份", fontSize = 10.sp,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                }
+
+                LaunchedEffect(Unit) {
+                    // Placeholder for future cloud sync initialization
+                }
+            }
+
             // === 关于 ===
             SettingsSection("ℹ️ 关于") {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Piano Companion", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("版本 1.3.0-dev", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Text("版本 2.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("智能钢琴练习助手 — 自动翻页 + 弹奏纠错", fontSize = 13.sp)
                 }
