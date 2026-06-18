@@ -32,7 +32,7 @@ class OnlineDTWTest {
     @Test
     fun `follows correct sequence`() {
         val scoreNotes = createScoreNotes(60, 62, 64, 65, 67)  // C D E F G
-        val dtw = OnlineDTW(scoreNotes, searchWindow = 10)
+        val dtw = OnlineDTW(scoreNotes, config = DtwConfig(searchWindow = 10))
 
         // Feed the same notes
         var state = dtw.processNote(createDetectedNote(60))
@@ -48,7 +48,7 @@ class OnlineDTWTest {
     @Test
     fun `handles wrong note gracefully`() {
         val scoreNotes = createScoreNotes(60, 62, 64)
-        val dtw = OnlineDTW(scoreNotes, searchWindow = 10)
+        val dtw = OnlineDTW(scoreNotes, config = DtwConfig(searchWindow = 10))
 
         // Feed wrong note
         val state = dtw.processNote(createDetectedNote(72))  // C5 instead of C4
@@ -59,7 +59,7 @@ class OnlineDTWTest {
     @Test
     fun `handles extra notes`() {
         val scoreNotes = createScoreNotes(60, 62, 64)
-        val dtw = OnlineDTW(scoreNotes, searchWindow = 10)
+        val dtw = OnlineDTW(scoreNotes, config = DtwConfig(searchWindow = 10))
 
         dtw.processNote(createDetectedNote(60))
         dtw.processNote(createDetectedNote(61))  // Extra note
