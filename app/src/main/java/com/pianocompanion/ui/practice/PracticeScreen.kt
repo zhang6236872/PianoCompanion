@@ -216,6 +216,29 @@ fun PracticeScreen(
                 }
             }
 
+            // === Hand separation stats ===
+            if (uiState.isPracticing && (uiState.rightHandCorrect + uiState.leftHandCorrect > 0)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HandStatCard(
+                        title = "✋ 右手",
+                        accuracy = uiState.rightHandAccuracy,
+                        correct = uiState.rightHandCorrect,
+                        color = Color(0xFF42A5F5),
+                        modifier = Modifier.weight(1f)
+                    )
+                    HandStatCard(
+                        title = "✋ 左手",
+                        accuracy = uiState.leftHandAccuracy,
+                        correct = uiState.leftHandCorrect,
+                        color = Color(0xFFEF5350),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
             // === Feedback card ===
             AnimatedContent(
                 targetState = Triple(uiState.lastFeedback, uiState.lastExpectedNote, uiState.lastDetectedNote),
@@ -463,6 +486,37 @@ private fun MetronomeControlBar(
             IconButton(onClick = { onBpmChange(bpm + 5) }, modifier = Modifier.size(32.dp)) {
                 Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+private fun HandStatCard(
+    title: String,
+    accuracy: Float,
+    correct: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.08f))
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "${(accuracy * 100).toInt()}%",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text("$correct 正确", fontSize = 10.sp, color = color.copy(alpha = 0.7f))
         }
     }
 }
