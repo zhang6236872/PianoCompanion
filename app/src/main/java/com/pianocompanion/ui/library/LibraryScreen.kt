@@ -51,7 +51,7 @@ fun LibraryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // SAF document picker — only *.xml / *.musicxml MusicXML files.
+    // SAF document picker — MusicXML (.xml/.musicxml) and MIDI (.mid/.midi).
     val pickFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -72,7 +72,7 @@ fun LibraryScreen(
     fun launchImportPicker() {
         // MusicXML has no universally registered mime type, so we offer the
         // common xml/text types plus a catch-all so users can pick any file.
-        pickFileLauncher.launch(arrayOf("application/xml", "text/xml", "*/*"))
+        pickFileLauncher.launch(arrayOf("application/xml", "text/xml", "audio/midi", "audio/x-midi", "*/*"))
     }
 
     Scaffold(
