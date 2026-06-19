@@ -33,7 +33,7 @@ import com.pianocompanion.data.model.Score
 import com.pianocompanion.omr.ImagePreprocessor
 import com.pianocompanion.omr.OmrEngine
 import com.pianocompanion.omr.OmrResult
-import com.pianocompanion.omr.StubOmrEngine
+import com.pianocompanion.omr.RealOmrEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -52,7 +52,7 @@ class OmrViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(OmrUiState())
     val uiState: StateFlow<OmrUiState> = _uiState.asStateFlow()
 
-    private val engine: OmrEngine = StubOmrEngine()
+    private val engine: OmrEngine = RealOmrEngine()
 
     fun processImage(uri: Uri) {
         val context = getApplication<Application>()
@@ -250,12 +250,23 @@ fun OmrScreen(
                 ) {
                     Text("🔬 OMR 功能说明", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        "当前为占位引擎，返回示例乐谱。\n后续将集成 TFLite 模型实现真实拍照识谱。\n\n支持图片：JPG / PNG，建议高分辨率拍摄。",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
+                    val infoLines = remember {
+                        listOf(
+                            "真实本地识谱引擎：Otsu 二值化 → 五线谱检测/去除",
+                            "→ 音符定位 → 音高映射（完全离线，无需模型文件）",
+                            "建议拍摄端正、高对比度、高分辨率的乐谱图片。",
+                            "节奏为估算值（每个音符按四分音符），需人工校对。",
+                            "支持图片：JPG / PNG。"
+                        )
+                    }
+                    infoLines.forEach { line ->
+                        Text(
+                            line,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
