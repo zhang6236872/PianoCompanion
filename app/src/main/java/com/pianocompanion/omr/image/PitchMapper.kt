@@ -40,6 +40,28 @@ object PitchMapper {
     }
 
     /**
+     * 调号感知版本：先按谱表位置算出"白键"音高，再叠加调号带来的升/降半音修正。
+     *
+     * @param key 谱号右侧识别到的调号；null 等同于 C 大调（无升降）。
+     */
+    fun mapToMidi(
+        noteheadY: Int,
+        system: StaffSystem,
+        staff: Staff,
+        key: KeySignature?
+    ): Int {
+        val base = mapToMidi(noteheadY, system, staff)
+        if (key == null || key.accidentalCount == 0) return base
+        val spacing = system.lineSpacing
+        if (spacing <= 0) return base
+        val stepPx = spacing / 2.0
+        val stepsFromBottom = ((system.bottomLine.center - noteheadY) / stepPx).roundToInt()
+        val gdc = bottomLineGdc(staff) + stepsFromBottom
+        val letter = Math.floorMod(gdc, 7) // C=0..B=6
+        return base + key.accidentalOffset(letter)
+    }
+
+    /**
      * Convert a diatonic staff-step index (0 = bottom line, +1 per line/space upward)
      * to a MIDI note number.
      */

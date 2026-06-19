@@ -10,6 +10,7 @@ import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.PitchMapper
 import com.pianocompanion.omr.image.RhythmAnalyzer
+import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.util.MusicUtils
@@ -75,19 +76,45 @@ object OmrPipeline {
         // --- 3. Connected components -------------------------------------------
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
 
-        // --- 4 + 5. Noteheads + pitch mapping, grouped per system --------------
+        // --- 4. 每系统检测符头 -------------------------------------------------
+        // 分两阶段：先用"紧凑主扫描"得到不含谱号/拍号等高大字形的干净符头，用于确定
+        // 签名区右界（避免谱号曲线被符头恢复扫描误判为符头、进而污染签名区边界）；
+        // 再用完整扫描（含符头+符干恢复、连梁组切分）得到最终符头，并排除签名区。
         data class Located(val nh: Notehead, val staff: Staff, val systemIdx: Int)
-        val located = ArrayList<Located>()
-
-        systems.forEachIndexed { sysIdx, system ->
-            val staff = if (systems.size > 1 && system.centerY >= binary.height / 2) Staff.BASS else Staff.TREBLE
+        val fullNoteheadsBySystem = ArrayList<List<Notehead>>(systems.size)
+        val noteheadsForSignature = ArrayList<List<Notehead>>(systems.size)
+        systems.forEach { system ->
             val band = lineSpacing * 3
             val top = system.topLine.center - band
             val bottom = system.bottomLine.center + band
-            // 传入 cleaned 图像，启用"符头+符干"融合块的二次恢复扫描。
-            val noteheads = NoteheadDetector.detect(blobs, system.lineSpacing, cleaned)
+            val compact = NoteheadDetector.detect(blobs, system.lineSpacing) // 仅紧凑主扫描
                 .filter { it.centerY in top..bottom }
-            for (nh in noteheads) {
+            // 传入 cleaned 图像，启用"符头+符干"融合块的二次恢复扫描与连梁组切分。
+            val full = NoteheadDetector.detect(blobs, system.lineSpacing, cleaned)
+                .filter { it.centerY in top..bottom }
+            fullNoteheadsBySystem += full
+            // 签名区右界优先用干净符头；若该系统全是带符干/连梁音符（紧凑扫描为空），
+            // 则回退到完整扫描，保证边界不为空。
+            noteheadsForSignature += if (compact.isNotEmpty()) compact else full
+        }
+
+        // --- 5. 签名识别：谱号 / 调号 / 拍号（替代旧的"按竖直位置推断谱表"）---
+        val signatures = SignatureDetector.detect(cleaned, systems, blobs, noteheadsForSignature)
+        val keysBySystem = signatures.perSystem.map { it.keySignature }
+        val detectedTimeSig = signatures.timeSignature
+
+        // 排除签名区内的符头：谱号曲线、拍号数字等高大字形会被符头恢复扫描误判为
+        // 符头，它们位于第一个真实音符左侧的签名区内，按 signatureEndX 过滤掉。
+        val noteheadsBySystem = fullNoteheadsBySystem.mapIndexed { idx, nhs ->
+            val endX = signatures.perSystem.getOrElse(idx) { null }?.signatureEndX ?: 0
+            if (endX <= 0) nhs else nhs.filter { it.centerX > endX }
+        }
+
+        // --- 6. 用识别到的谱号 + 调号映射音高 ----------------------------------
+        val located = ArrayList<Located>()
+        systems.forEachIndexed { sysIdx, system ->
+            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, binary)
+            for (nh in noteheadsBySystem[sysIdx]) {
                 located += Located(nh, staff, sysIdx)
             }
         }
@@ -95,12 +122,14 @@ object OmrPipeline {
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
-        // --- 6. Horizontal sequencing (left→right; same-column = chord) --------
+        // --- 7. Horizontal sequencing (left→right; same-column = chord) --------
         // 按 x 排序的索引，保持与 rhythms 对齐。
         val order = located.indices.sortedBy { located[it].nh.centerX }
         val xTolerance = (lineSpacing * 0.8).toInt().coerceAtLeast(2)
         val quarterMs = 60_000L / tempo.coerceAtLeast(1)
-        val measureMs = quarterMs * 4 // 默认 4/4 拍号下一个小节的时长
+        // 拍号决定一个小节的时长；未识别到时默认 4/4。
+        val quartersPerMeasure = detectedTimeSig?.quartersPerMeasure ?: 4.0
+        val measureMs = (quarterMs * quartersPerMeasure).toLong().coerceAtLeast(1L)
 
         val notes = ArrayList<ScoreNote>()
         var cursor = 0L
@@ -115,7 +144,7 @@ object OmrPipeline {
             while (j < order.size && located[order[j]].nh.centerX - columnX <= xTolerance) {
                 val ln = located[order[j]]
                 val system = systems[ln.systemIdx]
-                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff)
+                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
                 if (midi in 21..108) {
                     notes += ScoreNote(
                         midiNumber = midi,
@@ -137,7 +166,23 @@ object OmrPipeline {
             warnings += "识别到五线谱但未找到音符（可能图片太小或音符不清晰）"
         }
         if (systems.size > 1) {
-            warnings += "检测到 ${systems.size} 个谱表，已按高音/低音谱表分别处理"
+            warnings += "检测到 ${systems.size} 个谱表，已分别识别谱号后处理"
+        }
+        // 签名识别提示。
+        warnings += signatures.warnings
+        val detectedClefs = signatures.perSystem.map { it.clef }
+        if (detectedClefs.any { it == SignatureDetector.ClefType.TREBLE || it == SignatureDetector.ClefType.BASS }) {
+            val names = detectedClefs.joinToString("、") {
+                when (it) {
+                    SignatureDetector.ClefType.TREBLE -> "高音谱号"
+                    SignatureDetector.ClefType.BASS -> "低音谱号"
+                    else -> "未知"
+                }
+            }
+            warnings += "谱号识别：$names"
+        }
+        if (detectedTimeSig != null) {
+            warnings += "拍号识别：${detectedTimeSig.numerator}/${detectedTimeSig.denominator}"
         }
         // 节奏提示：根据是否检测到符干给出更准确的说明。
         val detectedStems = rhythms.count { it.hasStem }
@@ -156,11 +201,28 @@ object OmrPipeline {
                 composer = "OMR",
                 notes = notes,
                 tempo = tempo,
+                timeSignature = detectedTimeSig?.toString() ?: "4/4",
                 source = ScoreSource.OMR
             ),
             warnings = warnings,
             diagnostics = Diagnostics(systems.size, lineSpacing, notes.size)
         )
+    }
+
+    /**
+     * 把识别到的谱号转为 [Staff]；识别失败(UNKNOWN)时回退到旧的竖直位置启发式，
+     * 保证对没有绘制谱号的合成图仍保持原有行为。
+     */
+    private fun resolveStaff(
+        clef: SignatureDetector.ClefType,
+        systems: List<com.pianocompanion.omr.image.StaffSystem>,
+        system: com.pianocompanion.omr.image.StaffSystem,
+        binary: BinaryImage
+    ): Staff = when (clef) {
+        SignatureDetector.ClefType.TREBLE -> Staff.TREBLE
+        SignatureDetector.ClefType.BASS -> Staff.BASS
+        SignatureDetector.ClefType.UNKNOWN ->
+            if (systems.size > 1 && system.centerY >= binary.height / 2) Staff.BASS else Staff.TREBLE
     }
 
     private fun emptyScore(title: String, tempo: Int): Score = Score(
