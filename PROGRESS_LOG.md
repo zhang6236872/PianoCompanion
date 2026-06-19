@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.5.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分)
+- 当前版本: **v2.6.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别)
 - 当前分支: main
-- 最新 tag: v2.5.0
+- 最新 tag: v2.6.0
 
 ## 健康状态 (2026-06-19 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 95 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 128 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0
-- Kotlin 文件: 61 个 / 代码行数: 9200+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0
+- Kotlin 文件: 64 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -120,10 +120,34 @@
   - 已知限制：符头与符干在不同 y 且间距过大（>1 个谱线间距）的连梁组，
     窗口可能无法同时覆盖；密集拥挤连梁组（符头水平间距 <0.4 谱线间距）仍难区分
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+- **后续增强 (v2.6.0): OMR 谱号/调号/拍号识别 — ✅ 完成**
+  - 替代 v2.3.0 的"按竖直位置推断谱表"启发式，提升音高映射准确性
+  - 新增 `KeySignature`（调号音乐理论模型：五度圈枚举 + `accidentalOffset(letter)`）
+  - 新增 `TimeSignature`（拍号模型：`quartersPerMeasure` / `fromDigits` / `isValid`）
+  - 新增 `SignatureDetector`（核心检测器，纯 Kotlin 无 Android 依赖）：
+    - **谱号**：低音谱号双点（最可靠，高音谱号从不出现）+ 向上延伸量 + 高宽比等几何特征
+    - **调号**：竖直笔画数区分升号(2 根竖笔)/降号(1 根竖笔)，按多数票；个数即调号
+    - **拍号**：降采样到 5×7 布尔网格，与内置 0-9 点阵模板做汉明距离匹配
+    - UNKNOWN 谱号时调用方回退旧启发式，保证向后兼容
+  - `PitchMapper` 新增调号感知 `mapToMidi` 重载（先算白键音高，再用
+    `KeySignature.accidentalOffset(letter)` 叠加升/降半音）
+  - `OmrPipeline` 重构 `recognize()`：
+    - 集成 SignatureDetector；`resolveStaff()` 在谱号 UNKNOWN 时回退竖直位置启发式
+    - 拍号驱动 `measureMs` 计算（未识别默认 4/4）；`Score.timeSignature` 字段填充
+    - **两阶段符头检测**：先用紧凑主扫描得到不含高大字形的干净符头确定签名区右界，
+      再用完整扫描（含符头+符干恢复、连梁组切分）得到最终符头并排除签名区
+      ——解决谱号曲线/拍号数字被符头恢复扫描误判为符头、进而污染签名区边界的问题
+    - `SystemSignatures.signatureEndX` 暴露签名区最右 x 供符头过滤
+  - 新增测试：`KeySignatureTest`(纯逻辑)、`TimeSignatureTest`(纯逻辑)、
+    `SignatureDetectorTest`(合成图端到端：谱号/调号/拍号)、
+    `OmrSignatureIntegrationTest`(全管线：谱号改音高、调号升半音、拍号写入 Score)
+  - 单元测试 95 → **128** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：真实手写体照片的拍号数字/调号字形可能需人工校对（合成规整数字可靠）
 
-## 单元测试明细 (95 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (128 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -134,6 +158,10 @@
 - PitchMapperTest: 6
 - OmrPipelineTest: 16
 - RhythmAnalyzerTest: 14
+- KeySignatureTest: 11
+- TimeSignatureTest: 5
+- SignatureDetectorTest: 13
+- OmrSignatureIntegrationTest: 4
 
 ## 阻塞
 （无）
@@ -144,6 +172,7 @@
   - 待完善：符尾（非连梁单音符）精细层数识别
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
-- OMR 谱号/调号/拍号 字符识别（当前按竖直位置推断谱表）
+- OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
+  - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）、中音谱号(C clef)支持
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
