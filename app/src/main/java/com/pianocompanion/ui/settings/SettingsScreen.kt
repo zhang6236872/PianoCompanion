@@ -73,7 +73,7 @@ fun SettingsScreen(
                     value = uiState.micSensitivity,
                     range = 0.2f..1f,
                     suffix = "",
-                    format = { "%.0f%%" }
+                    format = { "%.0f%%".format(it) }
                 ) { viewModel.setMicSensitivity(it) }
             }
 
@@ -96,7 +96,7 @@ fun SettingsScreen(
                     value = dtw.searchWindow.toFloat(),
                     range = 10f..100f,
                     suffix = "",
-                    format = { "%.0f" }
+                    format = { "%.0f".format(it) }
                 ) { viewModel.updateDtwConfig { c -> c.copy(searchWindow = it.toInt()) } }
                 HorizontalDivider()
                 SliderItem(
@@ -114,7 +114,7 @@ fun SettingsScreen(
                     value = dtw.insertCost,
                     range = 0.5f..2f,
                     suffix = "",
-                    format = { "%.1f" }
+                    format = { "%.1f".format(it) }
                 ) { viewModel.updateDtwConfig { c -> c.copy(insertCost = it) } }
                 HorizontalDivider()
                 SliderItem(
@@ -123,7 +123,7 @@ fun SettingsScreen(
                     value = dtw.deleteCost,
                     range = 0.5f..2f,
                     suffix = "",
-                    format = { "%.1f" }
+                    format = { "%.1f".format(it) }
                 ) { viewModel.updateDtwConfig { c -> c.copy(deleteCost = it) } }
             }
 
@@ -196,7 +196,7 @@ fun SettingsScreen(
             SettingsSection("ℹ️ 关于") {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Piano Companion", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("版本 2.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Text("版本 2.1.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("智能钢琴练习助手 — 自动翻页 + 弹奏纠错", fontSize = 13.sp)
                 }
@@ -241,7 +241,7 @@ private fun SliderItem(
     range: ClosedFloatingPointRange<Float>,
     steps: Int = 0,
     suffix: String = "",
-    format: (Float) -> String = { "%.0f" },
+    format: (Float) -> String = { "%.0f".format(it) },
     onChange: (Float) -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
