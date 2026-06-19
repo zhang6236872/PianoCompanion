@@ -60,6 +60,22 @@ class RhythmAnalyzerTest {
         }
     }
 
+    /** 小实心圆点（附点），半径 r（默认 2）。 */
+    private fun dot(img: BinaryImage, cx: Int, cy: Int, r: Int = 2) {
+        for (y in cy - r..cy + r) for (x in cx - r..cx + r) {
+            if (x !in 0 until w || y !in 0 until h) continue
+            val ndx = (x - cx).toDouble() / r
+            val ndy = (y - cy).toDouble() / r
+            if (ndx * ndx + ndy * ndy <= 1.01) img.set(x, y, true)
+        }
+    }
+
+    /** 细长竖线（模拟符干），高 height。 */
+    private fun vLine(img: BinaryImage, x: Int, cy: Int, height: Int = 20) {
+        val top = cy - height / 2
+        for (y in top until top + height) if (y in 0 until h) img.set(x, y, true)
+    }
+
     private fun nh(cx: Int, cy: Int) = Notehead(cx, cy, 9, 7, 60)
 
     // ---- 纯分类逻辑 ----------------------------------------------------------
@@ -206,5 +222,119 @@ class RhythmAnalyzerTest {
         assertEquals(2, r.size)
         assertEquals(NoteDuration.WHOLE, r[0].duration)
         assertEquals(NoteDuration.QUARTER, r[1].duration)
+    }
+
+    // ---- 附点判定 (augmentation dots) ----------------------------------------
+
+    @Test
+    fun `NoteDuration toMillis applies dot multipliers`() {
+        val quarterMs = 500L
+        // 无附点
+        assertEquals(500L, NoteDuration.QUARTER.toMillis(quarterMs, 0))
+        // 单附点 ×1.5
+        assertEquals(750L, NoteDuration.QUARTER.toMillis(quarterMs, 1))
+        // 双附点 ×1.75
+        assertEquals(875L, NoteDuration.QUARTER.toMillis(quarterMs, 2))
+        // 附点二分 = 3 个四分 = 1500ms
+        assertEquals(1500L, NoteDuration.HALF.toMillis(quarterMs, 1))
+        // 默认参数 = 无附点
+        assertEquals(500L, NoteDuration.QUARTER.toMillis(quarterMs))
+    }
+
+    @Test
+    fun `filled notehead with stem and a right-side dot is dotted`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        dot(img, 75, 60) // 符头右侧约 1 个谱线间距处的小点
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("基础时值仍为四分音符", NoteDuration.QUARTER, r[0].duration)
+        assertEquals("应检测到 1 个附点", 1, r[0].dotCount)
+        assertTrue("dotted 应为 true", r[0].dotted)
+    }
+
+    @Test
+    fun `hollow notehead with stem and a dot is a dotted half`() {
+        val img = blank()
+        hollowEllipse(img, 60, 60); stemUp(img, 60, 60)
+        dot(img, 75, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals(NoteDuration.HALF, r[0].duration)
+        assertEquals(1, r[0].dotCount)
+        // 附点二分 = 2.0 × 1.5 = 3.0 个四分音符
+        assertEquals(3.0, r[0].duration.quarterValue * 1.5, 0.001)
+    }
+
+    @Test
+    fun `whole note can be dotted`() {
+        val img = blank()
+        hollowEllipse(img, 60, 60) // 无符干 = 全音符
+        dot(img, 75, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals(NoteDuration.WHOLE, r[0].duration)
+        assertEquals(1, r[0].dotCount)
+    }
+
+    @Test
+    fun `notehead without dot is not dotted`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals(0, r[0].dotCount)
+        assertFalse("无附点时 dotted 应为 false", r[0].dotted)
+    }
+
+    @Test
+    fun `double dot is detected as two dots`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        dot(img, 73, 60) // 第一个附点
+        dot(img, 79, 60) // 第二个附点
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("应检测到 2 个附点", 2, r[0].dotCount)
+        // 双附点四分 = 0.25 + ... → 1.0 × 1.75 = 1.75 个四分音符
+        val quarterMs = 500L
+        assertEquals(875L, r[0].effectiveMillis(quarterMs))
+    }
+
+    @Test
+    fun `effectiveMillis honours the dot`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        dot(img, 75, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        val quarterMs = 500L
+        // 附点四分 = 1.5 × 500 = 750ms
+        assertEquals(750L, r[0].effectiveMillis(quarterMs))
+    }
+
+    @Test
+    fun `a wide blob to the right (next notehead) is not counted as a dot`() {
+        val img = blank()
+        // 两个紧邻的实心符头（右侧符头落在附点扫描窗内，但宽度像符头而非附点）
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        filledEllipse(img, 78, 60); stemUp(img, 78, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60), nh(78, 60)), s)
+        assertEquals("右侧符头不应被误判为附点", 0, r[0].dotCount)
+        assertEquals(0, r[1].dotCount)
+    }
+
+    @Test
+    fun `a tall thin stroke to the right is not counted as a dot`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        // 符头右侧窗内一根高而窄的竖线（如下一个音符的向下符干残影）
+        vLine(img, 75, 60, height = 22)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("高而窄的竖线不应被误判为附点", 0, r[0].dotCount)
+    }
+
+    @Test
+    fun `dot above the notehead (line-note convention) is detected`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        // 线上音符的附点常画在上方的间内（约高半个谱线间距）
+        dot(img, 75, 55)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals(1, r[0].dotCount)
     }
 }
