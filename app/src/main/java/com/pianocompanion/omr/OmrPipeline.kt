@@ -171,11 +171,19 @@ object OmrPipeline {
         // 签名识别提示。
         warnings += signatures.warnings
         val detectedClefs = signatures.perSystem.map { it.clef }
-        if (detectedClefs.any { it == SignatureDetector.ClefType.TREBLE || it == SignatureDetector.ClefType.BASS }) {
+        if (detectedClefs.any {
+                it == SignatureDetector.ClefType.TREBLE ||
+                    it == SignatureDetector.ClefType.BASS ||
+                    it == SignatureDetector.ClefType.ALTO ||
+                    it == SignatureDetector.ClefType.TENOR
+            }
+        ) {
             val names = detectedClefs.joinToString("、") {
                 when (it) {
                     SignatureDetector.ClefType.TREBLE -> "高音谱号"
                     SignatureDetector.ClefType.BASS -> "低音谱号"
+                    SignatureDetector.ClefType.ALTO -> "中音谱号"
+                    SignatureDetector.ClefType.TENOR -> "次中音谱号"
                     else -> "未知"
                 }
             }
@@ -221,6 +229,8 @@ object OmrPipeline {
     ): Staff = when (clef) {
         SignatureDetector.ClefType.TREBLE -> Staff.TREBLE
         SignatureDetector.ClefType.BASS -> Staff.BASS
+        SignatureDetector.ClefType.ALTO -> Staff.ALTO
+        SignatureDetector.ClefType.TENOR -> Staff.TENOR
         SignatureDetector.ClefType.UNKNOWN ->
             if (systems.size > 1 && system.centerY >= binary.height / 2) Staff.BASS else Staff.TREBLE
     }

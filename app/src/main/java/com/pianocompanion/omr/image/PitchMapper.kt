@@ -20,8 +20,12 @@ object PitchMapper {
     // Global Diatonic Count (GDC) of each clef's bottom line, anchored at C4 = MIDI 60.
     // Treble bottom line = E4 → (4-4)*7 + 2 = 2.
     // Bass   bottom line = G2 → (2-4)*7 + 4 = -10.
+    // Alto   bottom line = F3 → (3-4)*7 + 3 = -4.  (middle line = C4)
+    // Tenor  bottom line = D3 → (3-4)*7 + 1 = -6.  (2nd line from top = C4)
     private fun bottomLineGdc(staff: Staff): Int = when (staff) {
         Staff.BASS -> -10
+        Staff.ALTO -> -4
+        Staff.TENOR -> -6
         else -> 2 // TREBLE / BOTH
     }
 

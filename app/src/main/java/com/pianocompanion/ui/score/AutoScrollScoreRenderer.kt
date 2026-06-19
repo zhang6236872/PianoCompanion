@@ -66,7 +66,10 @@ fun AutoScrollScoreRenderer(
         ) {
             // Treble staff
             ScrollableStaffView(
-                notes = notes.filter { it.staff == Staff.TREBLE || it.staff == Staff.BOTH },
+                notes = notes.filter {
+                    it.staff == Staff.TREBLE || it.staff == Staff.BOTH ||
+                        it.staff == Staff.ALTO || it.staff == Staff.TENOR
+                },
                 currentPosition = currentPosition,
                 isTreble = true,
                 noteWidthPx = noteWidthPx,
@@ -132,7 +135,11 @@ private fun ScrollableStaffView(
         var lastMeasure = -1
 
         notes.forEachIndexed { i, note ->
-            if (note.staff != Staff.BOTH && note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)) return@forEachIndexed
+            if (note.staff != Staff.BOTH &&
+                note.staff != Staff.ALTO &&
+                note.staff != Staff.TENOR &&
+                note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)
+            ) return@forEachIndexed
 
             val x = leftMargin + i * noteWidthPx + noteWidthPx / 2
 

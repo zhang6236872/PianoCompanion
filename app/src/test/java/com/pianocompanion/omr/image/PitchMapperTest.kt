@@ -46,4 +46,48 @@ class PitchMapperTest {
         assertEquals("C4", PitchMapper.staffPositionToNoteName(-2, Staff.TREBLE))
         assertEquals("A4", PitchMapper.staffPositionToNoteName(3, Staff.TREBLE))
     }
+
+    // ---- C 谱号 (中音 / 次中音) ------------------------------------------
+
+    @Test
+    fun `alto bottom line maps to F3`() {
+        // 中音谱表底线 = F3 = MIDI 53
+        assertEquals(53, PitchMapper.staffPositionToMidi(0, Staff.ALTO))
+    }
+
+    @Test
+    fun `alto middle line maps to middle C`() {
+        // step 4 = 中央线 = C4 = 60
+        assertEquals(60, PitchMapper.staffPositionToMidi(4, Staff.ALTO))
+    }
+
+    @Test
+    fun `alto staff positions ascend chromatically correct`() {
+        // F3 G3 A3 B3 C4 D4 E4 F4 G4
+        val expected = listOf(53, 55, 57, 59, 60, 62, 64, 65, 67)
+        expected.forEachIndexed { step, midi ->
+            assertEquals("step $step", midi, PitchMapper.staffPositionToMidi(step, Staff.ALTO))
+        }
+    }
+
+    @Test
+    fun `tenor bottom line maps to D3`() {
+        // 次中音谱表底线 = D3 = MIDI 50
+        assertEquals(50, PitchMapper.staffPositionToMidi(0, Staff.TENOR))
+    }
+
+    @Test
+    fun `tenor second line from top maps to middle C`() {
+        // step 6 = 自下而上第 4 线 = 自上而下第 2 线 = C4 = 60
+        assertEquals(60, PitchMapper.staffPositionToMidi(6, Staff.TENOR))
+    }
+
+    @Test
+    fun `tenor staff positions ascend chromatically correct`() {
+        // D3 E3 F3 G3 A3 B3 C4 D4 E4
+        val expected = listOf(50, 52, 53, 55, 57, 59, 60, 62, 64)
+        expected.forEachIndexed { step, midi ->
+            assertEquals("step $step", midi, PitchMapper.staffPositionToMidi(step, Staff.TENOR))
+        }
+    }
 }

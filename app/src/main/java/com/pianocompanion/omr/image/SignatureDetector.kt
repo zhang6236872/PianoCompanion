@@ -32,8 +32,11 @@ import kotlin.math.abs
  */
 object SignatureDetector {
 
-    /** 谱号类型。 */
-    enum class ClefType { TREBLE, BASS, UNKNOWN }
+    /**
+     * 谱号类型。C 谱号(中音/次中音)用同一个 𝄡 字形，区别在于它"框住"的谱线位置：
+     * 中音谱号框中央线(C4)，次中音谱号框自上而下第 2 条线(C4)。
+     */
+    enum class ClefType { TREBLE, BASS, ALTO, TENOR, UNKNOWN }
 
     /** 单个谱表系统的签名识别结果。 */
     data class SystemSignatures(
@@ -185,10 +188,82 @@ object SignatureDetector {
         // 强信号 2：高音谱号明显向上超出顶线。
         if (reachAbove >= 0.45 * staffHeight) return ClefType.TREBLE
 
-        // 紧凑且不向上延伸 → 倾向低音谱号。
+        // 强信号 3：C 谱号(中音/次中音)。紧凑且不向上延伸，但框住某条谱线
+        // (黑像质心落在该线上，且线上下两侧均有墨迹)。C 谱号从不带双点、不向上延伸，
+        // 故在已排除低音双点与高音向上延伸之后，用质心位置区分中音/次中音。
+        val cClef = classifyCClef(image, system, clef, s)
+        if (cClef != ClefType.UNKNOWN) return cClef
+
+        // 紧凑且不向上延伸 → 倾向低音谱号（无 C 谱号特征时的回退）。
         if (reachAbove < 0.25 * staffHeight && heightRatio <= 1.4) return ClefType.BASS
 
         return ClefType.UNKNOWN
+    }
+
+    /**
+     * C 谱号(中音/次中音)判定。C 谱号框住 C4 所在的谱线：中音谱号 = 中央线，
+     * 次中音谱号 = 自上而下第 2 条线。判定依据：
+     *   1) 谱号连通块的黑像素竖直质心落在该谱线容差内；
+     *   2) 该谱线上、下两侧均存在墨迹(说明谱号确实横跨/框住该线)。
+     * 满足上述条件即返回对应类型，否则 [ClefType.UNKNOWN]（调用方回退低音谱号）。
+     *
+     * 已知限制：真实低音谱号若两点未被检测到，其竖直质心可能恰好落在中央线附近，
+     * 此时会被误判为中音谱号；低音谱号的两点是最可靠的特征，正常情况下在此步之前
+     * 已被 [hasBassDots] 命中。
+     */
+    internal fun classifyCClef(
+        image: BinaryImage,
+        system: StaffSystem,
+        clef: Blob,
+        s: Int
+    ): ClefType {
+        if (system.lines.size < 3) return ClefType.UNKNOWN
+        val centerY = verticalCenterOfMass(image, clef)
+        // C 谱号框住的 C4 线：中音=中央线(lines[2])，次中音=自上而下第 2 线(lines[1])。
+        val middleLineY = system.lines[2].center
+        val secondLineY = system.lines[1].center
+        val distMiddle = abs(centerY - middleLineY)
+        val distSecond = abs(centerY - secondLineY)
+        val tol = (s * 0.6).toInt().coerceAtLeast(2)
+        return when {
+            distMiddle <= distSecond && distMiddle <= tol &&
+                straddlesLine(image, clef, middleLineY, s) -> ClefType.ALTO
+            distSecond < distMiddle && distSecond <= tol &&
+                straddlesLine(image, clef, secondLineY, s) -> ClefType.TENOR
+            else -> ClefType.UNKNOWN
+        }
+    }
+
+    /** 谱号连通块内黑像素的竖直质心(y 坐标)。 */
+    internal fun verticalCenterOfMass(image: BinaryImage, blob: Blob): Int {
+        var sum = 0L
+        var count = 0
+        for (y in blob.minY..blob.maxY) {
+            for (x in blob.minX..blob.maxX) {
+                if (image.isBlack(x, y)) { sum += y; count++ }
+            }
+        }
+        return if (count > 0) (sum / count).toInt() else blob.centerY
+    }
+
+    /**
+     * 谱号连通块在 [lineY] 上、下两侧是否都存在黑像素(各偏离至少半个间距)，
+     * 即谱号是否横跨该谱线。
+     */
+    private fun straddlesLine(image: BinaryImage, blob: Blob, lineY: Int, s: Int): Boolean {
+        val margin = (s * 0.5).toInt().coerceAtLeast(2)
+        var above = false
+        var below = false
+        for (y in blob.minY..blob.maxY) {
+            if (!above && y <= lineY - margin) {
+                for (x in blob.minX..blob.maxX) if (image.isBlack(x, y)) { above = true; break }
+            }
+            if (!below && y >= lineY + margin) {
+                for (x in blob.minX..blob.maxX) if (image.isBlack(x, y)) { below = true; break }
+            }
+            if (above && below) return true
+        }
+        return above && below
     }
 
     /**
