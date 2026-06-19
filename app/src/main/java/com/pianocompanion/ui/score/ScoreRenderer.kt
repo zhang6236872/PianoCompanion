@@ -40,7 +40,10 @@ fun ScoreRenderer(
 ) {
     Column(modifier = modifier) {
         StaffView(
-            notes = notes.filter { it.staff == Staff.TREBLE || it.staff == Staff.BOTH },
+            notes = notes.filter {
+                it.staff == Staff.TREBLE || it.staff == Staff.BOTH ||
+                    it.staff == Staff.ALTO || it.staff == Staff.TENOR
+            },
             currentPosition = currentPosition,
             isTreble = true,
             modifier = Modifier
@@ -114,7 +117,11 @@ private fun StaffView(
 
         for (i in startPos until endPos) {
             val note = notes[i]
-            if (note.staff != Staff.BOTH && note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)) continue
+            if (note.staff != Staff.BOTH &&
+                note.staff != Staff.ALTO &&
+                note.staff != Staff.TENOR &&
+                note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)
+            ) continue
 
             val displayIdx = i - startPos
             val x = leftMargin + displayIdx * noteSpacing + noteSpacing / 2

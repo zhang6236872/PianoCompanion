@@ -113,4 +113,54 @@ class OmrSignatureIntegrationTest {
         // 3/4 → quartersPerMeasure=3 → measureMs = 500*3 = 1500ms；measureIndex 仍为 0。
         assertEquals(0, result.score.notes[0].measureIndex)
     }
+
+    // ---- C 谱号 (中音 / 次中音) 全管线集成 ----------------------------------
+
+    /**
+     * C 谱号：竖直对称的紧凑字形，框住指定谱线 [centerLineY]。竖直对称保证
+     * 黑像质心落在该线，使 SignatureDetector 能区分中音/次中音。
+     */
+    private fun drawCClef(img: BinaryImage, x: Int, centerLineY: Int) {
+        val half = s * 3 / 2
+        val top = centerLineY - half
+        val bot = centerLineY + half
+        for (y in top..bot) for (dx in 0..3) img.set(x + dx, y, true)
+        for (dx in 0..9) {
+            img.set(x + dx, centerLineY - 1, true)
+            img.set(x + dx, centerLineY + 1, true)
+        }
+    }
+
+    @Test
+    fun `alto clef maps bottom-line note to F3 instead of E4`() {
+        val img = blank(); drawStaff(img); drawCClef(img, 15, lineYs[2]) // 中音谱号(中央线)
+        ellipse(img, 400, 90) // 底线
+        val result = OmrPipeline.recognize(img, tempo = 120)
+        assertEquals(1, result.score.notes.size)
+        // 中音谱表底线 = F3 = MIDI 53（若误用高音谱表则为 E4 = 64）
+        assertEquals(53, result.score.notes[0].midiNumber)
+        assertTrue("应提示中音谱号，实际: ${result.warnings}",
+            result.warnings.any { it.contains("中音谱号") })
+    }
+
+    @Test
+    fun `alto clef middle-line note maps to middle C`() {
+        val img = blank(); drawStaff(img); drawCClef(img, 15, lineYs[2])
+        ellipse(img, 400, 70) // 中央线
+        val result = OmrPipeline.recognize(img, tempo = 120)
+        // 中音谱表中央线 = C4 = 60
+        assertEquals(60, result.score.notes[0].midiNumber)
+    }
+
+    @Test
+    fun `tenor clef maps bottom-line note to D3`() {
+        val img = blank(); drawStaff(img); drawCClef(img, 15, lineYs[1]) // 次中音谱号(第2线)
+        ellipse(img, 400, 90) // 底线
+        val result = OmrPipeline.recognize(img, tempo = 120)
+        assertEquals(1, result.score.notes.size)
+        // 次中音谱表底线 = D3 = MIDI 50
+        assertEquals(50, result.score.notes[0].midiNumber)
+        assertTrue("应提示次中音谱号，实际: ${result.warnings}",
+            result.warnings.any { it.contains("次中音谱号") })
+    }
 }

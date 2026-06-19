@@ -239,4 +239,69 @@ class SignatureDetectorTest {
         for (y in 20..80) img.set(x, y, true)
         fillSquare(img, x + 1, 65, 8) // 圆腹
     }
+
+    // ---- C 谱号 (中音 / 次中音) 识别测试 ------------------------------------
+
+    /**
+     * C 谱号：竖直对称的紧凑字形，框住指定谱线 [centerLineY]——
+     * 一条贯穿的主竖直柱体 + 中心线两侧的横向托记号。竖直对称保证黑像质心
+     * 恰好落在 [centerLineY]，从而被 classifyCClef 正确归类。
+     */
+    private fun drawCClef(img: BinaryImage, x: Int, centerLineY: Int) {
+        val half = s * 3 / 2
+        val top = centerLineY - half
+        val bot = centerLineY + half
+        // 主竖直柱体（关于 centerLineY 对称）
+        for (y in top..bot) for (dx in 0..3) img.set(x + dx, y, true)
+        // 中心线处的横向托记号（关于 centerLineY 对称，成对出现在 ±1）
+        for (dx in 0..9) {
+            img.set(x + dx, centerLineY - 1, true)
+            img.set(x + dx, centerLineY + 1, true)
+        }
+    }
+
+    /** 中音谱号：C 谱号框住中央线（自上而下第 3 条线）。 */
+    private fun drawAltoClef(img: BinaryImage, x: Int) = drawCClef(img, x, lineYs[2])
+
+    /** 次中音谱号：C 谱号框住自上而下第 2 条线。 */
+    private fun drawTenorClef(img: BinaryImage, x: Int) = drawCClef(img, x, lineYs[1])
+
+    @Test
+    fun `alto clef is recognized via center-line bracket`() {
+        val img = blank(); drawStaff(img); drawAltoClef(img, 15); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.ALTO, result[0].clef)
+    }
+
+    @Test
+    fun `tenor clef is recognized via second-line bracket`() {
+        val img = blank(); drawStaff(img); drawTenorClef(img, 15); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.TENOR, result[0].clef)
+    }
+
+    @Test
+    fun `alto clef does not interfere with bass clef detection`() {
+        // 回归保护：带双点的低音谱号仍应被识别为 BASS，不会被误判为 C 谱号。
+        val img = blank(); drawStaff(img); drawBassClef(img, 15); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.BASS, result[0].clef)
+    }
+
+    @Test
+    fun `alto clef with key signature still detects clef and key`() {
+        val img = blank(); drawStaff(img); drawAltoClef(img, 15)
+        drawSharp(img, 55); drawSharp(img, 70); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.ALTO, result[0].clef)
+        assertEquals(KeySignature.D_MAJOR, result[0].keySignature)
+    }
+
+    @Test
+    fun `alto and tenor clefs produce distinct results`() {
+        val altoImg = blank(); drawStaff(altoImg); drawAltoClef(altoImg, 15); ellipse(altoImg, noteX, 70)
+        val tenorImg = blank(); drawStaff(tenorImg); drawTenorClef(tenorImg, 15); ellipse(tenorImg, noteX, 70)
+        assertEquals(ClefType.ALTO, recognizeSignatures(altoImg)[0].clef)
+        assertEquals(ClefType.TENOR, recognizeSignatures(tenorImg)[0].clef)
+    }
 }

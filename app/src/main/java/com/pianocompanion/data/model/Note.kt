@@ -37,7 +37,16 @@ data class DetectedNote(
     val endTime: Long get() = startTime + duration
 }
 
-enum class Staff { TREBLE, BASS, BOTH }
+/**
+ * Which staff / clef a note belongs to.
+ *
+ * - [TREBLE] 高音谱号 (G clef) — 钢琴右手
+ * - [BASS] 低音谱号 (F clef) — 钢琴左手
+ * - [ALTO] 中音谱号 (C clef, 中央线) — 中提琴等单声部乐器
+ * - [TENOR] 次中音谱号 (C clef, 自上而下第 2 线) — 大管/大提琴高音区
+ * - [BOTH] 大谱表双手共用
+ */
+enum class Staff { TREBLE, BASS, ALTO, TENOR, BOTH }
 
 /**
  * Represents a complete musical score.
