@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.6.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别)
+- 当前版本: **v2.7.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别)
 - 当前分支: main
-- 最新 tag: v2.6.0
+- 最新 tag: v2.7.0
 
-## 健康状态 (2026-06-19 核验)
+## 健康状态 (2026-06-20 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 128 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 142 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0
 - Kotlin 文件: 64 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -144,10 +144,33 @@
   - 单元测试 95 → **128** 全部通过；编译 + assembleDebug 通过
   - 已知限制：真实手写体照片的拍号数字/调号字形可能需人工校对（合成规整数字可靠）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+- **后续增强 (v2.7.0): OMR 中音/次中音谱号(C clef)识别 — ✅ 完成**
+  - 补齐 v2.6.0 列出的待完善项「中音谱号(C clef)支持」，使 OMR 能正确处理中提琴/
+    大提琴等单声部乐器的乐谱（此前只支持高音/低音谱号）
+  - `Staff` 数据模型枚举新增 `ALTO`(中音) / `TENOR`(次中音)
+  - `PitchMapper` 新增 C 谱表底线 GDC：
+    - 中音谱表底线 = F3 (GDC -4)，中央线(step 4) = C4 = MIDI 60
+    - 次中音谱表底线 = D3 (GDC -6)，第 2 线(step 6) = C4 = MIDI 60
+  - `SignatureDetector` 新增 `classifyCClef`：
+    - **判定依据**：在排除低音谱号双点与高音谱号向上延伸后，计算谱号连通块的
+      **竖直质心**；质心落在某谱线容差内且该线上下两侧均有墨迹(横跨)即判为 C 谱号
+    - **中音 vs 次中音**：质心最近中央线(lines[2]) → ALTO；最近自上而下第 2 线(lines[1]) → TENOR
+    - 辅以 `verticalCenterOfMass` / `straddlesLine` 两个纯函数（无 Android 依赖，可单测）
+    - 已知限制：真实低音谱号若双点未被检测到，质心可能落在中央线附近而被误判为中音；
+      低音双点是最可靠特征，正常情况下在 C 谱号判定之前已命中
+  - `OmrPipeline.resolveStaff` 支持 ALTO/TENOR；提示文案新增「中音谱号/次中音谱号」
+  - `HandTracker` 将 C 谱号单声部乐器(中提琴/大提琴)归入右手(主旋律)轨道
+  - `ScoreRenderer` / `AutoScrollScoreRenderer` 在高音谱表以正确 MIDI 音高渲染 C 谱号音符
+  - 新增 14 个单元测试：
+    - `PitchMapperTest` +6（中音/次中音底线、中央线/第2线=C4、音阶上行）
+    - `SignatureDetectorTest` +5（中音/次中音识别、低音谱号回归保护、中音+调号、中音/次中音互斥）
+    - `OmrSignatureIntegrationTest` +3（全管线：中音底线=F3、中音中央线=C4、次中音底线=D3 + 提示文案）
+  - 单元测试 128 → **142** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (128 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (142 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -155,13 +178,13 @@
 - OnlineDTWTest: 5
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
-- PitchMapperTest: 6
+- PitchMapperTest: 12
 - OmrPipelineTest: 16
 - RhythmAnalyzerTest: 14
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
-- SignatureDetectorTest: 13
-- OmrSignatureIntegrationTest: 4
+- SignatureDetectorTest: 18
+- OmrSignatureIntegrationTest: 7
 
 ## 阻塞
 （无）
@@ -173,6 +196,7 @@
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
-  - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）、中音谱号(C clef)支持
+  - ✅ 中音谱号(C clef)支持 (v2.7.0 已完成：竖直质心 + 谱线横跨判定，含次中音谱号)
+  - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）、女高音/女低音谱号(短谱表)支持
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
