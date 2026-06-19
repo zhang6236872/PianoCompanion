@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.7.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别)
+- 当前版本: **v2.8.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别)
 - 当前分支: main
-- 最新 tag: v2.7.0
+- 最新 tag: v2.8.0
 
 ## 健康状态 (2026-06-20 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 142 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 152 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0
 - Kotlin 文件: 64 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -167,10 +167,37 @@
     - `OmrSignatureIntegrationTest` +3（全管线：中音底线=F3、中音中央线=C4、次中音底线=D3 + 提示文案）
   - 单元测试 128 → **142** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+### 2026-06-20 (自主开发)
+- **后续增强 (v2.8.0): OMR 附点音符识别 — ✅ 完成**
+  - 解决 v2.4.0 列出的节奏限制：此前 OMR 完全忽略附点（augmentation dot），
+    导致附点二分/附点四分/附点八分等真实音乐中极常见的节奏全部按基础时值处理
+    （例如附点四分音符被当成四分音符，时值偏短 1/3）
+  - `RhythmAnalyzer` 新增 `countAugmentationDots`（纯 Kotlin，无 Android 依赖）：
+    - **扫描区域**：符头右边缘 + 0.35~1.9 个谱线间距、竖直 ±0.75 个谱线间距
+      （兼容间内音符附点居中、线上音符附点偏上/下半个间距两种记谱惯例）
+    - **三态墨块分类**：对每个连续墨列构成的墨块判定
+      ① 紧凑二维墨块（水平宽度与竖直跨度都 ≤0.8 谱线间距）→ 计为 1 个附点；
+      ② 高而窄墨块（竖直跨度过大，即符干）→ 跳过不计数也不停止；
+      ③ 宽墨块（宽度 >0.8 谱线间距，即下一个符头）→ 停止扫描。
+      —— 据此正确区分附点 / 符干 / 相邻符头，避免误判
+    - 支持单附点与双附点（标准记谱最多两个）
+  - `NoteDuration.toMillis` 新增 `dotCount` 参数：按 `×(2 − 0.5^dotCount)` 叠加附点倍率
+    （1 附点 ×1.5、2 附点 ×1.75），默认 0 保持向后兼容
+  - `RhythmFeatures` 新增 `dotCount` / `dotted` / `effectiveMillis(quarterMs)`；
+    `classify` 返回的仍是基础时值，附点倍率在 `effectiveMillis` 中叠加（关注点分离）
+  - `OmrPipeline` 改用 `effectiveMillis`（含附点）累加 startTime；
+    节奏提示文案新增「含 N 个附点音符」
+  - 新增 10 个单元测试 `RhythmAnalyzerTest`：附点倍率纯逻辑（toMillis 单/双附点）、
+    附点四分/附点二分/附点全音符、双附点、effectiveMillis、
+    线上音符附点偏上检测、**回归保护**（相邻宽符头不误判、高窄符干不误判、无附点不误判）
+  - 单元测试 142 → **152** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：附点窗口结束于符头右 1.9 谱线间距，极密集（间距 <1.9 间距）的相邻音符
+    其右侧符头可能落入窗内；已用「宽墨块即停止」缓解，真实拥挤排版仍需人工校对
 
-## 单元测试明细 (142 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (152 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -180,7 +207,7 @@
 - SyncEngineTest: 23
 - PitchMapperTest: 12
 - OmrPipelineTest: 16
-- RhythmAnalyzerTest: 14
+- RhythmAnalyzerTest: 24
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
 - SignatureDetectorTest: 18
@@ -193,6 +220,7 @@
 - 真机端到端测试 (需物理设备) — 含真实照片 OMR 效果验证
 - OMR 节奏分析增强：符干/横梁/音符尾 → 真实时值 ✅ (v2.4.0 已完成核心：全/二/四/八/十六分)
   - 待完善：符尾（非连梁单音符）精细层数识别
+- OMR 附点音符识别 ✅ (v2.8.0 已完成：符头右侧三态墨块分类检测单/双附点，时值 ×1.5/×1.75)
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)

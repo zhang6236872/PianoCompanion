@@ -137,8 +137,8 @@ object OmrPipeline {
         while (i < order.size) {
             val leadIdx = order[i]
             val columnX = located[leadIdx].nh.centerX
-            // 同一列（和弦）共享起始时间与时值；取首成员的时值。
-            val duration = rhythms[leadIdx].duration.toMillis(quarterMs)
+            // 同一列（和弦）共享起始时间与时值；取首成员的时值（含附点倍率）。
+            val duration = rhythms[leadIdx].effectiveMillis(quarterMs)
             val startTime = cursor
             var j = i
             while (j < order.size && located[order[j]].nh.centerX - columnX <= xTolerance) {
@@ -195,11 +195,14 @@ object OmrPipeline {
         // 节奏提示：根据是否检测到符干给出更准确的说明。
         val detectedStems = rhythms.count { it.hasStem }
         val durationTypes = rhythms.map { it.duration }.toSet()
+        val dottedCount = rhythms.count { it.dotted }
         if (detectedStems > 0 || durationTypes.any { it != com.pianocompanion.omr.image.NoteDuration.QUARTER }) {
             val typeNames = durationTypes.joinToString("、") { it.label }
-            warnings += "节奏已通过符干/横梁/符尾分析估算（$typeNames），复杂节奏需人工校对"
+            val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
+            warnings += "节奏已通过符干/横梁/符尾分析估算（$typeNames$dotHint），复杂节奏需人工校对"
         } else {
-            warnings += "节奏为估算值（未检测到符干，每个音符按四分音符处理），实际时值需人工校对"
+            val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
+            warnings += "节奏为估算值（未检测到符干，每个音符按四分音符处理$dotHint），实际时值需人工校对"
         }
 
         return Result(

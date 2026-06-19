@@ -14,8 +14,19 @@ enum class NoteDuration(val quarterValue: Double, val label: String) {
     SIXTEENTH(0.25, "十六分音符"),
     THIRTY_SECOND(0.125, "三十二分音符");
 
-    /** 把四分音符毫秒数换算为本时值的毫秒数（至少 1ms）。 */
-    fun toMillis(quarterMs: Long): Long = (quarterValue * quarterMs).toLong().coerceAtLeast(1L)
+    /**
+     * 把四分音符毫秒数换算为本时值的毫秒数（至少 1ms）。
+     *
+     * [dotCount] 为附点个数（标准记谱法最多两个附点）：每个附点在原有时值基础上
+     * 再叠加前一个时值的一半。
+     *   - 0 附点 → ×1.0
+     *   - 1 附点 → ×1.5
+     *   - 2 附点 → ×1.75
+     */
+    fun toMillis(quarterMs: Long, dotCount: Int = 0): Long {
+        val multiplier = if (dotCount <= 0) 1.0 else (2.0 - Math.pow(0.5, dotCount.toDouble()))
+        return (quarterValue * multiplier * quarterMs).toLong().coerceAtLeast(1L)
+    }
 }
 
 /**
@@ -28,7 +39,8 @@ enum class NoteDuration(val quarterValue: Double, val label: String) {
  * @param stemEndY   符干远端 y 坐标。
  * @param beamCount  连接该符干的横梁层数（0=无横梁）。
  * @param flagCount  符干末端的符尾层数（0=无符尾）。
- * @param duration   综合判定的时值。
+ * @param dotCount   右侧附点个数（0=无附点；标准记谱最多 2 个）。
+ * @param duration   综合判定的（基础）时值（不含附点倍率，附点在 [effectiveMillis] 中叠加）。
  */
 data class RhythmFeatures(
     val filled: Boolean,
@@ -38,10 +50,20 @@ data class RhythmFeatures(
     val stemEndY: Int,
     val beamCount: Int,
     val flagCount: Int,
+    val dotCount: Int = 0,
     val duration: NoteDuration
 ) {
     /** 横梁与符尾中较大的"尾巴"层数，决定八分/十六分等短时值。 */
     val tailCount: Int get() = maxOf(beamCount, flagCount)
+
+    /** 是否带附点。 */
+    val dotted: Boolean get() = dotCount > 0
+
+    /**
+     * 含附点倍率的实际持续毫秒数（四分音符毫秒数 [quarterMs]）。
+     * 1 附点 ×1.5、2 附点 ×1.75；无附点即基础时值。
+     */
+    fun effectiveMillis(quarterMs: Long): Long = duration.toMillis(quarterMs, dotCount)
 }
 
 /**
@@ -97,13 +119,15 @@ object RhythmAnalyzer {
         // 2) 横梁检测（成组符干末端之间的水平黑色连线）
         val beamCounts = detectBeamCounts(image, noteheads, base, s)
 
-        // 3) 符尾检测（仅对无横梁的带干符头）+ 综合分类
+        // 3) 符尾检测（仅对无横梁的带干符头）+ 附点检测 + 综合分类
         return base.mapIndexed { idx, f ->
             val beams = beamCounts[idx]
             val flags = if (!f.hasStem || beams > 0) 0 else detectFlags(image, f, s)
+            val dots = countAugmentationDots(image, noteheads[idx], s)
             f.copy(
                 beamCount = beams,
                 flagCount = flags,
+                dotCount = dots,
                 duration = classify(f.filled, f.hasStem, maxOf(beams, flags))
             )
         }
@@ -319,6 +343,77 @@ object RhythmAnalyzer {
         val right = countVerticalBands(image, sx + offset, sy - span, sy + span, halfWin)
         val left = countVerticalBands(image, sx - offset, sy - span, sy + span, halfWin)
         return maxOf(right, left)
+    }
+
+    // ---- 附点判定（augmentation dots）-----------------------------------------
+
+    /**
+     * 在符头右侧约 0.4–1.9 个谱线间距处扫描附点（小实心圆）。
+     *
+     * 为了把附点与右侧的下一个符头 / 符干区分开，每个连续墨列构成的墨块按下述
+     * 规则归类：
+     *  - **紧凑二维墨块**（水平宽度与竖直跨度都 ≤ [maxDotDim]）→ 计为一个附点；
+     *  - **高而窄的墨块**（竖直跨度 > [maxDotDim]，即符干）→ 跳过，不计数也不停止；
+     *  - **宽墨块**（水平宽度 > [maxDotDim]，即下一个符头）→ 停止扫描。
+     *
+     * 附点通常紧跟在符头右侧、在下一个符头之前，因此遇到宽墨块即意味着附点区结束。
+     *
+     * @return 附点个数（0–2）。
+     */
+    private fun countAugmentationDots(image: BinaryImage, nh: Notehead, s: Double): Int {
+        val rightEdge = nh.centerX + nh.width / 2 + 1
+        val xStart = (rightEdge + 0.35 * s).toInt()
+        val xEnd = (rightEdge + 1.9 * s).toInt()
+        if (xStart > xEnd) return 0
+        val yCenter = nh.centerY
+        // 附点可在符头正中(间内音符)或上下半个谱线间距处(线上音符)。
+        val yHalf = (0.75 * s).toInt().coerceAtLeast(1)
+        val maxDotDim = (0.8 * s).toInt().coerceAtLeast(2)
+
+        var dots = 0
+        var runStart = -1
+        var runWidth = 0
+        var stopped = false
+
+        fun closeRun() {
+            if (runStart < 0) return
+            val w = runWidth
+            if (w > maxDotDim) {
+                // 宽墨块 = 下一个符头，结束扫描
+                stopped = true
+            } else if (w in 1..maxDotDim) {
+                // 计算该墨块在竖直窗口内的跨度，排除高而窄的符干
+                var yMin = Int.MAX_VALUE
+                var yMax = Int.MIN_VALUE
+                for (rx in runStart until runStart + w) {
+                    for (dy in -yHalf..yHalf) {
+                        if (image.isBlack(rx, yCenter + dy)) {
+                            val yy = yCenter + dy
+                            if (yy < yMin) yMin = yy
+                            if (yy > yMax) yMax = yy
+                        }
+                    }
+                }
+                val vExtent = if (yMin <= yMax) yMax - yMin + 1 else 0
+                if (vExtent in 1..maxDotDim) dots++
+                // 否则高而窄(符干)：跳过，不计数也不停止
+            }
+            runStart = -1
+            runWidth = 0
+        }
+
+        for (x in xStart..xEnd) {
+            if (stopped) break
+            val hasInk = (-yHalf..yHalf).any { dy -> image.isBlack(x, yCenter + dy) }
+            if (hasInk) {
+                if (runStart < 0) runStart = x
+                runWidth++
+            } else {
+                closeRun()
+            }
+        }
+        closeRun()
+        return dots.coerceIn(0, 2)
     }
 
     /**
