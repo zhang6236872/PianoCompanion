@@ -170,6 +170,68 @@ class OmrPipelineTest {
         for (y in topY downTo topY - stemLen) if (y in 0 until height) img.set(x, y, true)
     }
 
+    // ---- 连梁组（beamed group）合成图辅助 -----------------------------------
+
+    /**
+     * 绘制一组共享横梁的实心符头（符干向上），全部融合成一个连通块。
+     *
+     * @param centers 各符头中心的 x 坐标（从左到右）。
+     * @param cy      符头中心的 y 坐标（统一高度）。
+     * @param beamY   横梁顶端 y（符干向上延伸至此）。
+     * @param beamLayers 横梁层数（1=单横梁八分, 2=双横梁十六分）。
+     */
+    private fun drawBeamedGroup(
+        img: BinaryImage,
+        centers: List<Int>,
+        cy: Int,
+        beamY: Int,
+        beamLayers: Int = 1
+    ) {
+        for (cx in centers) drawEllipse(img, cx, cy)
+        // 符干：每个符头右边缘向上到横梁
+        for (cx in centers) {
+            val x = cx + 4
+            for (y in (cy - 3) downTo beamY) if (y in 0 until height) img.set(x, y, true)
+        }
+        // 横梁：逐层连接所有符干顶端（层间距 4px：2px 横梁 + 2px 间隙，
+        // 保证节奏分析器能区分多层横梁）。
+        val xLeft = centers.min() + 4
+        val xRight = centers.max() + 4
+        for (layer in 0 until beamLayers) {
+            for (y in (beamY + layer * 4)..(beamY + layer * 4 + 1)) {
+                if (y !in 0 until height) continue
+                for (x in xLeft..xRight) if (x in 0 until width) img.set(x, y, true)
+            }
+        }
+    }
+
+    /**
+     * 绘制一组共享横梁的实心符头（**符干向下**），融合成一个连通块。
+     *
+     * @param beamY 横梁底端 y（符干向下延伸至此）。
+     */
+    private fun drawBeamedGroupDown(
+        img: BinaryImage,
+        centers: List<Int>,
+        cy: Int,
+        beamY: Int,
+        beamLayers: Int = 1
+    ) {
+        for (cx in centers) drawEllipse(img, cx, cy)
+        for (cx in centers) {
+            val x = cx + 4
+            for (y in (cy + 3)..beamY) if (y in 0 until height) img.set(x, y, true)
+        }
+        val xLeft = centers.min() + 4
+        val xRight = centers.max() + 4
+        for (layer in 0 until beamLayers) {
+            for (y in (beamY - layer * 4 - 1)..(beamY - layer * 4)) {
+                if (y !in 0 until height) continue
+                for (x in xLeft..xRight) if (x in 0 until width) img.set(x, y, true)
+            }
+        }
+    }
+
     @Test
     fun `pipeline detects a quarter note with stem via secondary pass`() {
         val img = blankScore()
@@ -222,5 +284,102 @@ class OmrPipelineTest {
         assertTrue(
             result.warnings.any { it.contains("节奏已通过符干") }
         )
+    }
+
+    // ---- 连梁组切分集成测试 --------------------------------------------------
+
+    @Test
+    fun `pipeline splits a beamed pair into two noteheads`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个同音符头 + 向上符干 + 共享单横梁（连梁组），融合成一个宽连通块。
+        // beamY=33 落在第 1、2 条谱线(30/40)之间，避免与谱线重叠被擦除。
+        drawBeamedGroup(img, listOf(150, 210), cy = 65, beamY = 33, beamLayers = 1)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        // 之前整个连梁组因"过宽"被丢弃；现在应切分出 2 个符头。
+        assertEquals("连梁组应切分为 2 个符头", 2, result.diagnostics.noteheadCount)
+        assertEquals(2, result.score.notes.size)
+        // 共享单横梁 → 八分音符 = 250ms（120 BPM）
+        result.score.notes.forEach {
+            assertEquals("连梁音符应为八分音符", 250L, it.duration)
+        }
+        // 时序：第二个音在第一个音之后 250ms 开始
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(250L, sorted[1].startTime)
+    }
+
+    @Test
+    fun `pipeline splits a beamed pair with double beam into sixteenths`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 双横梁 → 十六分音符（beamY=33 落在谱线之间，避免与谱线重叠）
+        drawBeamedGroup(img, listOf(150, 210), cy = 65, beamY = 33, beamLayers = 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(2, result.diagnostics.noteheadCount)
+        assertEquals(2, result.score.notes.size)
+        // 十六分音符 = 125ms（120 BPM）
+        result.score.notes.forEach {
+            assertEquals("双横梁应为十六分音符", 125L, it.duration)
+        }
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(125L, sorted[1].startTime)
+    }
+
+    @Test
+    fun `pipeline splits a stems-down beamed pair`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 符干向下：横梁在符头下方
+        drawBeamedGroupDown(img, listOf(150, 210), cy = 45, beamY = 78, beamLayers = 1)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("向下连梁组也应切分为 2 个符头", 2, result.diagnostics.noteheadCount)
+        assertEquals(2, result.score.notes.size)
+        result.score.notes.forEach { assertEquals(250L, it.duration) }
+    }
+
+    @Test
+    fun `pipeline splits a three-note beamed group`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 三个连梁八分音符
+        drawBeamedGroup(img, listOf(120, 180, 240), cy = 65, beamY = 33, beamLayers = 1)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("三连梁组应切分为 3 个符头", 3, result.diagnostics.noteheadCount)
+        assertEquals(3, result.score.notes.size)
+        // 三个音依次间隔 250ms
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(listOf(0L, 250L, 500L), sorted.map { it.startTime })
+    }
+
+    @Test
+    fun `beamed group detection leaves a nearby standalone quarter note intact`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 连梁组（2 个八分）+ 后面一个独立四分音符（带符干）
+        drawBeamedGroup(img, listOf(110, 170), cy = 65, beamY = 33, beamLayers = 1)
+        drawStemmedFilled(img, 320, 65)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 3 个符头", 3, result.diagnostics.noteheadCount)
+        assertEquals(3, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        // 两个八分 (250ms) 后接一个四分 (500ms)
+        assertEquals(250L, sorted[0].duration)
+        assertEquals(250L, sorted[1].duration)
+        assertEquals(500L, sorted[2].duration)
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(250L, sorted[1].startTime)
+        assertEquals(500L, sorted[2].startTime) // 两个八分结束后
     }
 }
