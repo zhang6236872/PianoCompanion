@@ -6,8 +6,10 @@ import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
+import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.PitchMapper
+import com.pianocompanion.omr.image.RhythmAnalyzer
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.util.MusicUtils
@@ -74,7 +76,7 @@ object OmrPipeline {
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
 
         // --- 4 + 5. Noteheads + pitch mapping, grouped per system --------------
-        data class Located(val x: Int, val y: Int, val staff: Staff, val systemIdx: Int)
+        data class Located(val nh: Notehead, val staff: Staff, val systemIdx: Int)
         val located = ArrayList<Located>()
 
         systems.forEachIndexed { sysIdx, system ->
@@ -82,45 +84,52 @@ object OmrPipeline {
             val band = lineSpacing * 3
             val top = system.topLine.center - band
             val bottom = system.bottomLine.center + band
-            val noteheads = NoteheadDetector.detect(blobs, system.lineSpacing)
+            // 传入 cleaned 图像，启用"符头+符干"融合块的二次恢复扫描。
+            val noteheads = NoteheadDetector.detect(blobs, system.lineSpacing, cleaned)
                 .filter { it.centerY in top..bottom }
             for (nh in noteheads) {
-                located += Located(nh.centerX, nh.centerY, staff, sysIdx)
+                located += Located(nh, staff, sysIdx)
             }
         }
 
+        // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
+        val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
+
         // --- 6. Horizontal sequencing (left→right; same-column = chord) --------
-        located.sortBy { it.x }
+        // 按 x 排序的索引，保持与 rhythms 对齐。
+        val order = located.indices.sortedBy { located[it].nh.centerX }
         val xTolerance = (lineSpacing * 0.8).toInt().coerceAtLeast(2)
         val quarterMs = 60_000L / tempo.coerceAtLeast(1)
+        val measureMs = quarterMs * 4 // 默认 4/4 拍号下一个小节的时长
 
         val notes = ArrayList<ScoreNote>()
-        val pitchesUsed = HashSet<Int>()
-        var step = 0
+        var cursor = 0L
         var i = 0
-        while (i < located.size) {
-            val columnX = located[i].x
-            val startTime = step * quarterMs
+        while (i < order.size) {
+            val leadIdx = order[i]
+            val columnX = located[leadIdx].nh.centerX
+            // 同一列（和弦）共享起始时间与时值；取首成员的时值。
+            val duration = rhythms[leadIdx].duration.toMillis(quarterMs)
+            val startTime = cursor
             var j = i
-            while (j < located.size && located[j].x - columnX <= xTolerance) {
-                val ln = located[j]
+            while (j < order.size && located[order[j]].nh.centerX - columnX <= xTolerance) {
+                val ln = located[order[j]]
                 val system = systems[ln.systemIdx]
-                val midi = PitchMapper.mapToMidi(ln.y, system, ln.staff)
+                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff)
                 if (midi in 21..108) {
                     notes += ScoreNote(
                         midiNumber = midi,
                         noteName = MusicUtils.midiToNoteName(midi),
                         startTime = startTime,
-                        duration = quarterMs,
+                        duration = duration,
                         staff = ln.staff,
-                        measureIndex = step / 4
+                        measureIndex = (startTime / measureMs).toInt()
                     )
-                    pitchesUsed += midi
                 }
                 j++
             }
+            cursor += duration
             i = j
-            step++
         }
 
         val warnings = ArrayList<String>()
@@ -130,8 +139,15 @@ object OmrPipeline {
         if (systems.size > 1) {
             warnings += "检测到 ${systems.size} 个谱表，已按高音/低音谱表分别处理"
         }
-        // Rhythm caveat: without beam/stem analysis every note is treated as a quarter note.
-        warnings += "节奏为估算值（每个音符按四分音符处理），实际时值需人工校对"
+        // 节奏提示：根据是否检测到符干给出更准确的说明。
+        val detectedStems = rhythms.count { it.hasStem }
+        val durationTypes = rhythms.map { it.duration }.toSet()
+        if (detectedStems > 0 || durationTypes.any { it != com.pianocompanion.omr.image.NoteDuration.QUARTER }) {
+            val typeNames = durationTypes.joinToString("、") { it.label }
+            warnings += "节奏已通过符干/横梁/符尾分析估算（$typeNames），复杂节奏需人工校对"
+        } else {
+            warnings += "节奏为估算值（未检测到符干，每个音符按四分音符处理），实际时值需人工校对"
+        }
 
         return Result(
             score = Score(
