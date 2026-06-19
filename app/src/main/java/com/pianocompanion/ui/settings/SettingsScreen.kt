@@ -153,7 +153,7 @@ fun SettingsScreen(
                             val result = syncManager.importFromFile(uri)
                             val msg = when (result) {
                                 is com.pianocompanion.data.sync.SyncResult.Success ->
-                                    "导入成功: ${result.imported}/${result.total} 条记录"
+                                    "同步完成: 新增 ${result.imported} · 更新 ${result.updated} · 跳过 ${result.skipped} / 共 ${result.total} 条"
                                 is com.pianocompanion.data.sync.SyncResult.Error ->
                                     "导入失败: ${result.message}"
                             }

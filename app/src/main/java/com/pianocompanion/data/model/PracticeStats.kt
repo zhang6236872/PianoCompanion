@@ -18,7 +18,13 @@ data class SessionRecord(
     val missedNotes: Int,
     val extraNotes: Int,
     val accuracy: Float,
-    val errorPositions: List<ErrorPosition> = emptyList()
+    val errorPositions: List<ErrorPosition> = emptyList(),
+    /**
+     * Wall-clock time (epoch ms) this record was last modified. Used by the
+     * sync engine for Last-Write-Wins conflict resolution across devices.
+     * 0 means "unknown" — the sync engine falls back to [startTime].
+     */
+    val updatedAt: Long = 0L
 ) {
     fun getFormattedDate(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())

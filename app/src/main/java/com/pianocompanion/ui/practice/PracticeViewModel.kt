@@ -186,7 +186,8 @@ class PracticeViewModel(
                 wrongNotes = _uiState.value.wrongCount,
                 missedNotes = stats?.missedNotes ?: 0,
                 extraNotes = stats?.extraNotes ?: 0,
-                accuracy = accuracy
+                accuracy = accuracy,
+                updatedAt = System.currentTimeMillis()
             )
             statsRepository.saveSession(record)
             _uiState.update { it.copy(sessionSaved = true) }
