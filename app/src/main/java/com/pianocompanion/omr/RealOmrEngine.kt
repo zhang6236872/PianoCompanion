@@ -8,15 +8,17 @@ import com.pianocompanion.omr.image.OtsuThresholder
  * Real optical-music-recognition engine backed by [OmrPipeline].
  *
  * It performs genuine pixel-level analysis of the photographed score:
- * grayscale → Otsu binarization → staff detection/removal → notehead
- * localization → pitch mapping → score assembly. No external model file is
- * required, so it works fully on-device and offline.
+ * grayscale → Otsu binarization → **deskew (rotation correction)** → staff
+ * detection/removal → notehead localization → pitch mapping → score assembly.
+ * No external model file is required, so it works fully on-device and offline.
+ *
+ * The deskew step automatically corrects tilted photos (up to ±12°) by
+ * maximizing the horizontal-projection peakiness, making the pipeline robust
+ * to handheld photography without requiring a perfectly level shot.
  *
  * Limitations (documented for the user via warnings):
- *  - note durations are estimated (each notehead → quarter note) since
- *    beam/stem/rhythm analysis is not yet implemented;
- *  - clefs are inferred from vertical position (upper staff = treble,
- *    lower staff = bass) rather than glyph recognition.
+ *  - note durations are estimated via stem/beam/flag/dot/rest analysis;
+ *  - complex real-world scores may still require manual proofreading.
  */
 class RealOmrEngine : OmrEngine {
 

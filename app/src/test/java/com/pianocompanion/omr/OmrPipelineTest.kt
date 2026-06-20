@@ -2,6 +2,7 @@ package com.pianocompanion.omr
 
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
+import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.OtsuThresholder
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
@@ -568,5 +569,84 @@ class OmrPipelineTest {
         // 500ms（第一个音）+ 62ms（三十二分休止符，0.125×500=62.5→62）= 562ms
         assertEquals("三十二分休止符后第二个音应在 562ms 开始", 562L, sorted[1].startTime)
         assertEquals(500L, sorted[1].duration)
+    }
+
+    // ── Deskew integration ────────────────────────────────────────────────────
+
+    /** Larger canvas with 2px-thick staff lines for deskew robustness tests. */
+    private val dw = 600
+    private val dh = 200
+    private val dLineYs = listOf(70, 90, 110, 130, 150) // spacing = 20
+
+    private fun drawThickStaff(img: BinaryImage) {
+        for (y in dLineYs) {
+            for (x in 0 until img.width) {
+                img.set(x, y, true)
+                if (y + 1 < img.height) img.set(x, y + 1, true) // 2px thick
+            }
+        }
+    }
+
+    private fun drawBigEllipse(img: BinaryImage, cx: Int, cy: Int, rx: Int = 7, ry: Int = 5) {
+        for (y in (cy - ry)..(cy + ry)) {
+            for (x in (cx - rx)..(cx + rx)) {
+                if (x !in 0 until img.width || y !in 0 until img.height) continue
+                val ndx = (x - cx).toDouble() / rx
+                val ndy = (y - cy).toDouble() / ry
+                if (ndx * ndx + ndy * ndy <= 1.01) img.set(x, y, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline auto-deskews a tilted score and detects notes`() {
+        // 1) Draw a horizontal score: thick staff + 3 noteheads.
+        val img = BinaryImage.blank(dw, dh)
+        drawThickStaff(img)
+        drawBigEllipse(img, 120, 130)  // on the 4th line → lower pitch
+        drawBigEllipse(img, 260, 110)  // on the 3rd line (center)
+        drawBigEllipse(img, 400, 90)   // on the 2nd line → higher pitch
+
+        // 2) Tilt by 3° to simulate a handheld photo.
+        val tilted = Deskewer.rotate(img, 3.0)
+
+        // 3) Without deskew the tilt would break staff detection; the pipeline
+        //    auto-deskews internally, so recognition should still succeed.
+        val result = OmrPipeline.recognize(tilted, tempo = 120)
+
+        assertTrue(
+            "tilted score should still be recognised after auto-deskew (got ${result.score.notes.size} notes, warnings: ${result.warnings})",
+            result.score.notes.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `pipeline reports deskew correction in warnings when tilt is significant`() {
+        val img = BinaryImage.blank(dw, dh)
+        drawThickStaff(img)
+        drawBigEllipse(img, 300, 110)
+
+        val tilted = Deskewer.rotate(img, 5.0)
+
+        val result = OmrPipeline.recognize(tilted, tempo = 120)
+
+        assertTrue(
+            "should warn about deskew correction, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("倾斜") && it.contains("校正") }
+        )
+    }
+
+    @Test
+    fun `pipeline does not report deskew for an already-horizontal score`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "horizontal score should not trigger deskew warning, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("倾斜") }
+        )
     }
 }

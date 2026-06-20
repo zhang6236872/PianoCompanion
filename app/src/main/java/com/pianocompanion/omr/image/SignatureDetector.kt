@@ -102,8 +102,8 @@ object SignatureDetector {
         val top = system.topLine.center
         val bottom = system.bottomLine.center
         // 第一个音符的 x；无音符时取图宽（整个左侧都算签名区）。
-        val firstNoteX = noteheads.minOf { it.centerX }
-        val leftLimit = if (firstNoteX == Int.MAX_VALUE) cleaned.width else firstNoteX
+        val firstNoteX = noteheads.minOfOrNull { it.centerX }
+        val leftLimit = firstNoteX ?: cleaned.width
 
         // 与本谱表竖向重叠、且位于第一个音符左侧的连通块，按 x 排序。
         val leftBlobs = blobs.asSequence()

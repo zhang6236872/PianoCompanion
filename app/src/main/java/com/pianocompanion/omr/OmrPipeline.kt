@@ -6,6 +6,7 @@ import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
+import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
@@ -17,6 +18,7 @@ import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.util.MusicUtils
+import kotlin.math.abs
 
 /**
  * Pure-Kotlin OMR pipeline: a [BinaryImage] → [Score].
@@ -58,8 +60,19 @@ object OmrPipeline {
         title: String = "拍照识别的乐谱",
         tempo: Int = 120
     ): Result {
+        // --- 0. Deskew (correct rotation so staff lines are horizontal) --------
+        // Real photos are rarely perfectly level. Even a small tilt spreads staff
+        // lines across many rows and breaks the horizontal-projection detector.
+        val skewAngle = Deskewer.estimateSkewAngle(binary)
+        val img = if (abs(skewAngle) >= 0.5) {
+            Deskewer.rotate(binary, -skewAngle)
+        } else {
+            binary
+        }
+        val deskewApplied = abs(skewAngle) >= 0.5
+
         // --- 1. Staff detection -------------------------------------------------
-        val systems = StaffLineDetector.detect(binary)
+        val systems = StaffLineDetector.detect(img)
         if (systems.isEmpty()) {
             return Result(
                 score = emptyScore(title, tempo),
@@ -73,8 +86,8 @@ object OmrPipeline {
         val maxLineThickness = (avgThickness + 2).coerceIn(2, 6)
 
         // --- 2. Staff removal ---------------------------------------------------
-        val minLineRun = (binary.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
-        val cleaned = StaffLineRemover.remove(binary, minLineRun, maxLineThickness)
+        val minLineRun = (img.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
+        val cleaned = StaffLineRemover.remove(img, minLineRun, maxLineThickness)
 
         // --- 3. Connected components -------------------------------------------
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
@@ -116,7 +129,7 @@ object OmrPipeline {
         // --- 6. 用识别到的谱号 + 调号映射音高 ----------------------------------
         val located = ArrayList<Located>()
         systems.forEachIndexed { sysIdx, system ->
-            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, binary)
+            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, img)
             for (nh in noteheadsBySystem[sysIdx]) {
                 located += Located(nh, staff, sysIdx)
             }
@@ -198,6 +211,9 @@ object OmrPipeline {
         }
 
         val warnings = ArrayList<String>()
+        if (deskewApplied) {
+            warnings += "检测到图像倾斜约 ${skewAngle}°，已自动校正"
+        }
         if (notes.isEmpty()) {
             warnings += "识别到五线谱但未找到音符（可能图片太小或音符不清晰）"
         }

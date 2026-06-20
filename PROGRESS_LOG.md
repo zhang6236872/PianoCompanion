@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.11.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别)
+- 当前版本: **v2.12.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew))
 - 当前分支: main
-- 最新 tag: v2.11.0
+- 最新 tag: v2.12.0
 
 ## 健康状态 (2026-06-20 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 194 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 209 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0
-- Kotlin 文件: 66 个 / 代码行数: 10000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0
+- Kotlin 文件: 67 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -263,10 +263,45 @@
   - 单元测试 181 → **194** 全部通过；编译 + assembleDebug 通过
   - 已知限制：高度超过 1.5 个谱线间距的三十二分休止符可能先被 quarterRest 匹配导致误判
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+### 2026-06-20 (自主开发)
+- **后续增强 (v2.12.0): OMR 倾斜校正 (deskew) — ✅ 完成**
+  - 解决真实手持拍照中最常见的失败模式：乐谱照片几乎不可能完全水平，
+    即使 2-5° 的倾斜也会使谱线墨迹分散到多行，稀释水平投影峰值，
+    导致 StaffLineDetector 完全无法检测到谱表，整个 OMR 管线失效
+  - 新增纯 Kotlin `omr/image/Deskewer`（无 Android 依赖，完全可单元测试）：
+    - **倾斜角估计** `estimateSkewAngle`：投影峰值最大化法。对每个候选角度 α
+      将黑色像素按 `round(y − x·tan α)` 分箱累加，计算分箱平方和（峰度的代理
+      指标）。当 α 匹配真实倾斜角时，同一谱线的像素坍缩到同一箱形成尖锐峰值，
+      平方和最大。搜索范围 ±12°，步长 0.5°；大图像自动子采样加速
+    - **旋转** `rotate`：最近邻逆映射旋转。正变换四角求输出画布包围盒，
+      每个输出像素逆映射回源坐标取最近邻。选择最近邻而非双线性插值是因为
+      源图已是硬阈值二值图，无亚像素灰度信息可插值
+    - **校正** `deskew`：先估计角度，若 |角度| ≥ 0.5° 则旋转 −角度校正，
+      否则返回原图（无拷贝）。对已水平的图像仅付出估计开销
+  - `OmrPipeline.recognize` 新增步骤 0（deskew 预处理）：在谱线检测之前
+    自动校正倾斜，使下游所有步骤（谱线检测/去除、符头检测、签名识别等）
+    都在水平图像上运行。校正角度 >0.5° 时向用户提示「检测到图像倾斜约 N°，
+    已自动校正」
+  - 附带修复 `SignatureDetector.detectForSystem` 的潜在崩溃 bug：
+    `noteheads.minOf` 在空列表上抛 `NoSuchElementException`，改为
+    `minOfOrNull` + 空安全回退（deskew 旋转后某些系统可能无符头，触发此 bug）
+  - 更新 `RealOmrEngine` 文档，反映 deskew 步骤和最新能力
+  - 新增 14 个单元测试 `DeskewerTest`（独立手绘倾斜谱线验证，避免循环依赖）：
+    水平图零倾斜、±5° 正负倾斜检测、8° 大倾斜检测、近空图零返回、
+    0° 旋转恒等、90° 旋转换维、旋转墨迹保留率、正反旋转恢复、
+    deskew 水平图不变、deskew 校正正/负倾斜、校正后谱线可检测、
+    未校正时倾斜谱线检测退化
+  - 新增 3 个端到端管线测试 `OmrPipelineTest`：
+    倾斜 3° 乐谱自动 deskew 后识别出音符、5° 倾斜触发校正提示文案、
+    水平乐谱不触发 deskew 提示
+  - 单元测试 194 → **209** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：±12° 以上的大角度倾斜（如竖拍横谱）需用户调整拍摄角度；
+    最近邻旋转对 1px 谱线可能引入微小断裂（真实照片谱线通常 ≥2px，影响很小）
 
-## 单元测试明细 (194 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (209 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -275,19 +310,23 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 21
+- OmrPipelineTest: 24
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
 - SignatureDetectorTest: 18
 - OmrSignatureIntegrationTest: 7
 - RestDetectorTest: 27
+- DeskewerTest: 14
 
 ## 阻塞
 （无）
 
 ## 后续可选方向 (超出原路线图)
 - 真机端到端测试 (需物理设备) — 含真实照片 OMR 效果验证
+- OMR 图像预处理鲁棒性：
+  - ✅ 倾斜校正(deskew) (v2.12.0 已完成：投影峰值最大化估计倾斜角 ±12°，最近邻逆映射旋转校正)
+  - 待完善：透视变形校正(梯形畸变)、光照不均匀自适应二值化(局部 Otsu)、降噪
 - OMR 节奏分析增强：符干/横梁/音符尾 → 真实时值 ✅ (v2.4.0 已完成核心：全/二/四/八/十六分)
   - ✅ 符尾（非连梁单音符）精细层数识别 (v2.9.0 已完成：符干方向感知 + 2D 水平墨迹投影计数八/十六/三十二分符尾)
 - OMR 附点音符识别 ✅ (v2.8.0 已完成：符头右侧三态墨块分类检测单/双附点，时值 ×1.5/×1.75)
