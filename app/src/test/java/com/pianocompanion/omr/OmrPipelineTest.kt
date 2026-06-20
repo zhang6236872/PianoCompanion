@@ -649,4 +649,70 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("倾斜") }
         )
     }
+
+    // ── Denoise integration ────────────────────────────────────────────────────
+
+    /** Scatter isolated black specks (pepper noise) across the image. */
+    private fun addPepperNoise(img: BinaryImage, count: Int, seed: Long = 42L) {
+        var s = seed
+        var placed = 0
+        while (placed < count) {
+            // simple LCG pseudo-random
+            s = (s * 6364136223846793005L + 1442695040888963407L)
+            val x = ((s ushr 16).toInt() and 0x7fffffff) % img.width
+            s = (s * 6364136223846793005L + 1442695040888963407L)
+            val y = ((s ushr 16).toInt() and 0x7fffffff) % img.height
+            if (!img.isBlack(x, y)) {
+                img.set(x, y, true)
+                placed++
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline recognises a score corrupted by pepper noise`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 100, 60) // G4-ish
+        drawEllipse(img, 250, 60)
+        drawEllipse(img, 380, 60)
+        // Add many isolated specks that would otherwise become spurious blobs.
+        addPepperNoise(img, count = 200)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "noisy score should still be recognised (got ${result.score.notes.size} notes, warnings: ${result.warnings})",
+            result.score.notes.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `pipeline reports a denoise warning when noise is cleaned`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 60)
+        addPepperNoise(img, count = 150)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "should warn that noise was cleaned, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("噪点") && it.contains("降噪") }
+        )
+    }
+
+    @Test
+    fun `pipeline does not report denoise warning on a clean score`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "clean score should not trigger denoise warning, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("噪点") }
+        )
+    }
 }
