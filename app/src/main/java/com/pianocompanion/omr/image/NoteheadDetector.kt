@@ -122,6 +122,11 @@ object NoteheadDetector {
         val nhHeight = (bandEnd - bandStart + 1).coerceAtLeast(1)
         val centerY = blob.minY + (bandStart + bandEnd) / 2
 
+        // 守卫：如果"符头带"高度占连通块总高的绝大部分，说明该连通块没有
+        // 明显的"宽符头 + 细符干"结构——例如四分休止符的锯齿形（整条都是
+        // 均匀窄带），不应被误判为符头+符干融合块。
+        if (nhHeight > blob.height * 0.6) return null
+
         // 取最宽行作为符头水平中心，避免符干把 x 重心带偏。
         var bestRow = bandStart
         for (i in bandStart..bandEnd) {

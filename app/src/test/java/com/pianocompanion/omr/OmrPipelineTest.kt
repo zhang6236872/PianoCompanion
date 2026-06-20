@@ -361,6 +361,8 @@ class OmrPipelineTest {
         assertEquals(listOf(0L, 250L, 500L), sorted.map { it.startTime })
     }
 
+    // ---- 休止符集成测试 -------------------------------------------------------
+
     @Test
     fun `beamed group detection leaves a nearby standalone quarter note intact`() {
         val img = blankScore()
@@ -381,5 +383,92 @@ class OmrPipelineTest {
         assertEquals(0L, sorted[0].startTime)
         assertEquals(250L, sorted[1].startTime)
         assertEquals(500L, sorted[2].startTime) // 两个八分结束后
+    }
+
+    /**
+     * 四分休止符：高而窄的锯齿形/闪电形墨迹（3 段交替方向的粗对角线）。
+     * 高约 2.5 个谱线间距（25px），宽约 0.7 个谱线间距（7px）。
+     */
+    private fun drawQuarterRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = 25
+        val halfW = 3
+        val topY = cy - totalH / 2
+        val segH = totalH / 3
+        val thick = 2
+        for (seg in 0 until 3) {
+            val y0 = topY + seg * segH
+            val y1 = y0 + segH
+            val x0 = cx + if (seg % 2 == 0) halfW else -halfW
+            val x1 = cx + if (seg % 2 == 0) -halfW else halfW
+            val dx = x1 - x0
+            val dy = y1 - y0
+            val steps = maxOf(kotlin.math.abs(dx), kotlin.math.abs(dy)).coerceAtLeast(1)
+            for (i in 0..steps) {
+                val x = x0 + dx * i / steps
+                val y = y0 + dy * i / steps
+                for (ty in 0 until thick) for (tx in 0 until thick) {
+                    val px = x + tx
+                    val py = y + ty
+                    if (px in 0 until width && py in 0 until height) img.set(px, py, true)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline advances cursor past a quarter rest between two notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 四分音符 → 四分休止符 → 四分音符
+        drawEllipse(img, 100, 60)                 // 第一个四分音符
+        drawQuarterRest(img, 220, 50)             // 四分休止符
+        drawEllipse(img, 340, 60)                 // 第二个四分音符
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        // 应产生 2 个音符（休止符不产生音符，只推进时间轴）
+        assertEquals("休止符不应产生音符", 2, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        // 第一个音：start 0ms，四分音符 500ms
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(500L, sorted[0].duration)
+        // 休止符推进 500ms → 第二个音 start = 500 + 500 = 1000ms
+        assertEquals("休止符后第二个音应在 1000ms 开始", 1000L, sorted[1].startTime)
+        assertEquals(500L, sorted[1].duration)
+    }
+
+    @Test
+    fun `pipeline reports rest detection warning`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 100, 60)
+        drawQuarterRest(img, 220, 50)
+        drawEllipse(img, 340, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应提示检测到休止符",
+            result.warnings.any { it.contains("休止符") }
+        )
+    }
+
+    @Test
+    fun `pipeline handles two consecutive quarter rests`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 四分音符 → 四分休止符 → 四分休止符 → 四分音符
+        drawEllipse(img, 80, 60)
+        drawQuarterRest(img, 160, 50)
+        drawQuarterRest(img, 240, 50)
+        drawEllipse(img, 320, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(2, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(0L, sorted[0].startTime)
+        // 500ms（第一个音）+ 500ms（第一个休止）+ 500ms（第二个休止）= 1500ms
+        assertEquals("两个四分休止符应推进 1000ms", 1500L, sorted[1].startTime)
     }
 }

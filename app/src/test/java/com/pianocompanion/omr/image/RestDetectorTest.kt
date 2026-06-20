@@ -1,0 +1,330 @@
+package com.pianocompanion.omr.image
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * 纯 JVM 单元测试：用像素级手绘的合成休止符验证 [RestDetector]。
+ *
+ * 测试覆盖全/二分/四分/八分休止符的识别、全 vs 二分位置判定、与符头/签名区/
+ * 小节线的区分，以及边界情况。不依赖真实照片或 Android 设备。
+ */
+class RestDetectorTest {
+
+    private val s = 10          // 谱线间距
+    private val w = 300
+    private val h = 160
+    // 五线谱线 Y 坐标（自上而下）：lines[0]=30 … lines[4]=70
+    private val lineYs = listOf(30, 40, 50, 60, 70)
+
+    private fun blank() = BinaryImage.blank(w, h)
+
+    /** 标记 blobs 与 label blobs 的快捷方式。 */
+    private fun blobs(img: BinaryImage) = ConnectedComponents.label(img, minPixels = 4)
+
+    // ---- 绘图工具 ---------------------------------------------------------- //
+
+    /** 实心椭圆符头（用于测试排除逻辑）。 */
+    private fun filledEllipse(img: BinaryImage, cx: Int, cy: Int, rx: Int = 4, ry: Int = 3) {
+        for (y in cy - ry..cy + ry) for (x in cx - rx..cx + rx) {
+            if (x !in 0 until w || y !in 0 until h) continue
+            val ndx = (x - cx).toDouble() / rx
+            val ndy = (y - cy).toDouble() / ry
+            if (ndx * ndx + ndy * ndy <= 1.01) img.set(x, y, true)
+        }
+    }
+
+    /**
+     * 全休止符：挂在 line2Y（lines[1]）下方的实心矩形。
+     * top 边在 line2Y，向下延伸约半个谱线间距。
+     */
+    private fun wholeRest(img: BinaryImage, cx: Int, line2Y: Int) {
+        val rw = s          // 宽 = 1 个谱线间距
+        val rh = s / 2      // 高 = 半个谱线间距
+        val left = cx - rw / 2
+        val top = line2Y    // 挂在线下方
+        for (y in top until top + rh) for (x in left until left + rw) {
+            if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+        }
+    }
+
+    /**
+     * 二分休止符：坐在 line3Y（lines[2]）上方的实心矩形。
+     * bottom 边在 line3Y，向上延伸约半个谱线间距。
+     */
+    private fun halfRest(img: BinaryImage, cx: Int, line3Y: Int) {
+        val rw = s
+        val rh = s / 2
+        val left = cx - rw / 2
+        val bottom = line3Y  // 坐在线上方
+        for (y in bottom - rh + 1..bottom) for (x in left until left + rw) {
+            if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+        }
+    }
+
+    /**
+     * 四分休止符：高而窄的锯齿形/闪电形墨迹。
+     * 由 3 段交替方向的粗对角线组成，高约 2.5 个谱线间距、宽约 0.7 个谱线间距。
+     */
+    private fun quarterRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (2.5 * s).toInt()  // 25
+        val halfW = (0.35 * s).toInt()  // 3.5
+        val topY = cy - totalH / 2
+        val segH = totalH / 3           // ~8
+        val thick = 2
+
+        // 3 段交替方向的粗对角线
+        for (seg in 0 until 3) {
+            val y0 = topY + seg * segH
+            val y1 = y0 + segH
+            val x0 = cx + if (seg % 2 == 0) halfW else -halfW
+            val x1 = cx + if (seg % 2 == 0) -halfW else halfW
+            drawThickLine(img, x0, y0, x1, y1, thick)
+        }
+    }
+
+    /**
+     * 八分休止符：旗形符号——一根对角斜线 + 顶端一个小卷曲旗钩。
+     * 总高度控制在 ~1.0s（10px），确保低于四分休止符的最低高度阈值（1.5s=15px），
+     * 从而只匹配八分休止符分类。
+     */
+    private fun eighthRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (1.0 * s).toInt()  // 10
+        val halfW = (0.4 * s).toInt()   // 4
+        val topY = cy - totalH / 2
+        val thick = 2
+        // 主斜线：右上到左下
+        drawThickLine(img, cx + halfW, topY, cx - halfW, topY + totalH, thick)
+        // 旗钩：顶端一个小弧（几个额外像素）
+        for (dy in 0 until 3) for (dx in 0 until 3) {
+            val px = cx + halfW - dx
+            val py = topY - 1 + dy
+            if (px in 0 until w && py in 0 until h) img.set(px, py, true)
+        }
+    }
+
+    /** 厚对角线：在 (x0,y0)-(x1,y1) 之间画 thick×thick 的粗线。 */
+    private fun drawThickLine(img: BinaryImage, x0: Int, y0: Int, x1: Int, y1: Int, thick: Int) {
+        val dx = x1 - x0
+        val dy = y1 - y0
+        val steps = maxOf(kotlin.math.abs(dx), kotlin.math.abs(dy)).coerceAtLeast(1)
+        for (i in 0..steps) {
+            val x = x0 + dx * i / steps
+            val y = y0 + dy * i / steps
+            for (ty in 0 until thick) for (tx in 0 until thick) {
+                val px = x + tx
+                val py = y + ty
+                if (px in 0 until w && py in 0 until h) img.set(px, py, true)
+            }
+        }
+    }
+
+    /** 细长竖线（模拟小节线 bar line），高 height。 */
+    private fun vLine(img: BinaryImage, x: Int, cy: Int, height: Int = 50) {
+        val top = cy - height / 2
+        for (y in top until top + height) if (y in 0 until h) img.set(x, y, true)
+    }
+
+    // ---- 全休止符测试 ------------------------------------------------------- //
+
+    @Test
+    fun `whole rest hanging below line 2 is detected as WHOLE`() {
+        val img = blank()
+        // lines[1] = 40；全休止符挂在 y=40 下方
+        wholeRest(img, cx = 100, line2Y = lineYs[1])
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为全休止符", NoteDuration.WHOLE, rest[0].duration)
+    }
+
+    @Test
+    fun `whole rest center is in upper part of center space`() {
+        val img = blank()
+        wholeRest(img, cx = 100, line2Y = lineYs[1])
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        // 中心应在 lines[1]=40 与 midSpace=45 之间
+        assertTrue("全休止符中心 ${rest[0].centerY} 应 < midSpace 45", rest[0].centerY < 45)
+    }
+
+    // ---- 二分休止符测试 ----------------------------------------------------- //
+
+    @Test
+    fun `half rest sitting above middle line is detected as HALF`() {
+        val img = blank()
+        // lines[2] = 50（中线）；二分休止符坐在 y=50 上方
+        halfRest(img, cx = 100, line3Y = lineYs[2])
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为二分休止符", NoteDuration.HALF, rest[0].duration)
+    }
+
+    @Test
+    fun `half rest center is in lower part of center space`() {
+        val img = blank()
+        halfRest(img, cx = 100, line3Y = lineYs[2])
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        // 中心应在 midSpace=45 与 lines[2]=50 之间
+        assertTrue("二分休止符中心 ${rest[0].centerY} 应 >= midSpace 45", rest[0].centerY >= 45)
+    }
+
+    // ---- 全 vs 二分区分测试 ------------------------------------------------- //
+
+    @Test
+    fun `whole and half rests at same x but different y are distinguished`() {
+        val img1 = blank()
+        val img2 = blank()
+        wholeRest(img1, cx = 100, line2Y = lineYs[1]) // 全休止符
+        halfRest(img2, cx = 100, line3Y = lineYs[2])  // 二分休止符
+        val r1 = RestDetector.detect(blobs(img1), emptyList(), s, lineYs)
+        val r2 = RestDetector.detect(blobs(img2), emptyList(), s, lineYs)
+        assertEquals(NoteDuration.WHOLE, r1[0].duration)
+        assertEquals(NoteDuration.HALF, r2[0].duration)
+    }
+
+    // ---- 四分休止符测试 ----------------------------------------------------- //
+
+    @Test
+    fun `quarter rest zigzag is detected as QUARTER`() {
+        val img = blank()
+        quarterRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为四分休止符", NoteDuration.QUARTER, rest[0].duration)
+    }
+
+    @Test
+    fun `quarter rest is taller than wide`() {
+        val img = blank()
+        quarterRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        assertTrue("四分休止符高 ${rest[0].height} 应 > 宽 ${rest[0].width}",
+            rest[0].height > rest[0].width)
+    }
+
+    // ---- 八分休止符测试 ----------------------------------------------------- //
+
+    @Test
+    fun `eighth rest flag shape is detected as EIGHTH`() {
+        val img = blank()
+        eighthRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为八分休止符", NoteDuration.EIGHTH, rest[0].duration)
+    }
+
+    // ---- 排除逻辑测试 ------------------------------------------------------- //
+
+    @Test
+    fun `filled notehead is not detected as a rest`() {
+        val img = blank()
+        filledEllipse(img, 100, 50) // 实心符头在谱表中间
+        val nh = Notehead(100, 50, 9, 7, 60)
+        val rest = RestDetector.detect(blobs(img), listOf(nh), s, lineYs)
+        // 符头被排除后，不应有任何休止符
+        assertTrue("已检测的符头不应被误判为休止符", rest.isEmpty())
+    }
+
+    @Test
+    fun `notehead and rest coexist at different x positions`() {
+        val img = blank()
+        filledEllipse(img, 50, 50)  // 符头在 x=50
+        quarterRest(img, cx = 150, cy = 50) // 休止符在 x=150
+        val nh = Notehead(50, 50, 9, 7, 60)
+        val rest = RestDetector.detect(blobs(img), listOf(nh), s, lineYs)
+        assertEquals("应检测到 1 个休止符（符头被排除）", 1, rest.size)
+        assertEquals(NoteDuration.QUARTER, rest[0].duration)
+        assertTrue("休止符应在符头右侧", rest[0].centerX > 50)
+    }
+
+    @Test
+    fun `blob in signature region is not detected as rest`() {
+        val img = blank()
+        // 全休止符在 x=50，但签名区右边界在 x=80
+        wholeRest(img, cx = 50, line2Y = lineYs[1])
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, signatureEndX = 80)
+        assertTrue("签名区内的连通块不应被检测为休止符", rest.isEmpty())
+    }
+
+    @Test
+    fun `thin vertical bar line is not detected as quarter rest`() {
+        val img = blank()
+        vLine(img, x = 100, cy = 50, height = 50) // 细竖线（小节线）
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertTrue("小节线不应被误判为休止符", rest.isEmpty())
+    }
+
+    // ---- 多休止符测试 ------------------------------------------------------- //
+
+    @Test
+    fun `multiple rests are detected and sorted by x`() {
+        val img = blank()
+        quarterRest(img, cx = 50, cy = 50)
+        wholeRest(img, cx = 150, line2Y = lineYs[1])
+        halfRest(img, cx = 250, line3Y = lineYs[2])
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals("应检测到 3 个休止符", 3, rests.size)
+        // 按 x 排序（容差 ±2 像素，因 Blob 中心计算可能有取整偏差）
+        assertEquals(50.0, rests[0].centerX.toDouble(), 2.0)
+        assertEquals(150.0, rests[1].centerX.toDouble(), 2.0)
+        assertEquals(250.0, rests[2].centerX.toDouble(), 2.0)
+        // 类型正确
+        assertEquals(NoteDuration.QUARTER, rests[0].duration)
+        assertEquals(NoteDuration.WHOLE, rests[1].duration)
+        assertEquals(NoteDuration.HALF, rests[2].duration)
+    }
+
+    @Test
+    fun `quarter rest followed by whole rest`() {
+        val img = blank()
+        quarterRest(img, cx = 60, cy = 50)
+        wholeRest(img, cx = 180, line2Y = lineYs[1])
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(2, rests.size)
+        assertEquals(NoteDuration.QUARTER, rests[0].duration)
+        assertEquals(NoteDuration.WHOLE, rests[1].duration)
+    }
+
+    // ---- 边界情况 ----------------------------------------------------------- //
+
+    @Test
+    fun `empty blobs returns empty list`() {
+        val img = blank()
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertTrue(rests.isEmpty())
+    }
+
+    @Test
+    fun `zero line spacing returns empty`() {
+        val img = blank()
+        quarterRest(img, cx = 100, cy = 50)
+        val rests = RestDetector.detect(blobs(img), emptyList(), 0, lineYs)
+        assertTrue(rests.isEmpty())
+    }
+
+    @Test
+    fun `block rest outside center space is not detected`() {
+        val img = blank()
+        // 在谱表顶部附近画一个小实心矩形（不在中央间内）
+        val rw = s
+        val rh = s / 2
+        for (y in 20 until 20 + rh) for (x in 90 until 90 + rw) {
+            if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+        }
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertTrue("中央间外的实心矩形不应被误判为休止符", rests.isEmpty())
+    }
+
+    @Test
+    fun `insufficient staff lines skips block rest classification`() {
+        val img = blank()
+        wholeRest(img, cx = 100, line2Y = lineYs[1])
+        // 只给 2 根线，不足以区分全/二分
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs.subList(0, 2))
+        assertTrue("谱线不足时不应检测全/二分休止符", rests.isEmpty())
+    }
+}
