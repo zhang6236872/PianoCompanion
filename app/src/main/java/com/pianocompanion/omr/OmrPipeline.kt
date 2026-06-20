@@ -168,6 +168,10 @@ object OmrPipeline {
         val allRests = restsBySystem.flatten()
 
         // --- 8. Horizontal sequencing (left→right; same-column = chord; rests advance cursor) ---
+        // 关键：多系统页面（真实乐谱一页通常有多行谱表，自上而下排列）必须按
+        // (systemIdx, x) 排序——先处理上方系统的全部音符（左→右），再处理下方系统。
+        // 若仅按 x 排序，下方系统最左侧的音符（小 x）会被插到上方系统最右侧音符（大 x）
+        // 之前，完全打乱音乐顺序。
         val xTolerance = (lineSpacing * 0.8).toInt().coerceAtLeast(2)
         val quarterMs = 60_000L / tempo.coerceAtLeast(1)
         // 拍号决定一个小节的时长；未识别到时默认 4/4。
@@ -175,15 +179,19 @@ object OmrPipeline {
         val measureMs = (quarterMs * quartersPerMeasure).toLong().coerceAtLeast(1L)
 
         // 时间轴项：音符（noteIdx >= 0）或休止符（noteIdx < 0，restDuration 非 null）。
-        data class TimelineItem(val x: Int, val noteIdx: Int, val restDuration: NoteDuration?)
+        // systemIdx 确保多系统时按谱表从上到下、系统内从左到右排序。
+        data class TimelineItem(val systemIdx: Int, val x: Int, val noteIdx: Int, val restDuration: NoteDuration?)
         val timeline = ArrayList<TimelineItem>()
         for (idx in located.indices) {
-            timeline += TimelineItem(located[idx].nh.centerX, idx, null)
+            timeline += TimelineItem(located[idx].systemIdx, located[idx].nh.centerX, idx, null)
         }
-        for (rest in allRests) {
-            timeline += TimelineItem(rest.centerX, -1, rest.duration)
+        // 休止符按所属系统索引配对（保留系统归属），而非使用丢失系统信息的 flattened 列表。
+        restsBySystem.forEachIndexed { sysIdx, rests ->
+            for (rest in rests) {
+                timeline += TimelineItem(sysIdx, rest.centerX, -1, rest.duration)
+            }
         }
-        timeline.sortBy { it.x }
+        timeline.sortWith(compareBy({ it.systemIdx }, { it.x }))
 
         val notes = ArrayList<ScoreNote>()
         var cursor = 0L
@@ -198,12 +206,16 @@ object OmrPipeline {
             }
             // 音符：处理同列和弦（与旧逻辑一致）。
             val leadIdx = item.noteIdx
+            val leadSystemIdx = located[leadIdx].systemIdx
             val columnX = item.x
             // 同一列（和弦）共享起始时间与时值；取首成员的时值（含附点倍率）。
+            // 和弦成员必须属于同一系统且 X 在容差范围内——跨系统的音符即使 X 较小
+            // （多系统排序后下方系统的音符 X 小于上方系统末尾音符）也不能合并。
             val duration = rhythms[leadIdx].effectiveMillis(quarterMs)
             val startTime = cursor
             var j = i
             while (j < timeline.size && timeline[j].noteIdx >= 0 &&
+                located[timeline[j].noteIdx].systemIdx == leadSystemIdx &&
                 located[timeline[j].noteIdx].nh.centerX - columnX <= xTolerance
             ) {
                 val ln = located[timeline[j].noteIdx]
