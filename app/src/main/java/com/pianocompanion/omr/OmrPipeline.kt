@@ -4,6 +4,7 @@ import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
+import com.pianocompanion.omr.image.BinaryDenoiser
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
@@ -71,8 +72,13 @@ object OmrPipeline {
         }
         val deskewApplied = abs(skewAngle) >= 0.5
 
+        // --- 0.5. Denoise (remove isolated specks + fill holes in strokes) ----
+        // 真实拍照 / 自适应二值化会引入椒盐噪声：孤立黑斑污染水平投影与连通块，
+        // 实心笔画内的白孔降低填充率判定准确性。此处保守清理（不破坏 1px 谱线）。
+        val (denoised, denoiseStats) = BinaryDenoiser.denoise(img)
+
         // --- 1. Staff detection -------------------------------------------------
-        val systems = StaffLineDetector.detect(img)
+        val systems = StaffLineDetector.detect(denoised)
         if (systems.isEmpty()) {
             return Result(
                 score = emptyScore(title, tempo),
@@ -86,8 +92,8 @@ object OmrPipeline {
         val maxLineThickness = (avgThickness + 2).coerceIn(2, 6)
 
         // --- 2. Staff removal ---------------------------------------------------
-        val minLineRun = (img.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
-        val cleaned = StaffLineRemover.remove(img, minLineRun, maxLineThickness)
+        val minLineRun = (denoised.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
+        val cleaned = StaffLineRemover.remove(denoised, minLineRun, maxLineThickness)
 
         // --- 3. Connected components -------------------------------------------
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
@@ -129,7 +135,7 @@ object OmrPipeline {
         // --- 6. 用识别到的谱号 + 调号映射音高 ----------------------------------
         val located = ArrayList<Located>()
         systems.forEachIndexed { sysIdx, system ->
-            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, img)
+            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, denoised)
             for (nh in noteheadsBySystem[sysIdx]) {
                 located += Located(nh, staff, sysIdx)
             }
@@ -213,6 +219,11 @@ object OmrPipeline {
         val warnings = ArrayList<String>()
         if (deskewApplied) {
             warnings += "检测到图像倾斜约 ${skewAngle}°，已自动校正"
+        }
+        // 降噪提示：仅在清理掉可观噪声时告知用户（说明源照片可能有噪点）。
+        if (denoiseStats.totalChanged > 0) {
+            warnings += "检测到图像噪点（擦除 ${denoiseStats.pepperRemoved} 个杂散像素、" +
+                "填充 ${denoiseStats.saltFilled} 个笔画孔洞），已自动降噪"
         }
         if (notes.isEmpty()) {
             warnings += "识别到五线谱但未找到音符（可能图片太小或音符不清晰）"
