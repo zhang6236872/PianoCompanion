@@ -8,6 +8,7 @@ import com.pianocompanion.omr.image.BinaryDenoiser
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
+import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
@@ -77,8 +78,16 @@ object OmrPipeline {
         // 实心笔画内的白孔降低填充率判定准确性。此处保守清理（不破坏 1px 谱线）。
         val (denoised, denoiseStats) = BinaryDenoiser.denoise(img)
 
+        // --- 0.7. Keystone (perspective / yaw) correction --------------------
+        // deskew 只能消除均匀的平面内旋转；若拍摄时相机相对纸面有偏航(yaw)，
+        // 谱线会朝消失点汇聚——谱表在图像左右两侧的高度不一致，破坏等间距分组与
+        // Y→音高映射。此处按左右两侧谱带高度比检测并校正梯形畸变。
+        val keystoneOutcome = KeystoneCorrector.correct(denoised)
+        val warped = keystoneOutcome.image
+        val keystoneApplied = keystoneOutcome.applied
+
         // --- 1. Staff detection -------------------------------------------------
-        val systems = StaffLineDetector.detect(denoised)
+        val systems = StaffLineDetector.detect(warped)
         if (systems.isEmpty()) {
             return Result(
                 score = emptyScore(title, tempo),
@@ -92,8 +101,8 @@ object OmrPipeline {
         val maxLineThickness = (avgThickness + 2).coerceIn(2, 6)
 
         // --- 2. Staff removal ---------------------------------------------------
-        val minLineRun = (denoised.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
-        val cleaned = StaffLineRemover.remove(denoised, minLineRun, maxLineThickness)
+        val minLineRun = (warped.width * 0.5).toInt().coerceAtLeast(lineSpacing * 4)
+        val cleaned = StaffLineRemover.remove(warped, minLineRun, maxLineThickness)
 
         // --- 3. Connected components -------------------------------------------
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
@@ -135,7 +144,7 @@ object OmrPipeline {
         // --- 6. 用识别到的谱号 + 调号映射音高 ----------------------------------
         val located = ArrayList<Located>()
         systems.forEachIndexed { sysIdx, system ->
-            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, denoised)
+            val staff = resolveStaff(signatures.perSystem[sysIdx].clef, systems, system, warped)
             for (nh in noteheadsBySystem[sysIdx]) {
                 located += Located(nh, staff, sysIdx)
             }
@@ -224,6 +233,12 @@ object OmrPipeline {
         if (denoiseStats.totalChanged > 0) {
             warnings += "检测到图像噪点（擦除 ${denoiseStats.pepperRemoved} 个杂散像素、" +
                 "填充 ${denoiseStats.saltFilled} 个笔画孔洞），已自动降噪"
+        }
+        // 透视变形提示：校正了梯形畸变时告知用户（说明拍摄角度有偏航）。
+        if (keystoneApplied) {
+            val diff = keystoneOutcome.ratio - 1.0
+            val pct = "%.0f".format(kotlin.math.abs(diff) * 100)
+            warnings += "检测到拍摄角度导致的透视变形（左右两侧谱表高度差约 $pct%），已自动校正梯形畸变"
         }
         if (notes.isEmpty()) {
             warnings += "识别到五线谱但未找到音符（可能图片太小或音符不清晰）"

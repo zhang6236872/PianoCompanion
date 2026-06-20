@@ -9,9 +9,10 @@ import com.pianocompanion.omr.image.BinaryImage
  *
  * It performs genuine pixel-level analysis of the photographed score:
  * grayscale → **adaptive (local) Otsu binarization** → **deskew (rotation
- * correction)** → **denoise (pepper/salt removal)** → staff detection/removal →
- * notehead localization → pitch mapping → score assembly. No external model file
- * is required, so it works fully on-device and offline.
+ * correction)** → **denoise (pepper/salt removal)** → **keystone (perspective /
+ * yaw correction)** → staff detection/removal → notehead localization → pitch
+ * mapping → score assembly. No external model file is required, so it works
+ * fully on-device and offline.
  *
  * Adaptive binarization divides the image into tiles, computes a local Otsu
  * threshold per tile and bilinearly interpolates it across pixels, which keeps
@@ -26,6 +27,13 @@ import com.pianocompanion.omr.image.BinaryImage
  * tile-boundary artefacts) and fills white holes inside solid strokes, which
  * keeps the horizontal projection clean and preserves notehead fill ratios used
  * by the rhythm analyser.
+ *
+ * The keystone step corrects perspective (yaw) distortion that deskew cannot:
+ * when the score is photographed at an angle the staff lines converge and the
+ * system height differs between the left and right edges, corrupting the
+ * Y→pitch mapping. It measures that convergence and applies a per-column
+ * vertical remap to restore uniform line spacing, so notehead pitches map
+ * consistently across the whole width.
  *
  * Limitations (documented for the user via warnings):
  *  - note durations are estimated via stem/beam/flag/dot/rest analysis;
