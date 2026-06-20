@@ -1,16 +1,22 @@
 package com.pianocompanion.omr
 
 import android.graphics.Bitmap
+import com.pianocompanion.omr.image.AdaptiveBinarizer
 import com.pianocompanion.omr.image.BinaryImage
-import com.pianocompanion.omr.image.OtsuThresholder
 
 /**
  * Real optical-music-recognition engine backed by [OmrPipeline].
  *
  * It performs genuine pixel-level analysis of the photographed score:
- * grayscale → Otsu binarization → **deskew (rotation correction)** → staff
- * detection/removal → notehead localization → pitch mapping → score assembly.
- * No external model file is required, so it works fully on-device and offline.
+ * grayscale → **adaptive (local) Otsu binarization** → **deskew (rotation
+ * correction)** → staff detection/removal → notehead localization → pitch
+ * mapping → score assembly. No external model file is required, so it works
+ * fully on-device and offline.
+ *
+ * Adaptive binarization divides the image into tiles, computes a local Otsu
+ * threshold per tile and bilinearly interpolates it across pixels, which keeps
+ * the pipeline robust to uneven lighting (shadows, vignetting, glare) that
+ * defeats a single global threshold.
  *
  * The deskew step automatically corrects tilted photos (up to ±12°) by
  * maximizing the horizontal-projection peakiness, making the pipeline robust
@@ -30,8 +36,7 @@ class RealOmrEngine : OmrEngine {
         return try {
             val scaled = downscale(bitmap, maxDim = 1600)
             val gray = toGrayscaleArray(scaled)
-            val threshold = OtsuThresholder.threshold(gray)
-            val binary = BinaryImage.fromGrayscale(scaled.width, scaled.height, gray, threshold)
+            val binary = AdaptiveBinarizer.binarize(scaled.width, scaled.height, gray)
 
             val result = OmrPipeline.recognize(binary)
             when {
