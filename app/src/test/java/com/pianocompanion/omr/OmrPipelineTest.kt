@@ -471,4 +471,102 @@ class OmrPipelineTest {
         // 500ms（第一个音）+ 500ms（第一个休止）+ 500ms（第二个休止）= 1500ms
         assertEquals("两个四分休止符应推进 1000ms", 1500L, sorted[1].startTime)
     }
+
+    // ---- 十六分 / 三十二分休止符端到端检测 -------------------------------------
+
+    /**
+     * 十六分休止符：竖线符干（1px）+ 2 个旗钩（各 3px 宽）。
+     * 总高度 9px（~0.9 个谱线间距），blob 宽度仅 4px（< 符头最小宽度 5px），
+     * 确保不会被 NoteheadDetector 误判为符头。
+     * 位于五线谱中央间（y=41–49，不与任何谱线交叉），去谱线后不碎裂。
+     * 2 个旗钩间隔 3 行纯符干，使 countFlags 统计出 2 组。
+     */
+    private fun drawSixteenthRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = 9
+        val topY = cy - totalH / 2
+        val stemW = 1
+        val flagW = 3
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            if (cx in 0 until width && y in 0 until height) img.set(cx, y, true)
+        }
+        // 2 个旗钩（间隔 >= 2 行纯符干）
+        for (flagY in listOf(topY + 1, topY + 5)) {
+            if (flagY in 0 until height) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until width) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
+    /**
+     * 三十二分休止符：竖线符干（1px）+ 3 个旗钩（各 3px 宽）。
+     * blob 宽度仅 4px，避免被误判为符头。3 个旗钩间隔各 2 行纯符干。
+     */
+    private fun drawThirtySecondRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = 9
+        val topY = cy - totalH / 2
+        val stemW = 1
+        val flagW = 3
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            if (cx in 0 until width && y in 0 until height) img.set(cx, y, true)
+        }
+        // 3 个旗钩（间隔各 >= 2 行纯符干）
+        for (flagY in listOf(topY + 1, topY + 4, topY + 7)) {
+            if (flagY in 0 until height) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until width) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline advances cursor past a sixteenth rest between two notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 四分音符 → 十六分休止符 → 四分音符
+        drawEllipse(img, 100, 60)
+        drawSixteenthRest(img, 220, 45)   // 位于中央间，不与谱线交叉
+        drawEllipse(img, 340, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        // 休止符不产生音符，只推进时间轴
+        assertEquals("十六分休止符不应产生音符", 2, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        // 第一个音：start 0ms，四分音符 500ms
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(500L, sorted[0].duration)
+        // 500ms（第一个音）+ 125ms（十六分休止符）= 625ms
+        assertEquals("十六分休止符后第二个音应在 625ms 开始", 625L, sorted[1].startTime)
+        assertEquals(500L, sorted[1].duration)
+        // 应提示检测到休止符
+        assertTrue(
+            "应提示检测到休止符",
+            result.warnings.any { it.contains("休止符") }
+        )
+    }
+
+    @Test
+    fun `pipeline advances cursor past a thirty-second rest between two notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 四分音符 → 三十二分休止符 → 四分音符
+        drawEllipse(img, 100, 60)
+        drawThirtySecondRest(img, 220, 45)
+        drawEllipse(img, 340, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("三十二分休止符不应产生音符", 2, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(0L, sorted[0].startTime)
+        assertEquals(500L, sorted[0].duration)
+        // 500ms（第一个音）+ 62ms（三十二分休止符，0.125×500=62.5→62）= 562ms
+        assertEquals("三十二分休止符后第二个音应在 562ms 开始", 562L, sorted[1].startTime)
+        assertEquals(500L, sorted[1].duration)
+    }
 }

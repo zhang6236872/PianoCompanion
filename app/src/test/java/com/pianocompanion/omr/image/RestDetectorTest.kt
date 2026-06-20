@@ -105,6 +105,57 @@ class RestDetectorTest {
         }
     }
 
+    /**
+     * 十六分休止符：旗形符号——一根竖线符干 + 2 个旗钩。
+     * 总高度 ~1.2 个谱线间距，2 个旗钩分别位于上部和下部，中间有 >=2 行纯符干间隔，
+     * 使 countFlags 能正确统计出 2 个独立旗钩组。
+     */
+    private fun sixteenthRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (1.2 * s).toInt()  // 12
+        val topY = cy - totalH / 2
+        val stemW = 2
+        val flagW = 4
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            for (x in cx until cx + stemW) {
+                if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+            }
+        }
+        // 2 个旗钩（各 1 行，间隔 >= 2 行纯符干）
+        for (flagY in listOf(topY + 1, topY + 6)) {
+            if (flagY in 0 until h) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until w) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
+    /**
+     * 三十二分休止符：旗形符号——一根竖线符干 + 3 个旗钩。
+     * 总高度 ~1.4 个谱线间距，3 个旗钩均匀分布，间隔 >= 2 行纯符干。
+     */
+    private fun thirtySecondRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (1.4 * s).toInt()  // 14
+        val topY = cy - totalH / 2
+        val stemW = 2
+        val flagW = 4
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            for (x in cx until cx + stemW) {
+                if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+            }
+        }
+        // 3 个旗钩
+        for (flagY in listOf(topY + 1, topY + 5, topY + 9)) {
+            if (flagY in 0 until h) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until w) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
     /** 厚对角线：在 (x0,y0)-(x1,y1) 之间画 thick×thick 的粗线。 */
     private fun drawThickLine(img: BinaryImage, x0: Int, y0: Int, x1: Int, y1: Int, thick: Int) {
         val dx = x1 - x0
@@ -217,6 +268,85 @@ class RestDetectorTest {
         assertEquals("应为八分休止符", NoteDuration.EIGHTH, rest[0].duration)
     }
 
+    @Test
+    fun `eighth rest with image counts exactly 1 flag`() {
+        val img = blank()
+        eighthRest(img, cx = 100, cy = 50)
+        // 传入二值图后，旗钩层数计数应得到 1 → EIGHTH
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals(1, rest.size)
+        assertEquals(NoteDuration.EIGHTH, rest[0].duration)
+    }
+
+    // ---- 十六分休止符测试 --------------------------------------------------- //
+
+    @Test
+    fun `sixteenth rest with 2 flags is detected as SIXTEENTH`() {
+        val img = blank()
+        sixteenthRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为十六分休止符", NoteDuration.SIXTEENTH, rest[0].duration)
+    }
+
+    @Test
+    fun `sixteenth rest without image falls back to EIGHTH`() {
+        val img = blank()
+        sixteenthRest(img, cx = 100, cy = 50)
+        // 不传 image → 无法计数旗钩 → 向后兼容默认 EIGHTH
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        assertEquals("无图像时十六分休止符回退为八分", NoteDuration.EIGHTH, rest[0].duration)
+    }
+
+    // ---- 三十二分休止符测试 ------------------------------------------------- //
+
+    @Test
+    fun `thirty-second rest with 3 flags is detected as THIRTY_SECOND`() {
+        val img = blank()
+        thirtySecondRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("应为三十二分休止符", NoteDuration.THIRTY_SECOND, rest[0].duration)
+    }
+
+    @Test
+    fun `thirty-second rest without image falls back to EIGHTH`() {
+        val img = blank()
+        thirtySecondRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        assertEquals("无图像时三十二分休止符回退为八分", NoteDuration.EIGHTH, rest[0].duration)
+    }
+
+    // ---- 旗钩层数区分测试 --------------------------------------------------- //
+
+    @Test
+    fun `eighth sixteenth and thirty-second rests are distinguished by flag count`() {
+        val img8 = blank()
+        val img16 = blank()
+        val img32 = blank()
+        eighthRest(img8, cx = 100, cy = 50)
+        sixteenthRest(img16, cx = 100, cy = 50)
+        thirtySecondRest(img32, cx = 100, cy = 50)
+        val r8 = RestDetector.detect(blobs(img8), emptyList(), s, lineYs, image = img8)
+        val r16 = RestDetector.detect(blobs(img16), emptyList(), s, lineYs, image = img16)
+        val r32 = RestDetector.detect(blobs(img32), emptyList(), s, lineYs, image = img32)
+        assertEquals(NoteDuration.EIGHTH, r8[0].duration)
+        assertEquals(NoteDuration.SIXTEENTH, r16[0].duration)
+        assertEquals(NoteDuration.THIRTY_SECOND, r32[0].duration)
+    }
+
+    @Test
+    fun `quarter rest is not misclassified as flagged rest`() {
+        val img = blank()
+        quarterRest(img, cx = 100, cy = 50)
+        // 四分休止符（高锯齿形）不应被旗形休止符分类匹配（高度 > 1.5s）
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals(1, rest.size)
+        assertEquals("四分休止符不应被误判为十六/三十二分", NoteDuration.QUARTER, rest[0].duration)
+    }
+
     // ---- 排除逻辑测试 ------------------------------------------------------- //
 
     @Test
@@ -287,6 +417,35 @@ class RestDetectorTest {
         assertEquals(2, rests.size)
         assertEquals(NoteDuration.QUARTER, rests[0].duration)
         assertEquals(NoteDuration.WHOLE, rests[1].duration)
+    }
+
+    @Test
+    fun `flagged rests of different durations are sorted and identified`() {
+        val img = blank()
+        sixteenthRest(img, cx = 50, cy = 50)
+        thirtySecondRest(img, cx = 150, cy = 50)
+        eighthRest(img, cx = 250, cy = 50)
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 3 个休止符", 3, rests.size)
+        // 按 x 排序
+        assertEquals(50.0, rests[0].centerX.toDouble(), 2.0)
+        assertEquals(150.0, rests[1].centerX.toDouble(), 2.0)
+        assertEquals(250.0, rests[2].centerX.toDouble(), 2.0)
+        // 类型正确
+        assertEquals(NoteDuration.SIXTEENTH, rests[0].duration)
+        assertEquals(NoteDuration.THIRTY_SECOND, rests[1].duration)
+        assertEquals(NoteDuration.EIGHTH, rests[2].duration)
+    }
+
+    @Test
+    fun `sixteenth rest coexists with quarter rest at different x`() {
+        val img = blank()
+        sixteenthRest(img, cx = 50, cy = 50)
+        quarterRest(img, cx = 150, cy = 50)
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals(2, rests.size)
+        assertEquals(NoteDuration.SIXTEENTH, rests[0].duration)
+        assertEquals(NoteDuration.QUARTER, rests[1].duration)
     }
 
     // ---- 边界情况 ----------------------------------------------------------- //
