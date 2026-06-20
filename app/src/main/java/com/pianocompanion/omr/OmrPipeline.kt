@@ -6,9 +6,12 @@ import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
+import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.PitchMapper
+import com.pianocompanion.omr.image.Rest
+import com.pianocompanion.omr.image.RestDetector
 import com.pianocompanion.omr.image.RhythmAnalyzer
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
@@ -122,27 +125,58 @@ object OmrPipeline {
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
-        // --- 7. Horizontal sequencing (left→right; same-column = chord) --------
-        // 按 x 排序的索引，保持与 rhythms 对齐。
-        val order = located.indices.sortedBy { located[it].nh.centerX }
+        // --- 7. 休止符检测 ---------------------------------------------------
+        // 在尚未被判定为符头的连通块中，依据几何形状识别休止符（全/二分/四分/八分）。
+        val restsBySystem = ArrayList<List<Rest>>(systems.size)
+        systems.forEachIndexed { sysIdx, system ->
+            val staffLineYs = system.lines.map { it.center }
+            val endX = signatures.perSystem.getOrElse(sysIdx) { null }?.signatureEndX ?: 0
+            restsBySystem += RestDetector.detect(
+                blobs, noteheadsBySystem[sysIdx], lineSpacing, staffLineYs, endX
+            )
+        }
+        val allRests = restsBySystem.flatten()
+
+        // --- 8. Horizontal sequencing (left→right; same-column = chord; rests advance cursor) ---
         val xTolerance = (lineSpacing * 0.8).toInt().coerceAtLeast(2)
         val quarterMs = 60_000L / tempo.coerceAtLeast(1)
         // 拍号决定一个小节的时长；未识别到时默认 4/4。
         val quartersPerMeasure = detectedTimeSig?.quartersPerMeasure ?: 4.0
         val measureMs = (quarterMs * quartersPerMeasure).toLong().coerceAtLeast(1L)
 
+        // 时间轴项：音符（noteIdx >= 0）或休止符（noteIdx < 0，restDuration 非 null）。
+        data class TimelineItem(val x: Int, val noteIdx: Int, val restDuration: NoteDuration?)
+        val timeline = ArrayList<TimelineItem>()
+        for (idx in located.indices) {
+            timeline += TimelineItem(located[idx].nh.centerX, idx, null)
+        }
+        for (rest in allRests) {
+            timeline += TimelineItem(rest.centerX, -1, rest.duration)
+        }
+        timeline.sortBy { it.x }
+
         val notes = ArrayList<ScoreNote>()
         var cursor = 0L
         var i = 0
-        while (i < order.size) {
-            val leadIdx = order[i]
-            val columnX = located[leadIdx].nh.centerX
+        while (i < timeline.size) {
+            val item = timeline[i]
+            if (item.noteIdx < 0) {
+                // 休止符：推进时间轴但不产生音符。
+                cursor += item.restDuration!!.toMillis(quarterMs)
+                i++
+                continue
+            }
+            // 音符：处理同列和弦（与旧逻辑一致）。
+            val leadIdx = item.noteIdx
+            val columnX = item.x
             // 同一列（和弦）共享起始时间与时值；取首成员的时值（含附点倍率）。
             val duration = rhythms[leadIdx].effectiveMillis(quarterMs)
             val startTime = cursor
             var j = i
-            while (j < order.size && located[order[j]].nh.centerX - columnX <= xTolerance) {
-                val ln = located[order[j]]
+            while (j < timeline.size && timeline[j].noteIdx >= 0 &&
+                located[timeline[j].noteIdx].nh.centerX - columnX <= xTolerance
+            ) {
+                val ln = located[timeline[j].noteIdx]
                 val system = systems[ln.systemIdx]
                 val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
                 if (midi in 21..108) {
@@ -197,7 +231,7 @@ object OmrPipeline {
         val durationTypes = rhythms.map { it.duration }.toSet()
         val dottedCount = rhythms.count { it.dotted }
         val flaggedCount = rhythms.count { it.flagCount > 0 }
-        if (detectedStems > 0 || durationTypes.any { it != com.pianocompanion.omr.image.NoteDuration.QUARTER }) {
+        if (detectedStems > 0 || durationTypes.any { it != NoteDuration.QUARTER }) {
             val typeNames = durationTypes.joinToString("、") { it.label }
             val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
             val flagHint = if (flaggedCount > 0) "，含 $flaggedCount 个带符尾音符" else ""
@@ -205,6 +239,15 @@ object OmrPipeline {
         } else {
             val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
             warnings += "节奏为估算值（未检测到符干，每个音符按四分音符处理$dotHint），实际时值需人工校对"
+        }
+        // 休止符提示。
+        if (allRests.isNotEmpty()) {
+            val restSummary = allRests.groupBy { it.duration }
+                .entries.joinToString("、") { (dur, list) ->
+                    val label = dur.label.replace("音符", "休止符")
+                    "${list.size} 个$label"
+                }
+            warnings += "检测到 ${allRests.size} 个休止符（$restSummary），已计入时间轴"
         }
 
         return Result(
