@@ -715,4 +715,94 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("噪点") }
         )
     }
+
+    // ── Keystone (perspective) integration ────────────────────────────────────
+
+    /**
+     * Draw the 5 staff lines warped by a yaw-perspective convergence model:
+     * at column x each original line y is remapped to
+     *   y' = yc + (y - yc) * (1 + k * (x/w - 0.5))
+     * k > 0 ⇒ the system is taller on the right (lines fan apart toward the
+     * right). This is an *independent* synthesis of the distortion (not the
+     * corrector's own warp), used to verify detection + correction end-to-end.
+     */
+    private fun drawWarpedStaff(img: BinaryImage, k: Double, yc: Double) {
+        val w = img.width
+        for (baseY in lineYs) {
+            for (x in 0 until w) {
+                val scale = 1.0 + k * (x.toDouble() / w - 0.5)
+                val y = (yc + (baseY - yc) * scale).toInt()
+                if (y in 0 until img.height) img.set(x, y, true)
+            }
+        }
+    }
+
+    /** Draw a filled ellipse warped by the same convergence model as the staff. */
+    private fun drawWarpedEllipse(img: BinaryImage, cx: Int, cy: Int, rx: Int, ry: Int, k: Double, yc: Double) {
+        val w = img.width
+        for (dy in -ry..ry) {
+            for (dx in -rx..rx) {
+                if ((dx.toDouble() / rx).let { it * it } +
+                    (dy.toDouble() / ry).let { it * it } > 1.01
+                ) continue
+                val sx = cx + dx
+                if (sx !in 0 until w) continue
+                val sy = cy + dy
+                val scale = 1.0 + k * (sx.toDouble() / w - 0.5)
+                val wy = (yc + (sy - yc) * scale).toInt()
+                if (wy in 0 until img.height) img.set(sx, wy, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline recognises a perspective-warped score after keystone correction`() {
+        // k = 0.20 ⇒ ~20% system-height change across the width (moderate yaw).
+        val k = 0.20
+        val yc = 50.0
+        val img = blankScore()
+        drawWarpedStaff(img, k, yc)
+        // Noteheads sit on the staff positions, warped the same way.
+        drawWarpedEllipse(img, 90, 60, 4, 3, k, yc)   // 4th line region
+        drawWarpedEllipse(img, 210, 55, 4, 3, k, yc)  // upper-space region
+        drawWarpedEllipse(img, 330, 50, 4, 3, k, yc)  // middle line
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "warped score should still be recognised after keystone correction " +
+                "(got ${result.score.notes.size} notes, warnings: ${result.warnings})",
+            result.score.notes.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `pipeline reports a keystone warning when perspective is corrected`() {
+        val k = 0.25
+        val yc = 50.0
+        val img = blankScore()
+        drawWarpedStaff(img, k, yc)
+        drawWarpedEllipse(img, 200, 60, 4, 3, k, yc)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "should warn that perspective was corrected, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("透视") && it.contains("校正") }
+        )
+    }
+
+    @Test
+    fun `pipeline does not report keystone warning on a fronto-parallel score`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "fronto-parallel score should not trigger keystone warning, warnings: ${result.warnings}",
+            result.warnings.any { it.contains("透视") }
+        )
+    }
 }
