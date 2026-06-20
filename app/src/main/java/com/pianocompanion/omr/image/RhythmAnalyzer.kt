@@ -122,7 +122,7 @@ object RhythmAnalyzer {
         // 3) 符尾检测（仅对无横梁的带干符头）+ 附点检测 + 综合分类
         return base.mapIndexed { idx, f ->
             val beams = beamCounts[idx]
-            val flags = if (!f.hasStem || beams > 0) 0 else detectFlags(image, f, s)
+            val flags = if (!f.hasStem || beams > 0) 0 else detectFlags(image, noteheads[idx], f, s)
             val dots = countAugmentationDots(image, noteheads[idx], s)
             f.copy(
                 beamCount = beams,
@@ -331,18 +331,85 @@ object RhythmAnalyzer {
     // ---- 符尾判定（无横梁的带干符头）-----------------------------------------
 
     /**
-     * 在符干末端左/右侧方扫描，统计堆叠的"尾巴"层数（符尾卷曲）。
-     * 同时尝试两侧并取较大值，兼容符尾向左或向右卷曲。
+     * 在符干末端朝远离符头的一侧扫描符尾（flag）。
+     *
+     * 符尾是附着在符干末端、向外(水平)卷曲的墨迹；多个符尾沿符干方向堆叠，
+     * 彼此之间有间隙（八分=1 个、十六分=2 个、三十二分=3 个）。
+     *
+     * 与旧版\"单列纵向带计数\"不同，这里对符干末端附近的每一行计算\"从符干向外延伸的
+     * 最长水平墨迹长度\"：裸符干只有约 1px 宽，不会超过阈值；而符尾会在所在行形成一条
+     * 较长的水平墨迹。逐行统计后，被白行隔开的连续\"符尾行\"段即为符尾个数——这使单个
+     * 卷曲的符尾即便在某一列恰好没有墨也能被正确识别为一个整体。
+     *
+     * 竖直扫描只覆盖符干末端到符头之间的区域（且不超过 2.2 个谱线间距），避免把符头
+     * 误判为符尾；水平方向同时尝试左/右两侧并取较大值，兼容符尾向左或向右卷曲。
      */
-    private fun detectFlags(image: BinaryImage, f: RhythmFeatures, s: Double): Int {
+    private fun detectFlags(image: BinaryImage, nh: Notehead, f: RhythmFeatures, s: Double): Int {
         val sx = f.stemEndX
         val sy = f.stemEndY
-        val offset = (0.6 * s).toInt().coerceAtLeast(2)
-        val halfWin = (0.25 * s).toInt().coerceAtLeast(1)
-        val span = (0.9 * s).toInt().coerceAtLeast(4)
-        val right = countVerticalBands(image, sx + offset, sy - span, sy + span, halfWin)
-        val left = countVerticalBands(image, sx - offset, sy - span, sy + span, halfWin)
-        return maxOf(right, left)
+        val extent = (2.2 * s).toInt()
+        val minFlagRun = (0.5 * s).toInt().coerceAtLeast(3)
+        // 竖直扫描范围：up-stem 符尾在顶端之下；down-stem 符尾在底端之上；
+        // 但都不得越过符头中心，避免把符头计入符尾区。
+        val yCenter = nh.centerY
+        val yStart: Int
+        val yEnd: Int
+        if (f.stemUp) {
+            yStart = sy
+            yEnd = minOf(sy + extent, yCenter - 1)
+        } else {
+            yEnd = sy
+            yStart = maxOf(sy - extent, yCenter + 1)
+        }
+        return countFlagRows(image, sx, yStart, yEnd, minFlagRun)
+    }
+
+    /**
+     * 逐行计算从 [stemX] 向左/右延伸的最长水平墨迹长度；连续超过 [minRun] 的行段
+     * （允许 1 行间断，容忍抗锯齿噪声）计为一个符尾。
+     */
+    private fun countFlagRows(
+        image: BinaryImage, stemX: Int, yStart: Int, yEnd: Int, minRun: Int
+    ): Int {
+        if (yEnd < yStart) return 0
+        var flags = 0
+        var inRun = false
+        var gap = 0
+        for (y in yStart..yEnd) {
+            val reach = maxOf(
+                horizontalRun(image, y, stemX, +1),
+                horizontalRun(image, y, stemX, -1)
+            )
+            if (reach >= minRun) {
+                inRun = true
+                gap = 0
+            } else if (inRun) {
+                gap++
+                if (gap > 1) {
+                    flags++
+                    inRun = false
+                }
+            }
+        }
+        if (inRun) flags++
+        return flags.coerceIn(0, 3)
+    }
+
+    /**
+     * 从 [startX] 沿 [dir] 方向扫描，返回连续水平墨迹长度。
+     * 注意：此处只判定本像素 [image.isBlack]——不做纵向 ±1 容差。
+     * 因为 [BinaryImage] 已是 Otsu 二值图（无抗锯齿），而符尾计数依赖\"逐行\"墨迹：
+     * 若加入纵向容差，每个符尾的纵向影响区会上下各膨胀 1 行，使间距较近的堆叠符尾
+     * （如十六分/三十二分）的影响区互相搭接、被误合并成单个符尾。
+     */
+    private fun horizontalRun(image: BinaryImage, y: Int, startX: Int, dir: Int): Int {
+        var len = 0
+        var x = startX
+        while (x in 0 until image.width) {
+            if (image.isBlack(x, y)) len++ else break
+            x += dir
+        }
+        return len
     }
 
     // ---- 附点判定（augmentation dots）-----------------------------------------
