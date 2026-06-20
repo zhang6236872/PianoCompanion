@@ -76,6 +76,21 @@ class RhythmAnalyzerTest {
         for (y in top until top + height) if (y in 0 until h) img.set(x, y, true)
     }
 
+    /**
+     * 符尾(flag)：附着在符干末端的水平卷曲墨迹。从 [stemX] 起、向 [dir] 方向延伸
+     * [width] 像素、垂直 [thick] 像素的一条水平带，中心行在 [rowY]。
+     * 多个符尾可通过不同 [rowY] 堆叠（沿符干方向逐层下移/上移）。
+     *
+     * @param dir +1 = 向右卷曲，-1 = 向左卷曲。
+     */
+    private fun flag(img: BinaryImage, stemX: Int, rowY: Int, width: Int = 8, thick: Int = 2, dir: Int = +1) {
+        val half = thick / 2
+        val xRange = if (dir >= 0) (stemX until stemX + width) else (stemX downTo stemX - width + 1)
+        for (yy in rowY - half..rowY + half) for (x in xRange) {
+            if (x in 0 until w && yy in 0 until h) img.set(x, yy, true)
+        }
+    }
+
     private fun nh(cx: Int, cy: Int) = Notehead(cx, cy, 9, 7, 60)
 
     // ---- 纯分类逻辑 ----------------------------------------------------------
@@ -336,5 +351,97 @@ class RhythmAnalyzerTest {
         dot(img, 75, 55)
         val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
         assertEquals(1, r[0].dotCount)
+    }
+
+    // ---- 符尾判定 (flags / 非连梁单音符) -------------------------------------
+
+    @Test
+    fun `filled notehead with stem and a single flag is an eighth note`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        // 符干顶端在 y = 60 - 3 - 24 = 33，符干右侧 x = 64
+        flag(img, stemX = 64, rowY = 33)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("应检测到 1 个符尾", 1, r[0].flagCount)
+        assertEquals(NoteDuration.EIGHTH, r[0].duration)
+    }
+
+    @Test
+    fun `filled notehead with two stacked flags is a sixteenth note`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        flag(img, stemX = 64, rowY = 33)
+        flag(img, stemX = 64, rowY = 39) // 第二层符尾，与第一层间隔约 0.6 个谱线间距
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("应检测到 2 个符尾", 2, r[0].flagCount)
+        assertEquals(NoteDuration.SIXTEENTH, r[0].duration)
+    }
+
+    @Test
+    fun `filled notehead with three stacked flags is a thirty-second note`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        flag(img, stemX = 64, rowY = 33)
+        flag(img, stemX = 64, rowY = 39)
+        flag(img, stemX = 64, rowY = 45)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("应检测到 3 个符尾", 3, r[0].flagCount)
+        assertEquals(NoteDuration.THIRTY_SECOND, r[0].duration)
+    }
+
+    @Test
+    fun `downward stem with a flag is also detected`() {
+        val img = blank()
+        filledEllipse(img, 60, 90); stemDown(img, 60, 90)
+        // 向下符干底端在 y = 90 + 3 + 24 = 117，符干左侧 x = 56；符尾向上卷曲
+        flag(img, stemX = 56, rowY = 115, dir = +1)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 90)), s)
+        assertEquals("向下符干的符尾也应被检测", 1, r[0].flagCount)
+        assertEquals(NoteDuration.EIGHTH, r[0].duration)
+    }
+
+    @Test
+    fun `flag curling to the left is detected`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        flag(img, stemX = 64, rowY = 33, dir = -1) // 向左卷曲（罕见但需兼容）
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("向左卷曲的符尾也应被检测", 1, r[0].flagCount)
+        assertEquals(NoteDuration.EIGHTH, r[0].duration)
+    }
+
+    @Test
+    fun `bare stem (quarter note) does not produce a flag`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertEquals("裸符干不应误判为符尾", 0, r[0].flagCount)
+        assertEquals(NoteDuration.QUARTER, r[0].duration)
+    }
+
+    @Test
+    fun `flagged notes mixed with quarter notes keep correct counts`() {
+        val img = blank()
+        // 第一个：八分音符（实心+干+1 符尾）
+        filledEllipse(img, 50, 60); stemUp(img, 50, 60)
+        flag(img, stemX = 54, rowY = 33)
+        // 第二个：四分音符（实心+干，无符尾）
+        filledEllipse(img, 140, 60); stemUp(img, 140, 60)
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(50, 60), nh(140, 60)), s)
+        assertEquals(1, r[0].flagCount)
+        assertEquals(NoteDuration.EIGHTH, r[0].duration)
+        assertEquals(0, r[1].flagCount)
+        assertEquals(NoteDuration.QUARTER, r[1].duration)
+    }
+
+    @Test
+    fun `flag does not bleed into the notehead region`() {
+        val img = blank()
+        filledEllipse(img, 60, 60); stemUp(img, 60, 60)
+        flag(img, stemX = 64, rowY = 33)
+        // 即使有符尾，符头不应被误判为额外的符尾层数（扫描被符头中心截断）
+        val r = RhythmAnalyzer.analyze(img, listOf(nh(60, 60)), s)
+        assertTrue("符尾层数不应超过 3", r[0].flagCount <= 3)
+        assertEquals(1, r[0].flagCount)
     }
 }

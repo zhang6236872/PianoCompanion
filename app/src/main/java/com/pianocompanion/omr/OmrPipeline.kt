@@ -196,10 +196,12 @@ object OmrPipeline {
         val detectedStems = rhythms.count { it.hasStem }
         val durationTypes = rhythms.map { it.duration }.toSet()
         val dottedCount = rhythms.count { it.dotted }
+        val flaggedCount = rhythms.count { it.flagCount > 0 }
         if (detectedStems > 0 || durationTypes.any { it != com.pianocompanion.omr.image.NoteDuration.QUARTER }) {
             val typeNames = durationTypes.joinToString("、") { it.label }
             val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
-            warnings += "节奏已通过符干/横梁/符尾分析估算（$typeNames$dotHint），复杂节奏需人工校对"
+            val flagHint = if (flaggedCount > 0) "，含 $flaggedCount 个带符尾音符" else ""
+            warnings += "节奏已通过符干/横梁/符尾分析估算（$typeNames$dotHint$flagHint），复杂节奏需人工校对"
         } else {
             val dotHint = if (dottedCount > 0) "，含 $dottedCount 个附点音符" else ""
             warnings += "节奏为估算值（未检测到符干，每个音符按四分音符处理$dotHint），实际时值需人工校对"
