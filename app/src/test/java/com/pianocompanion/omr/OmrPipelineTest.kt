@@ -805,4 +805,152 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("透视") }
         )
     }
+
+    // ---- 多系统页面时间轴排序（multi-system timeline ordering）----------------
+    // 真实乐谱一页通常有多个谱表系统（staff systems）上下排列；音乐从上到下、
+    // 每个系统内从左到右流动。此前时间轴仅按 x 排序，会把下方系统最左侧的音符
+    // （小 x）插到上方系统最右侧音符（大 x）之前，完全打乱顺序。
+
+    /** 在指定图像的 y 坐标列表处绘制一组 5 条谱线（使用图像自身宽高）。 */
+    private fun drawStaffAt(img: BinaryImage, ys: List<Int>) {
+        for (y in ys) for (x in 0 until img.width) img.set(x, y, true)
+    }
+
+    /** 在指定图像上绘制实心椭圆符头（使用图像自身宽高做边界检查）。 */
+    private fun drawEllipseOn(img: BinaryImage, cx: Int, cy: Int, rx: Int = 4, ry: Int = 3) {
+        for (y in (cy - ry)..(cy + ry)) {
+            for (x in (cx - rx)..(cx + rx)) {
+                if (x !in 0 until img.width || y !in 0 until img.height) continue
+                val ndx = (x - cx).toDouble() / rx
+                val ndy = (y - cy).toDouble() / ry
+                if (ndx * ndx + ndy * ndy <= 1.01) img.set(x, y, true)
+            }
+        }
+    }
+
+    @Test
+    fun `multi-system page sequences notes top-to-bottom not interleaved by x`() {
+        // 两个系统上下排列。系统 1（上方，y=20..60），系统 2（下方，y=100..140）。
+        val w = 420
+        val h = 180
+        val img = BinaryImage.blank(w, h)
+        drawStaffAt(img, listOf(20, 30, 40, 50, 60))   // 系统 1
+        drawStaffAt(img, listOf(100, 110, 120, 130, 140)) // 系统 2
+
+        // 系统 1：在最右侧放一个符头（大 x=360），底线 y=60。
+        // 无谱号 + 多系统 → 上方系统回退高音谱表，底线 E4 = MIDI 64。
+        drawEllipseOn(img, 360, 60)
+        // 系统 2：在最左侧放一个符头（小 x=60），底线 y=140。
+        // 无谱号 + 多系统 → 下方系统回退低音谱表，底线 G2 = MIDI 43。
+        drawEllipseOn(img, 60, 140)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("should detect 2 systems", 2, result.diagnostics.systemCount)
+        assertEquals("should find 2 notes", 2, result.score.notes.size)
+        // 关键断言：系统 1 的音符（x=360）必须先于系统 2 的音符（x=60）。
+        // 正确顺序：[64@0ms, 43@500ms]。
+        // BUG 行为（仅按 x 排序）：[43@0ms, 64@500ms]（x=60 排到 x=360 之前）。
+        assertEquals(
+            "system 1 note (x=360) must precede system 2 note (x=60)",
+            listOf(64, 43),
+            result.score.notes.map { it.midiNumber }
+        )
+        assertEquals(listOf(0L, 500L), result.score.notes.map { it.startTime })
+    }
+
+    @Test
+    fun `multi-system page preserves full sequence across systems with overlapping x`() {
+        // 系统 1 有 3 个音符（x=60/200/350），系统 2 有 2 个音符（x=100/300）。
+        // 两系统的 x 范围重叠，按 x 排序会完全交错，必须按 (system, x) 排序。
+        val w = 420
+        val h = 180
+        val img = BinaryImage.blank(w, h)
+        drawStaffAt(img, listOf(20, 30, 40, 50, 60))
+        drawStaffAt(img, listOf(100, 110, 120, 130, 140))
+
+        // 系统 1（高音谱表回退）：底线 E4=64, 自下而上 E4,F4,G4...
+        // 放在底线 y=60 → E4=64；间 y=55 → F4=65；第二线 y=50 → G4=67
+        drawEllipseOn(img, 60, 60)   // MIDI 64
+        drawEllipseOn(img, 200, 55)  // MIDI 65
+        drawEllipseOn(img, 350, 50)  // MIDI 67
+        // 系统 2（低音谱表回退）：底线 G2=43, 间 A2=45, 第二线 B2=47
+        drawEllipseOn(img, 100, 140) // MIDI 43
+        drawEllipseOn(img, 300, 135) // MIDI 45
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(2, result.diagnostics.systemCount)
+        assertEquals(5, result.score.notes.size)
+        // 正确顺序：sys1[64,65,67] 然后 sys2[43,45]。
+        // BUG 顺序（按 x）：64(x60), 43(x100), 65(x200), 45(x300), 67(x350)。
+        assertEquals(
+            "notes must follow system order then x order",
+            listOf(64, 65, 67, 43, 45),
+            result.score.notes.map { it.midiNumber }
+        )
+        // 5 个连续四分音符 @120BPM = 500ms each。
+        assertEquals(
+            listOf(0L, 500L, 1000L, 1500L, 2000L),
+            result.score.notes.map { it.startTime }
+        )
+    }
+
+    @Test
+    fun `multi-system page carries time cursor from system 1 into system 2`() {
+        // 验证时间游标从系统 1 连续传递到系统 2：系统 2 第一个音符的 startTime
+        // 必须紧跟系统 1 最后一个音符结束之后（而非从 0 重新开始）。
+        val w = 420
+        val h = 180
+        val img = BinaryImage.blank(w, h)
+        drawStaffAt(img, listOf(20, 30, 40, 50, 60))
+        drawStaffAt(img, listOf(100, 110, 120, 130, 140))
+
+        // 系统 1：两个四分音符（高音回退）
+        drawEllipseOn(img, 100, 60)  // E4=64 @0ms
+        drawEllipseOn(img, 250, 55)  // F4=65 @500ms
+        // 系统 2：一个四分音符（低音回退），必须 @1000ms（前两个结束时）
+        drawEllipseOn(img, 80, 140)  // G2=43 @1000ms
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(3, result.score.notes.size)
+        val sys2Note = result.score.notes.first { it.midiNumber == 43 }
+        assertEquals(
+            "system 2 first note must start at 1000ms (after system 1's two notes), " +
+                "not at 0ms or 500ms",
+            1000L,
+            sys2Note.startTime
+        )
+    }
+
+    @Test
+    fun `multi-system page orders three systems top-to-bottom`() {
+        // 验证排序修复对 3 个系统同样生效（真实乐谱一页常有 3-6 行谱表）。
+        val w = 420
+        val h = 260
+        val img = BinaryImage.blank(w, h)
+        drawStaffAt(img, listOf(20, 30, 40, 50, 60))    // 系统 1
+        drawStaffAt(img, listOf(100, 110, 120, 130, 140)) // 系统 2
+        drawStaffAt(img, listOf(180, 190, 200, 210, 220)) // 系统 3
+
+        // 每个系统各放一个音符，x 全部相同（100），确保排序依据是系统索引而非 x。
+        // 系统 1 底线 y=60 → 高音回退 E4=64
+        drawEllipseOn(img, 100, 60)
+        // 系统 2 底线 y=140 → 低音回退 G2=43
+        drawEllipseOn(img, 100, 140)
+        // 系统 3 底线 y=220 → 低音回退 G2=43
+        drawEllipseOn(img, 100, 220)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("should detect 3 systems", 3, result.diagnostics.systemCount)
+        assertEquals(3, result.score.notes.size)
+        // 正确顺序：系统 1 → 系统 2 → 系统 3，各间隔 500ms（四分音符）。
+        assertEquals(
+            "three notes at same x must be ordered by system, not interleaved",
+            listOf(0L, 500L, 1000L),
+            result.score.notes.map { it.startTime }
+        )
+    }
 }

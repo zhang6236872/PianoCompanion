@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.15.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone))
+- 当前版本: **v2.16.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复)
 - 当前分支: main
-- 最新 tag: v2.15.0
+- 最新 tag: v2.16.0
 
 ## 健康状态 (2026-06-21 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 255 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 259 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0
 - Kotlin 文件: 70 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -404,10 +404,35 @@
     主导投影峰值的根本缺陷)
   - 单元测试 240 → **255** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+### 2026-06-21 (自主开发)
+- **后续增强 (v2.16.0): OMR 多系统页面时间轴排序修复 — ✅ 完成**
+  - 修复真实多系统乐谱页面（一页有多行谱表上下排列）中音符顺序被完全打乱的
+    严重 bug。此前 `OmrPipeline` 的时间轴（timeline）仅按 X 坐标排序所有系统
+    的音符和休止符，但多系统页面的音乐是从上到下、每个系统内从左到右流动的——
+    下方系统最左侧的音符（小 X）会被插到上方系统最右侧音符（大 X）之前，
+    导致识别出的乐谱音符顺序与原始乐谱完全不一致。
+  - **修复 1（时间轴排序）**：`TimelineItem` 新增 `systemIdx` 字段，排序改为
+    `compareBy(systemIdx, x)`——先处理上方系统的全部音符（左→右），再处理下方系统。
+    休止符通过 `restsBySystem.forEachIndexed` 配对系统索引（不再使用丢失系统信息
+    的 flattened `allRests`），确保休止符也按系统正确排序。
+  - **修复 2（和弦分组跨系统泄漏）**：和弦分组循环原先仅检查 `centerX - columnX <=
+    xTolerance`，假设后续音符的 X 单调递增。改为系统排序后，下方系统的音符 X 较小，
+    差值为负，错误通过 `<= xTolerance` 判定被并入上方系统末尾音符的和弦。新增
+    `systemIdx == leadSystemIdx` 守卫，确保和弦成员必须属于同一系统。
+  - 单系统页面行为完全不变（系统索引恒为 0，排序与和弦逻辑退化为原行为），
+    无回归风险。
+  - 修正 build.gradle.kts 版本号 → v2.16.0 / versionCode 35
+  - 新增 4 个端到端管线测试 `OmrPipelineTest`（合成多系统图像验证）：
+    - 2 系统跨 X 排序（系统 1 大 X 音符先于系统 2 小 X 音符）
+    - 5 音符跨系统重叠 X 范围完整序列验证
+    - 时间游标从系统 1 连续传递到系统 2（系统 2 首音符不重置为 0ms）
+    - 3 系统同 X 音符按系统索引排序（验证修复推广到 >2 个系统）
+  - 单元测试 255 → **259** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (255 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (259 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -416,7 +441,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 30
+- OmrPipelineTest: 34
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
