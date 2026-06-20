@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.10.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别)
+- 当前版本: **v2.11.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别)
 - 当前分支: main
-- 最新 tag: v2.10.0
+- 最新 tag: v2.11.0
 
 ## 健康状态 (2026-06-20 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 181 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 194 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0
 - Kotlin 文件: 66 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -244,10 +244,29 @@
   - 已知限制：纯几何特征对真实照片中噪声碎片的区分能力有限，可能需人工校对；
     十六分及更短休止符暂不支持
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+### 2026-06-20 (自主开发)
+- **后续增强 (v2.11.0): OMR 十六分/三十二分休止符识别 — ✅ 完成**
+  - 补齐 v2.10.0 列出的待完善项「十六分及更短休止符」，使 OMR 能正确区分八分/十六分/
+    三十二分休止符（此前旗形休止符统一识别为八分休止符）
+  - `RestDetector.detect()` 新增 `image: BinaryImage?` 参数（默认 null，向后兼容）：
+    提供去谱线后的二值图以启用旗钩层数计数
+  - `eighthRest()` 方法替换为 `flaggedRest()`：统一处理旗形休止符包络
+    （高 0.7–1.5 间距、宽 0.4–1.2 间距、填充率 0.15–0.60），再按旗钩层数细分时值
+  - 新增 `countFlags()` 核心算法：在连通块边界框内逐行统计墨迹密度，取非零行最小值
+    为基线（纯符干行），墨迹密度 ≥ max(基线+1, 3) 的行标记为旗钩行；连续旗钩行
+    （允许 1 行间断桥接）归为一组，每组 = 1 层旗钩（1→八分, 2→十六分, 3→三十二分）
+  - `OmrPipeline` 步骤 7 传递 `cleaned` 图像给 `RestDetector.detect()`，启用旗钩计数
+  - 新增 9 个单元测试 `RestDetectorTest`（18→27 个）：旗钩计数精确性、image 为 null 时
+    回退八分、八分/十六分/三十二分区分、四分休止符不被误判、混合休止符排序）
+  - 新增 2 个端到端管线测试 `OmrPipelineTest`（19→21 个）：十六分休止符推进游标 125ms、
+    三十二分休止符推进游标 62ms（tempo=120）
+  - 单元测试 181 → **194** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：高度超过 1.5 个谱线间距的三十二分休止符可能先被 quarterRest 匹配导致误判
 
-## 单元测试明细 (181 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+
+## 单元测试明细 (194 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -256,13 +275,13 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 19
+- OmrPipelineTest: 21
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
 - SignatureDetectorTest: 18
 - OmrSignatureIntegrationTest: 7
-- RestDetectorTest: 18
+- RestDetectorTest: 27
 
 ## 阻塞
 （无）
@@ -278,6 +297,7 @@
   - ✅ 中音谱号(C clef)支持 (v2.7.0 已完成：竖直质心 + 谱线横跨判定，含次中音谱号)
   - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）、女高音/女低音谱号(短谱表)支持
 - OMR 休止符识别 ✅ (v2.10.0 已完成：RestDetector 几何分类全/二分/四分/八分休止符，TimelineItem 时间轴合并推进游标)
-  - 待完善：十六分及更短休止符、真实照片噪声鲁棒性
+  - ✅ 十六分/三十二分休止符 (v2.11.0 已完成：旗形休止符按旗钩层数计数区分八/十六/三十二分)
+  - 待完善：真实照片噪声鲁棒性、高度 >1.5 间距的三十二分休止符与四分休止符区分
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
