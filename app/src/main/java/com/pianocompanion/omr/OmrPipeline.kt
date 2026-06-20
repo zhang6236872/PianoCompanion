@@ -126,13 +126,15 @@ object OmrPipeline {
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
         // --- 7. 休止符检测 ---------------------------------------------------
-        // 在尚未被判定为符头的连通块中，依据几何形状识别休止符（全/二分/四分/八分）。
+        // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
+        // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
+        // 旗钩层数计数，从而区分八分/十六分/三十二分休止符。
         val restsBySystem = ArrayList<List<Rest>>(systems.size)
         systems.forEachIndexed { sysIdx, system ->
             val staffLineYs = system.lines.map { it.center }
             val endX = signatures.perSystem.getOrElse(sysIdx) { null }?.signatureEndX ?: 0
             restsBySystem += RestDetector.detect(
-                blobs, noteheadsBySystem[sysIdx], lineSpacing, staffLineYs, endX
+                blobs, noteheadsBySystem[sysIdx], lineSpacing, staffLineYs, endX, cleaned
             )
         }
         val allRests = restsBySystem.flatten()
