@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.20.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分)
+- 当前版本: **v2.21.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测)
 - 当前分支: main
-- 最新 tag: v2.20.0
+- 最新 tag: v2.21.0
 
-## 健康状态 (2026-06-21 核验)
+## 健康状态 (2026-06-22 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 321 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 342 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0
-- Kotlin 文件: 70 个 / 代码行数: 10000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0
+- Kotlin 文件: 72 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -550,10 +550,32 @@
   - 已知限制：无二值图（image=null）时无法做旗钩分析，高大的旗形休止符仍回退为四分
     休止符——OMR 管线始终传入 cleaned 图像，实际使用中不受影响
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0) 已完成！** 代码已合并到 main。
+### 2026-06-22 (自主开发)
+- **后续增强 (v2.21.0): OMR 断奏点(staccato dot)检测 — ✅ 完成**
+  - 新增 `Articulation` 枚举(`NONE`/`STACCATO`)，在 `ScoreNote` 中添加 `articulation` 字段，
+    为未来添加 tenuto、accent 等演奏法标记预留扩展空间
+  - 新增 `ArticulationDetector`（纯 Kotlin，无 Android 依赖）：
+    - 在去谱线+降噪后的 cleaned 图像上搜索符头附近的小圆点
+    - **搜索策略根据符干方向**：stem up → 搜索符头**下方**；stem down → 搜索符头**上方**；
+      无符干（全音符）→ 搜索两侧
+    - **与附点(augmentation dot)区分**：附点在符头**右侧**同一水平线，断奏点在符头
+      **上方或下方**（与符干相反一侧），搜索区域不覆盖符头右侧
+    - 尺寸约束：小圆点面积 ≥ 2 像素（避免噪声），最大维度 ≤ `2.0 × lineSpacing`
+    - 3×3 断奏点（面积=9）安全通过 BinaryDenoiser 降噪（`DEFAULT_PEPPER_MIN_AREA=4`）
+  - `OmrPipeline` 步骤 6.7 集成断奏检测：在节奏分析后调用 `ArticulationDetector.detectStaccato()`，
+    返回断奏符头索引集合，在创建 `ScoreNote` 时设置 `articulation` 属性
+  - `ScoreRenderer` 和 `AutoScrollScoreRenderer` 新增断奏点渲染：在音符下方绘制半径
+    `noteRadius × 0.22` 的小圆点
+  - 新增 `ArticulationDetectorTest`（18 个单元测试）：断奏点检测正确、无标记返回空、
+    附点不误判为断奏、尺寸过滤、边界情况等
+  - 新增 `OmrPipelineTest` 集成测试（3 个用例）：端到端验证含断奏点的合成乐谱图像
+    被正确识别并设置 `articulation = STACCATO`，含选择性断奏（部分音符有断奏点）
+  - 单元测试 321 → **342** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (321 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (342 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -562,7 +584,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 35
+- OmrPipelineTest: 38
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -575,6 +597,7 @@
 - KeystoneCorrectorTest: 12
 - BarlineDetectorTest: 34
 - VoltaDetectorTest: 21
+- ArticulationDetectorTest: 18
 
 ## 阻塞
 （无）
@@ -589,6 +612,9 @@
 - OMR 节奏分析增强：符干/横梁/音符尾 → 真实时值 ✅ (v2.4.0 已完成核心：全/二/四/八/十六分)
   - ✅ 符尾（非连梁单音符）精细层数识别 (v2.9.0 已完成：符干方向感知 + 2D 水平墨迹投影计数八/十六/三十二分符尾)
 - OMR 附点音符识别 ✅ (v2.8.0 已完成：符头右侧三态墨块分类检测单/双附点，时值 ×1.5/×1.75)
+- OMR 演奏法标记(articulations)识别：
+  - ✅ 断奏点(staccato dot) (v2.21.0 已完成：符干方向感知搜索符头反侧小圆点，与附点区分，渲染标注)
+  - 待添加：保持音(tenuto)、重音(accent)、连音(slur/tie) 等
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
