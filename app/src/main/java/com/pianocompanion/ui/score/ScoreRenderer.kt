@@ -197,13 +197,34 @@ private fun StaffView(
                 drawStem(noteColor, x, y, noteRadius, lineSpacing, stemUp = true)
             }
 
-            // Draw staccato dot if the note is marked staccato
-            if (note.articulation == com.pianocompanion.data.model.Articulation.STACCATO) {
-                drawCircle(
-                    color = noteColor,
-                    radius = noteRadius * 0.22f,
-                    center = Offset(x, y + noteRadius * 2.8f)
-                )
+            // Draw articulation marks (staccato dot / tenuto line / accent wedge)
+            when (note.articulation) {
+                com.pianocompanion.data.model.Articulation.STACCATO -> {
+                    drawCircle(
+                        color = noteColor,
+                        radius = noteRadius * 0.22f,
+                        center = Offset(x, y + noteRadius * 2.8f)
+                    )
+                }
+                com.pianocompanion.data.model.Articulation.TENUTO -> {
+                    val ty = y + noteRadius * 2.8f
+                    drawLine(
+                        color = noteColor,
+                        start = Offset(x - noteRadius * 0.8f, ty),
+                        end = Offset(x + noteRadius * 0.8f, ty),
+                        strokeWidth = 2.5f
+                    )
+                }
+                com.pianocompanion.data.model.Articulation.ACCENT -> {
+                    val ay = y + noteRadius * 2.6f
+                    val wedge = Path().apply {
+                        moveTo(x - noteRadius * 0.7f, ay - noteRadius * 0.4f)
+                        lineTo(x + noteRadius * 0.7f, ay)
+                        lineTo(x - noteRadius * 0.7f, ay + noteRadius * 0.4f)
+                    }
+                    drawPath(wedge, color = noteColor, style = Stroke(width = 2.5f))
+                }
+                else -> { /* NONE: no mark */ }
             }
 
             // Highlight current note with a circle

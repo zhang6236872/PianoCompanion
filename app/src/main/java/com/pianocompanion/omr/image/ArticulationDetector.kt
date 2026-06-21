@@ -1,66 +1,111 @@
 package com.pianocompanion.omr.image
 
+import com.pianocompanion.data.model.Articulation
+
 /**
  * Detects articulation marks near noteheads in a cleaned (staff-removed, denoised)
  * binary image.
  *
- * ## Staccato dot detection
+ * ## Supported articulations
  *
- * A staccato dot (•) is a small, compact ink mark placed directly above or below
- * a notehead — always on the **opposite** side from the stem. It instructs the
- * performer to play the note short and detached.
+ * - **Staccato dot (•)** [Articulation.STACCATO]: a small, compact, nearly square ink
+ *   blob placed directly above or below a notehead — always on the **opposite** side
+ *   from the stem. Instructs the performer to play short and detached.
  *
- * **Key distinction from augmentation dots** (counted by [RhythmAnalyzer]):
- * - Augmentation dot: to the **right** of the notehead, at the same vertical level.
- * - Staccato dot: **above or below** the notehead, in the same horizontal column.
+ * - **Tenuto line (—)** [Articulation.TENUTO]: a short horizontal line placed above or
+ *   below the notehead (opposite side from stem). Instructs the performer to hold the
+ *   note for its full value. Distinguished from staccato by a high **aspect ratio**
+ *   (width ≫ height): a tenuto line is much wider than it is tall.
  *
- * **Search strategy**: for each notehead the search side is chosen based on stem
- * direction (if known):
- * - Stem up → search **below** the notehead (dot is opposite to stem).
+ * - **Accent wedge (>)** [Articulation.ACCENT]: a small wedge/triangle mark placed
+ *   above or below the notehead. Instructs the performer to emphasize the note.
+ *   Distinguished from staccato by a lower **fill ratio**: an accent wedge is a
+ *   triangular/hollow shape that fills less of its bounding box than a solid dot.
+ *
+ * ## Key distinction from augmentation dots (counted by [RhythmAnalyzer])
+ *
+ * Augmentation dots sit to the **right** of the notehead at the same vertical level,
+ * while articulation marks sit **above or below** the notehead in the same horizontal
+ * column. By searching only above/below we avoid interference from augmentation dots.
+ *
+ * ## Search strategy
+ *
+ * For each notehead the search side is chosen based on stem direction (if known):
+ * - Stem up → search **below** the notehead (mark is opposite to stem).
  * - Stem down → search **above**.
  * - No stem (whole note) → search **both** sides.
  *
  * By searching the side opposite the stem we avoid interference from the stem's
- * vertical line, which would otherwise be indistinguishable from a small dot in
- * a noisy projection.
- *
- * Within the search region the detector looks for a compact blob whose horizontal
- * and vertical extents are both ≤ `0.6 × s` (staff line spacing) — too small to be
- * a notehead, too compact to be a stem or ledger line.
+ * vertical line, which would otherwise be indistinguishable from a tall mark in a
+ * noisy projection.
  */
 object ArticulationDetector {
 
+    // --- Thresholds (as multiples of staff line spacing `s`) ----------------
+
+    /** Maximum height of any articulation mark; taller blobs are stems/ledger lines. */
+    private const val MARK_MAX_HEIGHT_FRAC = 1.5
+
+    /** Maximum width/height of a staccato dot blob. */
+    private const val DOT_MAX_DIM_FRAC = 0.6
+
     /**
-     * Detects which noteheads have a staccato dot nearby.
+     * Aspect ratio (width / height) at or above which a blob is classified as a
+     * tenuto line rather than a compact mark. A tenuto line is clearly wider than
+     * tall (AR ≈ 4–8 in practice), while staccato/accent marks have AR ≈ 1–2.
+     */
+    private const val TENUTO_AR_THRESHOLD = 2.5
+
+    /** Minimum width (in spacing units) for a tenuto line (avoids classifying noise). */
+    private const val TENUTO_MIN_WIDTH_FRAC = 0.4
+
+    /**
+     * Fill ratio threshold: blobs whose fill ratio is **strictly below** this value
+     * are classified as accent (hollow/wedge), those at or above are staccato (solid).
+     * A solid dot fills ≈ 0.75–1.0 of its bounding box; a wedge fills ≈ 0.3–0.5.
+     */
+    private const val ACCENT_FILL_THRESHOLD = 0.55
+
+    /** Minimum total black pixels for any mark (excludes single-pixel noise). */
+    private const val MIN_PIXELS = 2
+
+    /** Minimum width AND height (in pixels) for an accent mark. */
+    private const val ACCENT_MIN_DIM = 3
+
+    // -----------------------------------------------------------------------
+
+    /**
+     * Detects articulation marks for all noteheads and returns a map of
+     * notehead-index → [Articulation] (only entries with a detected mark are included).
      *
      * @param image       cleaned binary image (staff lines removed, denoised).
      * @param noteheads   all detected noteheads (same list/order used by the pipeline).
      * @param rhythms     parallel rhythm features (for stem direction); must be the same
      *                    length as [noteheads], or empty to search both sides for all.
      * @param lineSpacing staff line spacing in pixels.
-     * @return set of indices into [noteheads] that have a staccato dot.
+     * @return map from notehead index to its detected articulation (excluding [Articulation.NONE]).
      */
-    fun detectStaccato(
+    fun detectArticulations(
         image: BinaryImage,
         noteheads: List<Notehead>,
         rhythms: List<RhythmFeatures>,
         lineSpacing: Int
-    ): Set<Int> {
-        if (lineSpacing <= 0 || noteheads.isEmpty()) return emptySet()
+    ): Map<Int, Articulation> {
+        if (lineSpacing <= 0 || noteheads.isEmpty()) return emptyMap()
         val s = lineSpacing.toDouble()
 
-        val maxDotDim = (0.6 * s).toInt().coerceAtLeast(2)   // max width/height of a dot blob
-        val minPixels = 2                                     // at least 2 black pixels to qualify
-        val searchGap = (0.4 * s).toInt().coerceAtLeast(2)    // gap between notehead edge and search start
-        val searchRange = (2.0 * s).toInt()                   // how far to search
-        val xHalf = (maxOf(noteheads[0].width, 0) / 2.0)      // will be recomputed per notehead
+        val maxMarkHeight = (MARK_MAX_HEIGHT_FRAC * s).toInt().coerceAtLeast(3)
+        val searchGap = (0.4 * s).toInt().coerceAtLeast(2)
+        val searchRange = (2.0 * s).toInt()
 
-        val result = HashSet<Int>()
+        val result = HashMap<Int, Articulation>()
 
         noteheads.forEachIndexed { idx, nh ->
-            val halfW = (maxOf(nh.width / 2, (0.4 * s).toInt())).coerceAtLeast(2)
-            val xLo = (nh.centerX - halfW).coerceAtLeast(0)
-            val xHi = (nh.centerX + halfW).coerceAtLeast(xLo)
+            // X-window centered on notehead, at least 0.6s half-width (wider than
+            // staccato-only to capture accent marks that extend slightly beyond notehead).
+            val halfW = (maxOf(nh.width / 2, (0.6 * s).toInt())).coerceAtLeast(3)
+            val xLo = (nh.centerX - halfW).coerceIn(0, image.width - 1)
+            val xHi = (nh.centerX + halfW).coerceIn(xLo, image.width - 1)
             val topEdge = nh.centerY - nh.height / 2
             val botEdge = nh.centerY + nh.height / 2
 
@@ -74,20 +119,22 @@ object ArticulationDetector {
                 else -> { searchBelow = false; searchAbove = true }
             }
 
-            val foundBelow = if (searchBelow) {
+            // Search below first (primary side for stem-up notes).
+            var found: Articulation = Articulation.NONE
+            if (searchBelow) {
                 val yStart = (botEdge + searchGap).coerceAtLeast(0)
                 val yEnd = minOf(botEdge + searchGap + searchRange, image.height - 1)
-                hasCompactDot(image, xLo, xHi, yStart, yEnd, maxDotDim, minPixels)
-            } else false
-
-            val foundAbove = if (searchAbove && !foundBelow) {
+                found = findAndClassify(image, xLo, xHi, yStart, yEnd, maxMarkHeight, s)
+            }
+            // Search above only if nothing found below.
+            if (found == Articulation.NONE && searchAbove) {
                 val yStart = maxOf(topEdge - searchGap - searchRange, 0)
                 val yEnd = minOf(topEdge - searchGap, image.height - 1)
-                hasCompactDot(image, xLo, xHi, yStart, yEnd, maxDotDim, minPixels)
-            } else false
+                found = findAndClassify(image, xLo, xHi, yStart, yEnd, maxMarkHeight, s)
+            }
 
-            if (foundBelow || foundAbove) {
-                result += idx
+            if (found != Articulation.NONE) {
+                result[idx] = found
             }
         }
 
@@ -95,62 +142,144 @@ object ArticulationDetector {
     }
 
     /**
-     * Scans a rectangular region for a compact ink blob that looks like a staccato dot.
+     * Detects which noteheads have a staccato dot nearby.
      *
-     * A dot is characterised by:
-     * - At least [minPixels] black pixels in the region.
-     * - The ink is confined to a small number of consecutive rows (height ≤ [maxDim]).
-     * - The widest ink row has ≤ [maxDim] pixels (compact, not a wide line).
+     * Convenience wrapper around [detectArticulations] that returns only staccato
+     * indices. Retained for backward compatibility.
      *
-     * @return `true` if a dot-like blob is found.
+     * @return set of indices into [noteheads] that have a staccato dot.
      */
-    private fun hasCompactDot(
+    fun detectStaccato(
+        image: BinaryImage,
+        noteheads: List<Notehead>,
+        rhythms: List<RhythmFeatures>,
+        lineSpacing: Int
+    ): Set<Int> {
+        return detectArticulations(image, noteheads, rhythms, lineSpacing)
+            .filterValues { it == Articulation.STACCATO }
+            .keys
+    }
+
+    // -----------------------------------------------------------------------
+    //  Internal helpers
+    // -----------------------------------------------------------------------
+
+    /**
+     * Scans a rectangular region for the first articulation-like blob and classifies it.
+     *
+     * @return the classified [Articulation], or [Articulation.NONE] if no mark found.
+     */
+    private fun findAndClassify(
         image: BinaryImage,
         xLo: Int,
         xHi: Int,
         yStart: Int,
         yEnd: Int,
-        maxDim: Int,
-        minPixels: Int
-    ): Boolean {
-        if (yStart > yEnd || xLo > xHi) return false
+        maxMarkHeight: Int,
+        s: Double
+    ): Articulation {
+        if (yStart > yEnd || xLo > xHi) return Articulation.NONE
 
-        // Row projection: black pixel count per row within the X window.
-        val rowCounts = IntArray(yEnd - yStart + 1)
-        var totalPixels = 0
-        for ((ri, y) in (yStart..yEnd).withIndex()) {
-            var c = 0
+        // Row-by-row scan: track per-row black pixel count and horizontal extent.
+        data class RowInfo(val count: Int, val minX: Int, val maxX: Int)
+
+        // Build row info list (only for rows in [yStart, yEnd]).
+        val rowInfos = ArrayList<RowInfo>(yEnd - yStart + 1)
+        for (y in yStart..yEnd) {
+            var count = 0
+            var minX = Int.MAX_VALUE
+            var maxX = Int.MIN_VALUE
             for (x in xLo..xHi) {
-                if (image.isBlack(x, y)) c++
+                if (image.isBlack(x, y)) {
+                    count++
+                    if (x < minX) minX = x
+                    if (x > maxX) maxX = x
+                }
             }
-            rowCounts[ri] = c
-            totalPixels += c
+            rowInfos.add(RowInfo(count, if (count > 0) minX else 0, if (count > 0) maxX else 0))
         }
-        if (totalPixels < minPixels) return false
 
-        // Find groups of consecutive rows that have ink.
-        // A staccato dot creates a compact group (height ≤ maxDim);
-        // a stem or ledger line creates a tall group.
+        // Find groups of consecutive rows that have ink. Return the classification
+        // of the first group that is short enough to be an articulation mark (not a
+        // stem or ledger line).
         var i = 0
-        while (i < rowCounts.size) {
-            if (rowCounts[i] == 0) { i++; continue }
+        while (i < rowInfos.size) {
+            if (rowInfos[i].count == 0) { i++; continue }
             // Start of an ink group.
-            var groupStart = i
+            val groupStartRow = i
             var groupPixels = 0
-            var maxRowInGroup = 0
-            while (i < rowCounts.size && rowCounts[i] > 0) {
-                groupPixels += rowCounts[i]
-                if (rowCounts[i] > maxRowInGroup) maxRowInGroup = rowCounts[i]
+            var groupMinX = Int.MAX_VALUE
+            var groupMaxX = Int.MIN_VALUE
+            while (i < rowInfos.size && rowInfos[i].count > 0) {
+                groupPixels += rowInfos[i].count
+                if (rowInfos[i].minX < groupMinX) groupMinX = rowInfos[i].minX
+                if (rowInfos[i].maxX > groupMaxX) groupMaxX = rowInfos[i].maxX
                 i++
             }
-            val groupHeight = i - groupStart
+            val groupHeight = i - groupStartRow
+            val groupWidth = if (groupPixels > 0) groupMaxX - groupMinX + 1 else 0
 
-            // Staccato dot: compact (height ≤ maxDim, width ≤ maxDim), enough pixels.
-            if (groupHeight in 1..maxDim && maxRowInGroup in 1..maxDim && groupPixels >= minPixels) {
-                return true
-            }
-            // Otherwise this group is too tall (stem/line) or too wide — skip it.
+            // Skip groups that are too tall (stems, ledger lines).
+            if (groupHeight > maxMarkHeight) continue
+            // Skip groups with too few pixels (noise).
+            if (groupPixels < MIN_PIXELS) continue
+
+            // Classify this blob. Continue to the next group if it doesn't match
+            // any articulation shape (could be noise or a non-articulation mark).
+            val blob = MarkBlob(groupWidth, groupHeight, groupPixels)
+            val art = classifyMark(blob, s)
+            if (art != Articulation.NONE) return art
         }
-        return false
+
+        return Articulation.NONE
+    }
+
+    /**
+     * Classifies an ink blob as staccato, tenuto, or accent based on its geometry.
+     *
+     * Decision tree:
+     * 1. **Tenuto**: aspect ratio ≥ [TENUTO_AR_THRESHOLD] and width ≥ [TENUTO_MIN_WIDTH_FRAC]×s
+     *    → clearly horizontal line (much wider than tall).
+     * 2. **Accent**: fill ratio < [ACCENT_FILL_THRESHOLD] and blob is large enough
+     *    → hollow/wedge shape (triangular marks have significant empty space).
+     * 3. **Staccato**: everything else compact → solid dot.
+     */
+    private fun classifyMark(blob: MarkBlob, s: Double): Articulation {
+        val ar = blob.aspectRatio
+        val fill = blob.fillRatio
+        val dotMaxDim = (DOT_MAX_DIM_FRAC * s).toInt().coerceAtLeast(2)
+
+        return when {
+            // Tenuto: clearly horizontal line (width >> height).
+            ar >= TENUTO_AR_THRESHOLD && blob.width >= (TENUTO_MIN_WIDTH_FRAC * s) ->
+                Articulation.TENUTO
+
+            // Accent: hollow/wedge shape with low fill ratio.
+            blob.width >= ACCENT_MIN_DIM && blob.height >= ACCENT_MIN_DIM && fill < ACCENT_FILL_THRESHOLD ->
+                Articulation.ACCENT
+
+            // Staccato: solid compact dot (within dotMaxDim).
+            blob.width <= dotMaxDim && blob.height <= dotMaxDim ->
+                Articulation.STACCATO
+
+            // Anything else (too large/tall or doesn't match any shape) → not an articulation.
+            else -> Articulation.NONE
+        }
+    }
+
+    /**
+     * Geometric description of an ink blob found in a search region.
+     *
+     * @param width       bounding-box width (maxX - minX + 1).
+     * @param height      bounding-box height (consecutive ink rows).
+     * @param pixelCount  total black pixels in the blob.
+     */
+    private data class MarkBlob(val width: Int, val height: Int, val pixelCount: Int) {
+        /** Width / height ratio. ≥ 1 means wider than tall. */
+        val aspectRatio: Double get() = if (height > 0) width.toDouble() / height else 0.0
+
+        /** Black pixel density within the bounding box. 1.0 = fully solid. */
+        val fillRatio: Double get() =
+            if (width > 0 && height > 0) pixelCount.toDouble() / (width * height) else 0.0
     }
 }
