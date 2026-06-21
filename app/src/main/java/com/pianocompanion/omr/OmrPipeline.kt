@@ -4,6 +4,8 @@ import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
+import com.pianocompanion.omr.image.BarlineDetector
+import com.pianocompanion.omr.image.BarlineType
 import com.pianocompanion.omr.image.BinaryDenoiser
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
@@ -150,6 +152,26 @@ object OmrPipeline {
             }
         }
 
+        // --- 6.5. 小节线检测 -------------------------------------------------
+        // 在含谱线的 warped 图上检测竖线（小节线需贯穿全谱高）。用已检测符头 X 排除符干。
+        // 小节线位置用于精确计算 ScoreNote.measureIndex（替代旧的 startTime/measureMs 估算）。
+        val barlinesBySystem = systems.mapIndexed { idx, system ->
+            val endX = signatures.perSystem.getOrElse(idx) { null }?.signatureEndX ?: 0
+            BarlineDetector.detect(warped, system, endX, noteheadsBySystem[idx].map { it.centerX })
+        }
+        val totalBarlines = barlinesBySystem.sumOf { it.size }
+
+        // 每系统的累积小节偏移：系统 0 从 0 开始，系统 1 的偏移 = 系统 0 的小节线数，
+        // 以此类推（多系统页面的乐谱从上到下、系统内从左到右流动）。
+        val measureBaseBySystem = IntArray(systems.size)
+        if (systems.size > 1) {
+            var base = 0
+            for (idx in systems.indices) {
+                measureBaseBySystem[idx] = base
+                base += barlinesBySystem[idx].size
+            }
+        }
+
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
@@ -222,13 +244,22 @@ object OmrPipeline {
                 val system = systems[ln.systemIdx]
                 val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
                 if (midi in 21..108) {
+                    // 小节线检测到时，用视觉小节线位置精确计算 measureIndex
+                    // （该音符之前有多少条小节线 = 该音符所在小节序号）；
+                    // 未检测到小节线时回退到旧的 startTime/measureMs 时间估算。
+                    val measureIndex = if (totalBarlines > 0) {
+                        measureBaseBySystem[ln.systemIdx] +
+                            barlinesBySystem[ln.systemIdx].count { it.centerX < ln.nh.centerX }
+                    } else {
+                        (startTime / measureMs).toInt()
+                    }
                     notes += ScoreNote(
                         midiNumber = midi,
                         noteName = MusicUtils.midiToNoteName(midi),
                         startTime = startTime,
                         duration = duration,
                         staff = ln.staff,
-                        measureIndex = (startTime / measureMs).toInt()
+                        measureIndex = measureIndex
                     )
                 }
                 j++
@@ -304,6 +335,20 @@ object OmrPipeline {
                     "${list.size} 个$label"
                 }
             warnings += "检测到 ${allRests.size} 个休止符（$restSummary），已计入时间轴"
+        }
+        // 小节线提示：告知用户检测到的小节数，说明 measureIndex 基于视觉小节线。
+        if (totalBarlines > 0) {
+            val maxMeasure = (notes.maxOfOrNull { it.measureIndex } ?: 0) + 1
+            val typeSummary = barlinesBySystem.flatten().groupBy { it.type }
+                .entries.joinToString("、") { (type, list) ->
+                    val name = when (type) {
+                        BarlineType.SINGLE -> "单竖线"
+                        BarlineType.DOUBLE -> "双竖线"
+                        BarlineType.FINAL -> "终止线"
+                    }
+                    "${list.size} 条$name"
+                }
+            warnings += "检测到 $totalBarlines 条小节线（$typeSummary），乐谱约 $maxMeasure 个小节，已据此计算小节归属"
         }
 
         return Result(
