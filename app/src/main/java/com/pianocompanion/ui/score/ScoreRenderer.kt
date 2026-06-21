@@ -197,6 +197,15 @@ private fun StaffView(
                 drawStem(noteColor, x, y, noteRadius, lineSpacing, stemUp = true)
             }
 
+            // Draw staccato dot if the note is marked staccato
+            if (note.articulation == com.pianocompanion.data.model.Articulation.STACCATO) {
+                drawCircle(
+                    color = noteColor,
+                    radius = noteRadius * 0.22f,
+                    center = Offset(x, y + noteRadius * 2.8f)
+                )
+            }
+
             // Highlight current note with a circle
             if (isCurrent) {
                 drawOval(

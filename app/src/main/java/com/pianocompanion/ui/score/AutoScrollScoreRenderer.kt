@@ -203,6 +203,15 @@ private fun ScrollableStaffView(
             val stemHeight = lineSpacing * 2.5f
             drawLine(noteColor, Offset(x + noteRadius, y), Offset(x + noteRadius, y - stemHeight), 2f)
 
+            // Staccato dot
+            if (note.articulation == com.pianocompanion.data.model.Articulation.STACCATO) {
+                drawCircle(
+                    color = noteColor,
+                    radius = noteRadius * 0.22f,
+                    center = Offset(x, y + noteRadius * 2.8f)
+                )
+            }
+
             // Current note highlight + label
             if (isCurrent) {
                 drawOval(

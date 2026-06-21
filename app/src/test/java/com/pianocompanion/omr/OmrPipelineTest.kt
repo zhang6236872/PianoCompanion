@@ -1025,4 +1025,85 @@ class OmrPipelineTest {
             voltaWarning.contains("第1结尾") && voltaWarning.contains("第2结尾")
         )
     }
+
+    // ---- 断奏点(staccato)集成测试 -------------------------------------------
+
+    /**
+     * 在指定位置绘制一个小圆点（断奏点 / staccato dot），3×3 实心方块。
+     */
+    private fun drawStaccatoDot(img: BinaryImage, cx: Int, cy: Int) {
+        for (dy in -1..1) for (dx in -1..1) {
+            if (cx + dx in 0 until width && cy + dy in 0 until height) {
+                img.set(cx + dx, cy + dy, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects staccato articulation on stemmed note`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 带向上符干的实心音符在 (200, 60)——谱线 y=60 上
+        drawStemmedFilled(img, 200, 60)
+        // 断奏点在符头下方（与符干相反一侧）
+        drawStaccatoDot(img, 200, 75)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 1 个音符", 1, result.score.notes.size)
+        assertEquals(
+            "音符应标记为断奏(STACCATO)",
+            com.pianocompanion.data.model.Articulation.STACCATO,
+            result.score.notes[0].articulation
+        )
+        assertTrue(
+            "应在 warnings 中包含断奏提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("断奏") }
+        )
+    }
+
+    @Test
+    fun `pipeline does not mark staccato when no dot is present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(1, result.score.notes.size)
+        assertEquals(
+            "无断奏点时不应标记为 STACCATO",
+            com.pianocompanion.data.model.Articulation.NONE,
+            result.score.notes[0].articulation
+        )
+        assertFalse(
+            "不应有断奏提示",
+            result.warnings.any { it.contains("断奏") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects selective staccato on mixed notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个音符：第一个有断奏点，第二个没有
+        drawStemmedFilled(img, 120, 60)
+        drawStaccatoDot(img, 120, 75)
+        drawStemmedFilled(img, 260, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 2 个音符", 2, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(
+            "第一个音符（有断奏点）应为 STACCATO",
+            com.pianocompanion.data.model.Articulation.STACCATO,
+            sorted[0].articulation
+        )
+        assertEquals(
+            "第二个音符（无断奏点）应为 NONE",
+            com.pianocompanion.data.model.Articulation.NONE,
+            sorted[1].articulation
+        )
+    }
 }
