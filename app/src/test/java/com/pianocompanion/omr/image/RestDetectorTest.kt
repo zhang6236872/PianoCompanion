@@ -156,6 +156,57 @@ class RestDetectorTest {
         }
     }
 
+    /**
+     * **高大的**三十二分休止符：总高度 ~1.8 个谱线间距（超过四分休止符下限 1.5 间距），
+     * 3 个旗钩间隔更大（>= 5 行纯符干），用于验证 [RestDetector] 能正确区分高大的
+     * 三十二分休止符与四分休止符（此前会被四分休止符的"高锯齿形"启发式误判）。
+     */
+    private fun tallThirtySecondRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (1.8 * s).toInt()  // 18
+        val topY = cy - totalH / 2
+        val stemW = 2
+        val flagW = 4
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            for (x in cx until cx + stemW) {
+                if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+            }
+        }
+        // 3 个旗钩（间隔 >= 5 行纯符干，强对比）
+        for (flagY in listOf(topY + 1, topY + 7, topY + 13)) {
+            if (flagY in 0 until h) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until w) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
+    /**
+     * **高大的**十六分休止符：总高度 ~1.7 个谱线间距（超过四分休止符下限 1.5 间距），
+     * 2 个旗钩间隔大（>= 7 行纯符干）。
+     */
+    private fun tallSixteenthRest(img: BinaryImage, cx: Int, cy: Int) {
+        val totalH = (1.7 * s).toInt()  // 17
+        val topY = cy - totalH / 2
+        val stemW = 2
+        val flagW = 4
+        // 竖线符干
+        for (y in topY until topY + totalH) {
+            for (x in cx until cx + stemW) {
+                if (x in 0 until w && y in 0 until h) img.set(x, y, true)
+            }
+        }
+        // 2 个旗钩（间隔 >= 7 行纯符干，强对比）
+        for (flagY in listOf(topY + 1, topY + 9)) {
+            if (flagY in 0 until h) {
+                for (x in cx + stemW until cx + stemW + flagW) {
+                    if (x in 0 until w) img.set(x, flagY, true)
+                }
+            }
+        }
+    }
+
     /** 厚对角线：在 (x0,y0)-(x1,y1) 之间画 thick×thick 的粗线。 */
     private fun drawThickLine(img: BinaryImage, x0: Int, y0: Int, x1: Int, y1: Int, thick: Int) {
         val dx = x1 - x0
@@ -345,6 +396,81 @@ class RestDetectorTest {
         val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
         assertEquals(1, rest.size)
         assertEquals("四分休止符不应被误判为十六/三十二分", NoteDuration.QUARTER, rest[0].duration)
+    }
+
+    // ---- 高位旗形休止符测试（高大的十六/三十二分休止符 vs 四分休止符）----------- //
+
+    @Test
+    fun `tall thirty-second rest above 1_5 spacing is detected as THIRTY_SECOND`() {
+        val img = blank()
+        tallThirtySecondRest(img, cx = 100, cy = 50)
+        // 高度 ~1.8 间距（> 1.5），此前会被四分休止符抢先匹配而误判为 QUARTER；
+        // 现由 tallFlaggedRest 在四分休止符之前拦截，通过强对比旗钩计数正确分类。
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("高大的三十二分休止符应为 THIRTY_SECOND（而非 QUARTER）",
+            NoteDuration.THIRTY_SECOND, rest[0].duration)
+    }
+
+    @Test
+    fun `tall sixteenth rest above 1_5 spacing is detected as SIXTEENTH`() {
+        val img = blank()
+        tallSixteenthRest(img, cx = 100, cy = 50)
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 1 个休止符", 1, rest.size)
+        assertEquals("高大的十六分休止符应为 SIXTEENTH（而非 QUARTER）",
+            NoteDuration.SIXTEENTH, rest[0].duration)
+    }
+
+    @Test
+    fun `tall thirty-second rest without image falls back to quarter rest`() {
+        val img = blank()
+        tallThirtySecondRest(img, cx = 100, cy = 50)
+        // 不传 image → 无法做旗钩分析 → tallFlaggedRest 跳过 → 高度 1.8 间距落入
+        // 四分休止符区间，按向后兼容行为判为 QUARTER（无图时无法区分）。
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs)
+        assertEquals(1, rest.size)
+        assertEquals("无图像时无法计数旗钩，高大的旗形休止符回退为四分",
+            NoteDuration.QUARTER, rest[0].duration)
+    }
+
+    @Test
+    fun `quarter rest remains QUARTER even with image and tall flagged-rest check active`() {
+        val img = blank()
+        quarterRest(img, cx = 100, cy = 50)
+        // 强对比旗钩计数对锯齿形四分休止符应返回 <2（各行密度均匀、无强对比旗钩带），
+        // 不被 tallFlaggedRest 误判。
+        val rest = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals(1, rest.size)
+        assertEquals("四分休止符不应被高位旗形休止符判定误判",
+            NoteDuration.QUARTER, rest[0].duration)
+    }
+
+    @Test
+    fun `tall thirty-second rest and quarter rest are distinguished side by side`() {
+        val img = blank()
+        tallThirtySecondRest(img, cx = 60, cy = 50)   // 高大的三十二分休止符
+        quarterRest(img, cx = 160, cy = 50)            // 四分休止符（锯齿）
+        val rests = RestDetector.detect(blobs(img), emptyList(), s, lineYs, image = img)
+        assertEquals("应检测到 2 个休止符", 2, rests.size)
+        // 按 x 排序：三十二分在左，四分在右
+        assertEquals(60.0, rests[0].centerX.toDouble(), 3.0)
+        assertEquals(160.0, rests[1].centerX.toDouble(), 3.0)
+        assertEquals("左侧应为三十二分休止符", NoteDuration.THIRTY_SECOND, rests[0].duration)
+        assertEquals("右侧应为四分休止符", NoteDuration.QUARTER, rests[1].duration)
+    }
+
+    @Test
+    fun `tall thirty-second rest advances cursor less than quarter rest`() {
+        // 时值验证：三十二分（0.25 拍）短于四分（1 拍），确保正确分类带来的时序正确性。
+        val img32 = blank()
+        val imgQ = blank()
+        tallThirtySecondRest(img32, cx = 100, cy = 50)
+        quarterRest(imgQ, cx = 100, cy = 50)
+        val r32 = RestDetector.detect(blobs(img32), emptyList(), s, lineYs, image = img32)[0]
+        val rq = RestDetector.detect(blobs(imgQ), emptyList(), s, lineYs, image = imgQ)[0]
+        assertTrue("三十二分休止符时长应短于四分休止符",
+            r32.duration.quarterValue < rq.duration.quarterValue)
     }
 
     // ---- 排除逻辑测试 ------------------------------------------------------- //

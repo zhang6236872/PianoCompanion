@@ -37,7 +37,10 @@ data class Rest(
  *
  *  - **十六分休止符 / 三十二分休止符**（sixteenth / thirty-second rest）：与八分
  *    休止符形状相似，但分别带 2 个 / 3 个旗钩。通过 [countFlags] 逐行墨迹密度分析
- *    统计旗钩层数来区分（需传入二值图 [BinaryImage]）。
+ *    统计旗钩层数来区分（需传入二值图 [BinaryImage]）。**高大的**十六分/三十二分
+ *    休止符（高度 ≥1.5 个谱线间距）由 [tallFlaggedRest] 在四分休止符之前拦截，用
+ *    [countStrongFlags] 的强对比旗钩计数（中位数基线 + 高对比阈值）正确分类，避免
+ *    被 [quarterRest] 的"高锯齿形"启发式误判。
  *
  * 全程只读取 [Blob] 的几何特征与（可选的）五线谱线位置，不修改像素。
  *
@@ -109,10 +112,18 @@ object RestDetector {
         // 1) 全/二分休止符（小型实心矩形）
         blockRest(blob, bw, bh, fillRatio, s, staffLineYs)?.let { return it }
 
-        // 2) 四分休止符（高锯齿形）
+        // 2) 高位旗形休止符（高大的十六分/三十二分休止符）——必须在四分休止符之前
+        //    判定。高大的三十二分休止符（3 个旗钩时较高）其高度可能 ≥1.5 个谱线间距，
+        //    落入四分休止符的高度区间，会被四分休止符的"高锯齿形"启发式抢先匹配而误判。
+        //    仅在提供二值图时可判定（需旗钩层数分析）；无图时跳过以保持向后兼容。
+        if (image != null) {
+            tallFlaggedRest(blob, bw, bh, fillRatio, s, image)?.let { return it }
+        }
+
+        // 3) 四分休止符（高锯齿形）
         quarterRest(blob, bw, bh, fillRatio, s)?.let { return it }
 
-        // 3) 八分/十六分/三十二分休止符（旗形，按旗钩层数区分）
+        // 4) 八分/十六分/三十二分休止符（正常高度 0.7–1.5 间距，按旗钩层数区分）
         flaggedRest(blob, bw, bh, fillRatio, s, image)?.let { return it }
 
         return null
@@ -195,6 +206,108 @@ object RestDetector {
         return Rest(blob.centerX, blob.centerY, bw, bh, NoteDuration.QUARTER)
     }
 
+    // ---- 高位旗形休止符（区分高大的十六/三十二分休止符与四分休止符）-----------
+
+    /**
+     * 处理高度 ≥ 1.5 个谱线间距的旗形休止符（高大的十六分/三十二分休止符）。
+     *
+     * **解决的歧义**：高大的三十二分休止符（3 个旗钩时整体偏高）其高度可能
+     * ≥ 1.5 个谱线间距，落入四分休止符的高度区间（1.5–3.5 间距），会被
+     * [quarterRest] 的"高锯齿形"启发式抢先匹配而误判为四分休止符。本方法在
+     * [quarterRest] 之前拦截此类连通块。
+     *
+     * **判定依据（强对比旗钩结构）**：旗形休止符具有清晰的「竖直符干脊 + 水平
+     * 旗钩带」结构——旗钩所在行的墨迹密度显著高于纯符干脊行（对比度大）；而
+     * 四分休止符是单根连续锯齿笔画，各行墨迹密度相近，无明显脊/峰对比。
+     * [countStrongFlags] 用中位数基线 + 高对比阈值统计强旗钩带层数。仅当检测到
+     * ≥ 2 层强旗钩（对应十六分/三十二分）时才判定为旗形休止符——八分休止符仅
+     * 1 旗钩且通常较矮（<1.5 间距），不会进入本分支。
+     *
+     * 几何约束与 [flaggedRest] 的宽度/填充率区间保持一致，仅高度上限放宽到 3.5
+     * 个谱线间距（标准记谱中休止符不会超出谱表高度）。
+     *
+     * @return 十六分或三十二分休止符；若不符合旗形结构则返回 null（交由四分休止符判定）。
+     */
+    private fun tallFlaggedRest(
+        blob: Blob, bw: Int, bh: Int, fillRatio: Double, s: Double,
+        image: BinaryImage
+    ): Rest? {
+        val minH = (1.5 * s).toInt()
+        val maxH = (3.5 * s).toInt()
+        if (bh !in minH..maxH) return null
+
+        val minW = (0.4 * s).toInt().coerceAtLeast(3)
+        val maxW = (1.2 * s).toInt()
+        if (bw !in minW..maxW) return null
+        if (fillRatio < 0.15 || fillRatio > 0.60) return null
+
+        val flagCount = countStrongFlags(blob, image)
+        if (flagCount < 2) return null // < 2 层强旗钩 → 不是高位旗形休止符
+        val duration = if (flagCount >= 3) NoteDuration.THIRTY_SECOND else NoteDuration.SIXTEENTH
+        return Rest(blob.centerX, blob.centerY, bw, bh, duration)
+    }
+
+    /**
+     * 用**强对比阈值**统计旗钩层数——比 [countFlags] 更严格，专门用于区分高大的
+     * 旗形休止符与四分休止符锯齿。
+     *
+     * 与 [countFlags] 的关键区别：
+     *  - 基线取所有非零行的**中位数**（而非最小值），对个别高密度行（如锯齿转弯
+     *    处的密集行）更鲁棒；
+     *  - 旗钩行阈值 = `max(基线×2, 基线+3)`（且 ≥4），要求旗钩行密度**远高于**
+     *    脊行——四分休止符锯齿各行密度接近（如 2 vs 3），不满足此强对比阈值，
+     *    因此返回 0，不会被误判；而旗形休止符的旗钩行密度通常为脊行的 3 倍以上。
+     *
+     * @return 强旗钩带的层数（0=无、1=八分、2=十六分、3=三十二分）。
+     */
+    private fun countStrongFlags(blob: Blob, image: BinaryImage): Int {
+        val h = blob.height
+        if (h <= 0) return 0
+
+        // 1. 逐行墨迹密度
+        val rowCounts = IntArray(h)
+        for (row in 0 until h) {
+            val y = blob.minY + row
+            var cnt = 0
+            for (x in blob.minX..blob.maxX) {
+                if (image.isBlack(x, y)) cnt++
+            }
+            rowCounts[row] = cnt
+        }
+
+        // 2. 中位数基线（非零行），对个别高密度行更鲁棒。
+        val nonzero = rowCounts.filter { it > 0 }.sorted()
+        if (nonzero.isEmpty()) return 0
+        val baseline = nonzero[nonzero.size / 2]
+
+        // 3. 强对比阈值：旗钩行密度必须远高于脊行。
+        val threshold = maxOf(baseline * 2, baseline + 3).coerceAtLeast(4)
+
+        // 4. 统计独立强旗钩组（允许 1 行间断桥接）。
+        var flagCount = 0
+        var i = 0
+        while (i < h) {
+            if (rowCounts[i] < threshold) {
+                i++
+                continue
+            }
+            flagCount++
+            i++
+            var gap = 0
+            while (i < h) {
+                if (rowCounts[i] >= threshold) {
+                    gap = 0
+                    i++
+                } else {
+                    gap++
+                    if (gap > 1) break
+                    i++
+                }
+            }
+        }
+        return flagCount
+    }
+
     // ---- 八分/十六分/三十二分休止符 -------------------------------------------
 
     /**
@@ -209,8 +322,9 @@ object RestDetector {
      *
      * 若未提供 [image]（向后兼容），无法计数旗钩，默认返回八分休止符。
      *
-     * 已知限制：高度超过 1.5 个谱线间距的三十二分休止符可能先被 [quarterRest] 匹配
-     * （四分休止符也检查高度 ≥1.5s 的连通块），此时会被误判为四分休止符。
+     * 已知限制（已解决）：高度超过 1.5 个谱线间距的三十二分休止符此前会被
+     * [quarterRest]（四分休止符也检查高度 ≥1.5s）抢先匹配而误判。现已由
+     * [tallFlaggedRest] 在 [quarterRest] 之前拦截，通过强对比旗钩计数正确分类。
      */
     private fun flaggedRest(
         blob: Blob, bw: Int, bh: Int, fillRatio: Double, s: Double,
