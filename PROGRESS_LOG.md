@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.16.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复)
+- 当前版本: **v2.17.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测)
 - 当前分支: main
 - 最新 tag: v2.16.0
 
 ## 健康状态 (2026-06-21 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 259 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 277 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0
 - Kotlin 文件: 70 个 / 代码行数: 10000+ 行
@@ -429,10 +429,29 @@
     - 3 系统同 X 音符按系统索引排序（验证修复推广到 >2 个系统）
   - 单元测试 255 → **259** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0) 已完成！** 代码已合并到 main，所有 tag 已打。
+### 2026-06-21 (自主开发)
+- **后续增强 (v2.17.0): OMR 小节线检测 — ✅ 完成**
+  - 新增 `BarlineDetector`：纯 Kotlin 小节线检测器（无 Android 依赖，完全可单元测试），
+    基于竖直列投影在谱表带 `[topY..botY]` 内检测小节线位置。小节线列填充率接近 100%
+    （整列黑），远高于普通列的 ~12%（仅 5 条谱线贡献的黑像素）。
+  - 支持三种小节线类型分类：
+    - **SINGLE** `|`：单独细竖线（宽 ≤ 0.5 谱线间距），分隔小节
+    - **DOUBLE** `||`：两条相邻细竖线（间距 ≤ 1.5 谱线间距），标记调号/拍号变化
+    - **FINAL** `|▎`：细线 + 紧邻粗线（粗线宽 > 0.5 且 ≤ 1.0 间距），乐曲结束
+  - 误判防护：通过符头 X 坐标排除符干被误识为小节线；通过签名区域（`signatureEndX`）
+    排除调号/拍号内的竖线被误识。
+  - **OmrPipeline 改进**：新增步骤 6.5 小节线检测阶段；`measureIndex` 现从视觉小节线位置
+    计算（音符 X 前方的小节线数量），替代旧的 `startTime / measureMs` 时间估算——后者在
+    节奏估计偏差时会产生错误的小节归组。支持多系统页面的跨行小节累加
+    （`measureBaseBySystem`），无小节线时自动回退到时间估算。
+  - 新增 18 个测试用例 `BarlineDetectorTest`（合成像素图像）：
+    单/双/终止线检测、符干排除、签名排除、多小节线排序、中心X精度、间距边界等
+  - 单元测试 259 → **277** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (259 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (277 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -452,6 +471,7 @@
 - AdaptiveBinarizerTest: 13
 - BinaryDenoiserTest: 15
 - KeystoneCorrectorTest: 12
+- BarlineDetectorTest: 18
 
 ## 阻塞
 （无）
@@ -474,5 +494,7 @@
 - OMR 休止符识别 ✅ (v2.10.0 已完成：RestDetector 几何分类全/二分/四分/八分休止符，TimelineItem 时间轴合并推进游标)
   - ✅ 十六分/三十二分休止符 (v2.11.0 已完成：旗形休止符按旗钩层数计数区分八/十六/三十二分)
   - 待完善：真实照片噪声鲁棒性、高度 >1.5 间距的三十二分休止符与四分休止符区分
+- OMR 小节线检测 ✅ (v2.17.0 已完成：竖直列投影检测 SINGLE/DOUBLE/FINAL 三种小节线，measureIndex 从视觉小节线位置计算)
+  - 待完善：真实照片鲁棒性、重复小节线/虚线小节线、段线（dashed barline）支持
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
