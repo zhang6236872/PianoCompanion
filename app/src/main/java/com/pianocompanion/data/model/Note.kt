@@ -34,8 +34,9 @@ data class ScoreNote(
  * - [STACCATO] 断奏（•）：音符应短促、断开演奏
  * - [TENUTO] 保持音（—）：音符应充分保持其时值，平稳演奏
  * - [ACCENT] 重音（>）：音符应加以强调、重击
+ * - [STACCATISSIMO] 短断奏（▼/▔）：极短促、尖锐断开，比断奏更短
  */
-enum class Articulation { NONE, STACCATO, TENUTO, ACCENT }
+enum class Articulation { NONE, STACCATO, TENUTO, ACCENT, STACCATISSIMO }
 
 data class DetectedNote(
     val midiNumber: Int,

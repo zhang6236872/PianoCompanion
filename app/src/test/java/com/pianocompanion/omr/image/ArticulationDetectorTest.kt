@@ -568,15 +568,177 @@ class ArticulationDetectorTest {
         )
     }
 
+    // ========================================================================
+    //  Staccatissimo detection
+    // ========================================================================
+
+    /**
+     * Draw a staccatissimo mark (vertical spade/wedge ▼) centered at (cx, cy).
+     * The shape is a small filled triangle pointing up (toward the notehead above):
+     *   .X.
+     *   XXX
+     *   .X.
+     * Bounding box 3×3, pixel count 5, fill ratio ≈ 0.56 (moderate — between solid dot
+     * and hollow wedge), height ≥ width.
+     */
+    private fun drawStaccatissimo(img: BinaryImage, cx: Int, cy: Int) {
+        // Spade shape: tip at top, wide middle, tail at bottom
+        val points = listOf(
+            cx to cy,                       // top tip
+            cx - 1 to cy + 1, cx to cy + 1, cx + 1 to cy + 1,  // wide middle
+            cx to cy + 2                    // bottom tail
+        )
+        for ((px, py) in points) {
+            if (px in 0 until width && py in 0 until height) img.set(px, py, true)
+        }
+    }
+
     @Test
-    fun `empty rhythms list searches both sides for articulations`() {
+    fun `staccatissimo wedge below stem-up notehead is detected`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawStaccatissimo(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.STACCATISSIMO), result)
+    }
+
+    @Test
+    fun `staccatissimo wedge above stem-down notehead is detected`() {
+        val img = blank()
+        drawNotehead(img, 100, 70)
+        drawStaccatissimo(img, 100, 50)
+
+        val nhs = listOf(makeNh(100, 70))
+        val rhythms = listOf(stemDownFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.STACCATISSIMO), result)
+    }
+
+    @Test
+    fun `staccatissimo wedge above whole note (no stem) is detected`() {
         val img = blank()
         drawNotehead(img, 100, 60)
-        drawTenuto(img, 100, 75, halfWidth = 4, thickness = 2)
+        drawStaccatissimo(img, 100, 42)
+
+        val nhs = listOf(makeNh(100, 60))
+        val rhythms = listOf(noStemFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.STACCATISSIMO), result)
+    }
+
+    // ========================================================================
+    //  Disambiguation: staccato vs staccatissimo vs accent
+    // ========================================================================
+
+    @Test
+    fun `staccatissimo is not classified as staccato`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawStaccatissimo(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        // detectStaccato should NOT include this note (it's staccatissimo, not staccato)
+        val staccatoResult = ArticulationDetector.detectStaccato(img, nhs, rhythms, s)
+        assertTrue("Staccatissimo should not appear in staccato set", staccatoResult.isEmpty())
+
+        // detectArticulations should classify it as STACCATISSIMO
+        val artResult = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+        assertEquals(Articulation.STACCATISSIMO, artResult[0])
+    }
+
+    @Test
+    fun `staccato dot is not classified as staccatissimo`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        // Solid 3×3 dot — fill ratio = 1.0 (well above staccato threshold)
+        drawDot(img, 100, 65)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals("Solid dot should be STACCATO, not STACCATISSIMO",
+            Articulation.STACCATO, result[0])
+    }
+
+    @Test
+    fun `staccatissimo wedge is not classified as accent`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawStaccatissimo(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals("Staccatissimo should not be ACCENT",
+            Articulation.STACCATISSIMO, result[0])
+    }
+
+    @Test
+    fun `all four articulations on separate noteheads`() {
+        val img = blank()
+        drawNotehead(img, 50, 50)     // staccato
+        drawNotehead(img, 110, 50)    // tenuto
+        drawNotehead(img, 170, 50)    // accent
+        drawNotehead(img, 230, 50)    // staccatissimo
+
+        drawDot(img, 50, 65)          // 3×3 solid dot
+        drawTenuto(img, 110, 65, halfWidth = 4, thickness = 2)   // 9×2 line
+        drawAccent(img, 170, 65)      // 5×3 wedge
+        drawStaccatissimo(img, 230, 65) // 3×3 spade
+
+        val nhs = listOf(makeNh(50, 50), makeNh(110, 50), makeNh(170, 50), makeNh(230, 50))
+        val rhythms = listOf(stemUpFeatures(), stemUpFeatures(), stemUpFeatures(), stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(
+            mapOf(
+                0 to Articulation.STACCATO,
+                1 to Articulation.TENUTO,
+                2 to Articulation.ACCENT,
+                3 to Articulation.STACCATISSIMO
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `selective staccato and staccatissimo across multiple noteheads`() {
+        val img = blank()
+        drawNotehead(img, 80, 50)    // staccato
+        drawNotehead(img, 160, 50)   // no mark
+        drawNotehead(img, 240, 50)   // staccatissimo
+
+        drawDot(img, 80, 65)
+        drawStaccatissimo(img, 240, 65)
+
+        val nhs = listOf(makeNh(80, 50), makeNh(160, 50), makeNh(240, 50))
+        val rhythms = listOf(stemUpFeatures(), stemUpFeatures(), stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(
+            mapOf(0 to Articulation.STACCATO, 2 to Articulation.STACCATISSIMO),
+            result
+        )
+    }
+
+    @Test
+    fun `empty rhythms list searches both sides for staccatissimo`() {
+        val img = blank()
+        drawNotehead(img, 100, 60)
+        drawStaccatissimo(img, 100, 75)
 
         val nhs = listOf(makeNh(100, 60))
         val result = ArticulationDetector.detectArticulations(img, nhs, emptyList(), s)
 
-        assertEquals(mapOf(0 to Articulation.TENUTO), result)
+        assertEquals(mapOf(0 to Articulation.STACCATISSIMO), result)
     }
 }

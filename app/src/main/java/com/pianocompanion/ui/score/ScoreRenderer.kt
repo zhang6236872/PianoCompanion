@@ -224,6 +224,16 @@ private fun StaffView(
                     }
                     drawPath(wedge, color = noteColor, style = Stroke(width = 2.5f))
                 }
+                com.pianocompanion.data.model.Articulation.STACCATISSIMO -> {
+                    val sy = y + noteRadius * 2.8f
+                    val spade = Path().apply {
+                        moveTo(x, sy - noteRadius * 0.5f)
+                        lineTo(x - noteRadius * 0.3f, sy)
+                        lineTo(x + noteRadius * 0.3f, sy)
+                        close()
+                    }
+                    drawPath(spade, color = noteColor)
+                }
                 else -> { /* NONE: no mark */ }
             }
 

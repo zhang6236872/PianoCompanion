@@ -22,6 +22,14 @@ import com.pianocompanion.data.model.Articulation
  *   Distinguished from staccato by a lower **fill ratio**: an accent wedge is a
  *   triangular/hollow shape that fills less of its bounding box than a solid dot.
  *
+ * - **Staccatissimo wedge (▼)** [Articulation.STACCATISSIMO]: a small vertical
+ *   wedge/spade mark placed above or below the notehead (same position as staccato).
+ *   Instructs the performer to play extremely short and detached — even shorter than
+ *   staccato. Distinguished from staccato by a moderate **fill ratio** (0.35–0.70):
+ *   the wedge's triangular shape has empty space that a solid dot lacks. Distinguished
+ *   from accent by its **vertical orientation** (height ≥ width), while accents are
+ *   horizontally elongated wedges (width > height).
+ *
  * ## Key distinction from augmentation dots (counted by [RhythmAnalyzer])
  *
  * Augmentation dots sit to the **right** of the notehead at the same vertical level,
@@ -66,11 +74,27 @@ object ArticulationDetector {
      */
     private const val ACCENT_FILL_THRESHOLD = 0.55
 
-    /** Minimum total black pixels for any mark (excludes single-pixel noise). */
+    /**
+     * Minimum total black pixels for any mark (excludes single-pixel noise).
+     */
     private const val MIN_PIXELS = 2
 
     /** Minimum width AND height (in pixels) for an accent mark. */
     private const val ACCENT_MIN_DIM = 3
+
+    /**
+     * Fill ratio at or above which a compact blob is a solid staccato dot.
+     * Below this, the blob has empty space and is classified as staccatissimo
+     * (if vertically oriented) or accent (if horizontally oriented).
+     * A solid round dot fills ≈ 0.75–1.0; a triangular wedge fills ≈ 0.40–0.65.
+     */
+    private const val STACCATO_FILL_THRESHOLD = 0.70
+
+    /**
+     * Minimum fill ratio for any small articulation mark. Blobs with fill below
+     * this are too sparse to be a real mark (likely noise or a fragmented stem).
+     */
+    private const val MIN_ARTICULATION_FILL = 0.30
 
     // -----------------------------------------------------------------------
 
@@ -235,36 +259,58 @@ object ArticulationDetector {
     }
 
     /**
-     * Classifies an ink blob as staccato, tenuto, or accent based on its geometry.
+     * Classifies an ink blob as staccato, tenuto, accent, or staccatissimo based on
+     * its geometry.
      *
      * Decision tree:
      * 1. **Tenuto**: aspect ratio ≥ [TENUTO_AR_THRESHOLD] and width ≥ [TENUTO_MIN_WIDTH_FRAC]×s
      *    → clearly horizontal line (much wider than tall).
-     * 2. **Accent**: fill ratio < [ACCENT_FILL_THRESHOLD] and blob is large enough
-     *    → hollow/wedge shape (triangular marks have significant empty space).
-     * 3. **Staccato**: everything else compact → solid dot.
+     * 2. **Compact blobs** (both dims ≤ [DOT_MAX_DIM_FRAC]×s):
+     *    a. **Staccato**: fill ≥ [STACCATO_FILL_THRESHOLD] → solid dot.
+     *    b. **Staccatissimo**: fill ≥ [MIN_ARTICULATION_FILL] and height ≥ width
+     *       → vertical wedge/spade (moderate fill, taller than wide).
+     *    c. **Accent**: fill < [ACCENT_FILL_THRESHOLD] and dims ≥ [ACCENT_MIN_DIM]
+     *       → small horizontal wedge (very sparse, wider than tall).
+     *    d. Remaining compact blobs → **Staccato** (slightly noisy solid dot).
+     * 3. **Larger blobs**: **Accent** if fill < [ACCENT_FILL_THRESHOLD] and dims ≥ [ACCENT_MIN_DIM].
+     * 4. Anything else → [Articulation.NONE].
      */
     private fun classifyMark(blob: MarkBlob, s: Double): Articulation {
         val ar = blob.aspectRatio
         val fill = blob.fillRatio
         val dotMaxDim = (DOT_MAX_DIM_FRAC * s).toInt().coerceAtLeast(2)
 
-        return when {
-            // Tenuto: clearly horizontal line (width >> height).
-            ar >= TENUTO_AR_THRESHOLD && blob.width >= (TENUTO_MIN_WIDTH_FRAC * s) ->
-                Articulation.TENUTO
-
-            // Accent: hollow/wedge shape with low fill ratio.
-            blob.width >= ACCENT_MIN_DIM && blob.height >= ACCENT_MIN_DIM && fill < ACCENT_FILL_THRESHOLD ->
-                Articulation.ACCENT
-
-            // Staccato: solid compact dot (within dotMaxDim).
-            blob.width <= dotMaxDim && blob.height <= dotMaxDim ->
-                Articulation.STACCATO
-
-            // Anything else (too large/tall or doesn't match any shape) → not an articulation.
-            else -> Articulation.NONE
+        // Tenuto: clearly horizontal line (width >> height).
+        if (ar >= TENUTO_AR_THRESHOLD && blob.width >= (TENUTO_MIN_WIDTH_FRAC * s)) {
+            return Articulation.TENUTO
         }
+
+        val isCompact = blob.width <= dotMaxDim && blob.height <= dotMaxDim
+
+        if (isCompact) {
+            // Staccato: solid dot with high fill ratio.
+            if (fill >= STACCATO_FILL_THRESHOLD) {
+                return Articulation.STACCATO
+            }
+            // Staccatissimo: vertical wedge/spade with moderate fill (height ≥ width).
+            if (fill >= MIN_ARTICULATION_FILL && blob.height >= blob.width) {
+                return Articulation.STACCATISSIMO
+            }
+            // Accent: very sparse horizontal wedge (even when compact).
+            if (fill < ACCENT_FILL_THRESHOLD && blob.width >= ACCENT_MIN_DIM && blob.height >= ACCENT_MIN_DIM) {
+                return Articulation.ACCENT
+            }
+            // Remaining compact blobs: treat as staccato (slightly noisy solid dot).
+            return Articulation.STACCATO
+        }
+
+        // Non-compact: Accent (larger hollow wedge).
+        if (blob.width >= ACCENT_MIN_DIM && blob.height >= ACCENT_MIN_DIM && fill < ACCENT_FILL_THRESHOLD) {
+            return Articulation.ACCENT
+        }
+
+        // Anything else (too large/tall or doesn't match any shape) → not an articulation.
+        return Articulation.NONE
     }
 
     /**
