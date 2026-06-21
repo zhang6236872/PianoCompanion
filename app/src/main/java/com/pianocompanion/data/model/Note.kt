@@ -20,11 +20,20 @@ data class ScoreNote(
     val velocity: Int = 64,
     val staff: Staff = Staff.TREBLE,
     val measureIndex: Int = 0,
-    val isGraceNote: Boolean = false
+    val isGraceNote: Boolean = false,
+    val articulation: Articulation = Articulation.NONE
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)
 }
+
+/**
+ * 演奏法标记（articulation），影响音符的演奏方式。
+ *
+ * - [NONE] 无标记
+ * - [STACCATO] 断奏（•）：音符应短促、断开演奏
+ */
+enum class Articulation { NONE, STACCATO }
 
 data class DetectedNote(
     val midiNumber: Int,

@@ -1,9 +1,11 @@
 package com.pianocompanion.omr
 
+import com.pianocompanion.data.model.Articulation
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
+import com.pianocompanion.omr.image.ArticulationDetector
 import com.pianocompanion.omr.image.BarlineDetector
 import com.pianocompanion.omr.image.BarlineType
 import com.pianocompanion.omr.image.BinaryDenoiser
@@ -196,6 +198,13 @@ object OmrPipeline {
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
+        // --- 6.7. 断奏点(staccato dot)检测 ------------------------------------
+        // 断奏点是符头上方或下方（与符干相反一侧）的小圆点，指示演奏者短促断开。
+        // 使用节奏分析的符干方向确定搜索侧（避免符干干扰），在 cleaned 图像上检测。
+        val staccatoIndices = ArticulationDetector.detectStaccato(
+            cleaned, located.map { it.nh }, rhythms, lineSpacing
+        )
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -281,7 +290,9 @@ object OmrPipeline {
                         startTime = startTime,
                         duration = duration,
                         staff = ln.staff,
-                        measureIndex = measureIndex
+                        measureIndex = measureIndex,
+                        articulation = if (timeline[j].noteIdx in staccatoIndices)
+                            Articulation.STACCATO else Articulation.NONE
                     )
                 }
                 j++
@@ -379,6 +390,10 @@ object OmrPipeline {
         if (allVoltas.isNotEmpty()) {
             val voltaSummary = allVoltas.joinToString("、") { "第${it.number}结尾" }
             warnings += "检测到 ${allVoltas.size} 个反复跳房子（$voltaSummary），已标注反复结构"
+        }
+        // 断奏提示：告知用户检测到的断奏标记数量。
+        if (staccatoIndices.isNotEmpty()) {
+            warnings += "检测到 ${staccatoIndices.size} 个断奏点（staccato），已标注演奏法标记"
         }
 
         return Result(
