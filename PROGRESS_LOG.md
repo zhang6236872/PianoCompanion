@@ -607,10 +607,35 @@
   - 已知限制：重音(accent)与断奏(staccato)在小尺寸（≤4px）二值图中可能因填充率接近而
     难以区分，真实照片需人工校对；保持音检测非常可靠（宽高比区分度高）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0) 已完成！** 代码已合并到 main。
+### v2.23.0 — OMR 短断奏(staccatissimo)演奏法标记检测 (2026-06-22)
+- **目标**：在已有断奏(staccato)/保持音(tenuto)/重音(accent)基础上，增加第四种演奏法标记——
+  短断奏(staccatissimo ▼)的检测能力
+- **技术方案**：基于墨块几何特征的分类决策树扩展
+  - `Articulation` 枚举新增 `STACCATISSIMO`（短断奏），演奏法检测器现已支持全部四种基本演奏法
+  - `ArticulationDetector.classifyMark()` 决策树重构为**紧凑/非紧凑分支**结构：
+    - **紧凑blob**（宽高均 ≤0.6 谱线间距）：
+      a. 填充率 ≥0.70 → **STACCATO**（实心圆点，填充率 ≈0.75–1.0）
+      b. 填充率 ≥0.30 且高度 ≥宽度 → **STACCATISSIMO**（垂直楔形/黑桃形，填充率 ≈0.40–0.65）
+      c. 填充率 <0.55 且宽 ≥3 → **ACCENT**（水平楔形，极低填充率，宽度 >高度）
+      d. 其余紧凑blob → STACCATO（轻微噪声的实心点）
+    - **非紧凑blob**：填充率 <0.55 → ACCENT（较大空心楔形）
+  - **关键区分逻辑**：
+    - 短断奏 vs 断奏：**填充率**（STACCATO_FILL_THRESHOLD=0.70）——实心圆 vs 三角形/楔形
+    - 短断奏 vs 重音：**方向**（高度≥宽度=垂直 vs 宽度>高度=水平）
+  - 新增常量 `STACCATO_FILL_THRESHOLD=0.70`、`MIN_ARTICULATION_FILL=0.30`
+  - `ScoreRenderer` / `AutoScrollScoreRenderer` 新增渲染：符头下方小实心三角形（向下尖角）
+  - `OmrPipeline` 警告提示增加短断奏(staccatissimo)类型
+  - 新增 8 个单元测试 `ArticulationDetectorTest`（33→41 个）：
+    - 短断奏：垂直楔形在 stem-up/stem-down/whole note 下方/上方检测
+    - 消歧：短断奏不误判为断奏、断奏点不误判为短断奏、短断奏不误判为重音
+    - 四种标记并排正确分类、多符头选择性检测、空 rhythms 双侧搜索
+  - 单元测试 360 → **368** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：短断奏与断奏在极小尺寸（≤3px）二值图中因像素量化可能难以可靠区分；
 
-## 单元测试明细 (360 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (368 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -632,7 +657,7 @@
 - KeystoneCorrectorTest: 12
 - BarlineDetectorTest: 34
 - VoltaDetectorTest: 21
-- ArticulationDetectorTest: 33
+- ArticulationDetectorTest: 41
 
 ## 阻塞
 （无）
@@ -650,7 +675,8 @@
 - OMR 演奏法标记(articulations)识别：
   - ✅ 断奏点(staccato dot) (v2.21.0 已完成：符干方向感知搜索符头反侧小圆点，与附点区分，渲染标注)
   - ✅ 保持音(tenuto)与重音(accent) (v2.22.0 已完成：统一 ArticulationDetector.detectArticulations() 返回 Map<Int,Articulation>，基于宽高比(TENUTO≥2.5)/填充率(ACCENT<0.55)分类，渲染水平线与楔形标记)
-  - 待添加：连音(slur/tie)、强音(marcato)、短断奏(staccatissimo) 等
+  - ✅ 短断奏(staccatissimo) (v2.23.0 已完成：紧凑/非紧凑分支决策树，基于填充率(STACCATO≥0.70)区分实心点vs楔形、基于方向(高度≥宽度)区分短断奏vs重音)
+  - 待添加：连音(slur/tie)、强音(marcato) 等
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
