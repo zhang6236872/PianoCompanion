@@ -198,10 +198,13 @@ object OmrPipeline {
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
 
-        // --- 6.7. 断奏点(staccato dot)检测 ------------------------------------
-        // 断奏点是符头上方或下方（与符干相反一侧）的小圆点，指示演奏者短促断开。
+        // --- 6.7. 演奏法标记(articulation)检测 -------------------------------
+        // 演奏法标记是符头上方或下方（与符干相反一侧）的小标记：
+        // - 断奏点(staccato •)：小实心圆点，指示短促断开
+        // - 保持音(tenuto —)：短水平线，指示充分保持时值
+        // - 重音(accent >)：小楔形/三角，指示强调
         // 使用节奏分析的符干方向确定搜索侧（避免符干干扰），在 cleaned 图像上检测。
-        val staccatoIndices = ArticulationDetector.detectStaccato(
+        val articulations = ArticulationDetector.detectArticulations(
             cleaned, located.map { it.nh }, rhythms, lineSpacing
         )
 
@@ -291,8 +294,7 @@ object OmrPipeline {
                         duration = duration,
                         staff = ln.staff,
                         measureIndex = measureIndex,
-                        articulation = if (timeline[j].noteIdx in staccatoIndices)
-                            Articulation.STACCATO else Articulation.NONE
+                        articulation = articulations[timeline[j].noteIdx] ?: Articulation.NONE
                     )
                 }
                 j++
@@ -391,9 +393,19 @@ object OmrPipeline {
             val voltaSummary = allVoltas.joinToString("、") { "第${it.number}结尾" }
             warnings += "检测到 ${allVoltas.size} 个反复跳房子（$voltaSummary），已标注反复结构"
         }
-        // 断奏提示：告知用户检测到的断奏标记数量。
-        if (staccatoIndices.isNotEmpty()) {
-            warnings += "检测到 ${staccatoIndices.size} 个断奏点（staccato），已标注演奏法标记"
+        // 演奏法标记提示：告知用户检测到的断奏/保持音/重音标记。
+        if (articulations.isNotEmpty()) {
+            val parts = articulations.values.groupBy { it }
+                .entries.joinToString("、") { (art, list) ->
+                    val name = when (art) {
+                        Articulation.STACCATO -> "断奏点(staccato)"
+                        Articulation.TENUTO -> "保持音(tenuto)"
+                        Articulation.ACCENT -> "重音(accent)"
+                        Articulation.NONE -> ""
+                    }
+                    "${list.size} 个$name"
+                }
+            warnings += "检测到 ${articulations.size} 个演奏法标记（$parts），已标注"
         }
 
         return Result(

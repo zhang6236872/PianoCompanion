@@ -1106,4 +1106,110 @@ class OmrPipelineTest {
             sorted[1].articulation
         )
     }
+
+    // ---- 保持音(tenuto)与重音(accent)集成测试 ------------------------------
+
+    /**
+     * 在指定位置绘制保持音标记（短水平线），halfWidth 宽 × thickness 高的实心矩形。
+     */
+    private fun drawTenutoMark(img: BinaryImage, cx: Int, cy: Int, halfWidth: Int = 4, thickness: Int = 2) {
+        for (y in cy..(cy + thickness - 1)) {
+            for (x in (cx - halfWidth)..(cx + halfWidth)) {
+                if (x in 0 until width && y in 0 until height) img.set(x, y, true)
+            }
+        }
+    }
+
+    /**
+     * 在指定位置绘制重音标记（楔形 ">"），5×3 像素，填充率 ≈ 0.33。
+     */
+    private fun drawAccentMark(img: BinaryImage, cx: Int, cy: Int) {
+        val points = listOf(
+            cx - 2 to cy, cx + 2 to cy,
+            cx - 1 to cy + 1, cx + 1 to cy + 1,
+            cx to cy + 2
+        )
+        for ((px, py) in points) {
+            if (px in 0 until width && py in 0 until height) img.set(px, py, true)
+        }
+    }
+
+    @Test
+    fun `pipeline detects tenuto articulation on stemmed note`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 60)
+        // Tenuto line below the notehead (opposite side from stem)
+        drawTenutoMark(img, 200, 74)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 1 个音符", 1, result.score.notes.size)
+        assertEquals(
+            "音符应标记为保持音(TENUTO)",
+            com.pianocompanion.data.model.Articulation.TENUTO,
+            result.score.notes[0].articulation
+        )
+        assertTrue(
+            "应在 warnings 中包含保持音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("保持音") || it.contains("tenuto") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects accent articulation on stemmed note`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 60)
+        // Accent wedge below the notehead
+        drawAccentMark(img, 200, 73)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 1 个音符", 1, result.score.notes.size)
+        assertEquals(
+            "音符应标记为重音(ACCENT)",
+            com.pianocompanion.data.model.Articulation.ACCENT,
+            result.score.notes[0].articulation
+        )
+        assertTrue(
+            "应在 warnings 中包含重音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("重音") || it.contains("accent") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects mixed articulations staccato tenuto and accent`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 三个音符：断奏、保持音、重音
+        drawStemmedFilled(img, 100, 60)
+        drawStaccatoDot(img, 100, 75)
+
+        drawStemmedFilled(img, 210, 60)
+        drawTenutoMark(img, 210, 74)
+
+        drawStemmedFilled(img, 320, 60)
+        drawAccentMark(img, 320, 73)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 3 个音符", 3, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(
+            "第一个音符应为 STACCATO",
+            com.pianocompanion.data.model.Articulation.STACCATO,
+            sorted[0].articulation
+        )
+        assertEquals(
+            "第二个音符应为 TENUTO",
+            com.pianocompanion.data.model.Articulation.TENUTO,
+            sorted[1].articulation
+        )
+        assertEquals(
+            "第三个音符应为 ACCENT",
+            com.pianocompanion.data.model.Articulation.ACCENT,
+            sorted[2].articulation
+        )
+    }
 }
