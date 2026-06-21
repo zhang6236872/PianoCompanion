@@ -12,8 +12,8 @@ android {
         applicationId = "com.pianocompanion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 42
-        versionName = "2.23.0"
+        versionCode = 43
+        versionName = "2.24.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

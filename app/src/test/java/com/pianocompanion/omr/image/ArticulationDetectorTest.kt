@@ -741,4 +741,193 @@ class ArticulationDetectorTest {
 
         assertEquals(mapOf(0 to Articulation.STACCATISSIMO), result)
     }
+
+    // ========================================================================
+    //  Marcato detection
+    // ========================================================================
+
+    /**
+     * Draw a marcato mark (vertical V-shaped caret ^) centered at (cx, cy).
+     * Two converging strokes meeting at a pointed apex, with empty interior.
+     * The apex is narrow (rows 0-1) and the base spreads wider (rows 2+):
+     *   .X.
+     *   X.X
+     *   X...X
+     *   X...X
+     *   X...X
+     *   X...X
+     *   X...X
+     * Bounding box 5×7, pixel count 13, fill ratio ≈ 0.37 (sparse — two thin
+     * strokes with large empty interior), height ≥ width.
+     * Non-compact: height(7) > dotMaxDim(6) when s=10.
+     * The wide base keeps interior pixels below the fillSalt neighbor threshold
+     * (each interior pixel has only 2-3 black neighbors out of 8), so the
+     * denoiser does NOT fill the hollow interior.
+     */
+    private fun drawMarcato(img: BinaryImage, cx: Int, cy: Int) {
+        val points = ArrayList<Pair<Int, Int>>()
+        // Narrow apex (rows 0-1)
+        points.add(cx to cy)                           // row 0: apex
+        points.add(cx - 1 to cy + 1)                   // row 1: left
+        points.add(cx + 1 to cy + 1)                   // row 1: right
+        // Wide base (rows 2-6)
+        for (row in 2..6) {
+            points.add(cx - 2 to cy + row)              // left stroke
+            points.add(cx + 2 to cy + row)              // right stroke
+        }
+        for ((px, py) in points) {
+            if (px in 0 until width && py in 0 until height) img.set(px, py, true)
+        }
+    }
+
+    @Test
+    fun `marcato caret below stem-up notehead is detected`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawMarcato(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.MARCATO), result)
+    }
+
+    @Test
+    fun `marcato caret above stem-down notehead is detected`() {
+        val img = blank()
+        drawNotehead(img, 100, 70)
+        drawMarcato(img, 100, 50)
+
+        val nhs = listOf(makeNh(100, 70))
+        val rhythms = listOf(stemDownFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.MARCATO), result)
+    }
+
+    @Test
+    fun `marcato caret below whole note (no stem) is detected`() {
+        val img = blank()
+        drawNotehead(img, 100, 60)
+        drawMarcato(img, 100, 72)
+
+        val nhs = listOf(makeNh(100, 60))
+        val rhythms = listOf(noStemFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(mapOf(0 to Articulation.MARCATO), result)
+    }
+
+    @Test
+    fun `marcato is not classified as staccatissimo`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawMarcato(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals("Marcato caret should not be STACCATISSIMO (it's non-compact)",
+            Articulation.MARCATO, result[0])
+    }
+
+    @Test
+    fun `staccatissimo is not classified as marcato`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawStaccatissimo(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals("Compact staccatissimo should not be MARCATO",
+            Articulation.STACCATISSIMO, result[0])
+    }
+
+    @Test
+    fun `marcato is not classified as accent`() {
+        val img = blank()
+        drawNotehead(img, 100, 50)
+        drawMarcato(img, 100, 62)
+
+        val nhs = listOf(makeNh(100, 50))
+        val rhythms = listOf(stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals("Vertical marcato should not be ACCENT (different orientation)",
+            Articulation.MARCATO, result[0])
+    }
+
+    @Test
+    fun `all five articulations on separate noteheads`() {
+        val img = blank()
+        drawNotehead(img, 40, 50)     // staccato
+        drawNotehead(img, 100, 50)    // tenuto
+        drawNotehead(img, 160, 50)    // accent
+        drawNotehead(img, 220, 50)    // staccatissimo
+        drawNotehead(img, 280, 50)    // marcato
+
+        drawDot(img, 40, 65)          // 3×3 solid dot
+        drawTenuto(img, 100, 65, halfWidth = 4, thickness = 2)   // 9×2 line
+        drawAccent(img, 160, 65)      // 5×3 wedge
+        drawStaccatissimo(img, 220, 65) // 3×3 spade
+        drawMarcato(img, 280, 65)     // 3×7 caret
+
+        val nhs = listOf(makeNh(40, 50), makeNh(100, 50), makeNh(160, 50), makeNh(220, 50), makeNh(280, 50))
+        val rhythms = listOf(stemUpFeatures(), stemUpFeatures(), stemUpFeatures(), stemUpFeatures(), stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(
+            mapOf(
+                0 to Articulation.STACCATO,
+                1 to Articulation.TENUTO,
+                2 to Articulation.ACCENT,
+                3 to Articulation.STACCATISSIMO,
+                4 to Articulation.MARCATO
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun `selective marcato and staccato across multiple noteheads`() {
+        val img = blank()
+        drawNotehead(img, 80, 50)    // staccato
+        drawNotehead(img, 160, 50)   // no mark
+        drawNotehead(img, 240, 50)   // marcato
+
+        drawDot(img, 80, 65)
+        drawMarcato(img, 240, 65)
+
+        val nhs = listOf(makeNh(80, 50), makeNh(160, 50), makeNh(240, 50))
+        val rhythms = listOf(stemUpFeatures(), stemUpFeatures(), stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(
+            mapOf(0 to Articulation.STACCATO, 2 to Articulation.MARCATO),
+            result
+        )
+    }
+
+    @Test
+    fun `marcato and accent disambiguated by orientation`() {
+        val img = blank()
+        drawNotehead(img, 80, 50)    // marcato (vertical)
+        drawNotehead(img, 160, 50)   // accent (horizontal)
+
+        drawMarcato(img, 80, 65)     // 3×7 vertical caret
+        drawAccent(img, 160, 65)     // 5×3 horizontal wedge
+
+        val nhs = listOf(makeNh(80, 50), makeNh(160, 50))
+        val rhythms = listOf(stemUpFeatures(), stemUpFeatures())
+        val result = ArticulationDetector.detectArticulations(img, nhs, rhythms, s)
+
+        assertEquals(
+            mapOf(0 to Articulation.MARCATO, 1 to Articulation.ACCENT),
+            result
+        )
+    }
 }

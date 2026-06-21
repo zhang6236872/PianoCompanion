@@ -204,6 +204,7 @@ object OmrPipeline {
         // - 保持音(tenuto —)：短水平线，指示充分保持时值
         // - 重音(accent >)：小楔形/三角，指示强调
         // - 短断奏(staccatissimo ▼)：垂直小楔形，指示极短促断开
+        // - 强音(marcato ^)：垂直V形标记，指示强烈强调
         // 使用节奏分析的符干方向确定搜索侧（避免符干干扰），在 cleaned 图像上检测。
         val articulations = ArticulationDetector.detectArticulations(
             cleaned, located.map { it.nh }, rhythms, lineSpacing
@@ -403,6 +404,7 @@ object OmrPipeline {
                         Articulation.TENUTO -> "保持音(tenuto)"
                         Articulation.ACCENT -> "重音(accent)"
                         Articulation.STACCATISSIMO -> "短断奏(staccatissimo)"
+                        Articulation.MARCATO -> "强音(marcato)"
                         Articulation.NONE -> ""
                     }
                     "${list.size} 个$name"

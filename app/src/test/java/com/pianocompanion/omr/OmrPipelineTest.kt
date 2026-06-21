@@ -1212,4 +1212,84 @@ class OmrPipelineTest {
             sorted[2].articulation
         )
     }
+
+    // ---- 强音(marcato)集成测试 ---------------------------------------------
+
+    /**
+     * 在指定位置绘制强音标记（垂直 V 形记号 ^），宽底窄尖。
+     * 尖端 2 行宽 3px，底部 5 行宽 5px。包围盒 5×7，像素 13，填充率 ≈ 0.37。
+     * 宽底使内部像素的黑邻居数 < 6，防止降噪器填充空心内部。
+     */
+    private fun drawMarcatoMark(img: BinaryImage, cx: Int, cy: Int) {
+        val points = ArrayList<Pair<Int, Int>>()
+        // 尖端（0-1 行）
+        points.add(cx to cy)
+        points.add(cx - 1 to cy + 1)
+        points.add(cx + 1 to cy + 1)
+        // 宽底（2-6 行）
+        for (row in 2..6) {
+            points.add(cx - 2 to cy + row)
+            points.add(cx + 2 to cy + row)
+        }
+        for ((px, py) in points) {
+            if (px in 0 until width && py in 0 until height) img.set(px, py, true)
+        }
+    }
+
+    @Test
+    fun `pipeline detects marcato articulation on stemmed note`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 60)
+        // Marcato caret below the notehead (opposite side from stem)
+        drawMarcatoMark(img, 200, 72)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 1 个音符", 1, result.score.notes.size)
+        assertEquals(
+            "音符应标记为强音(MARCATO)",
+            com.pianocompanion.data.model.Articulation.MARCATO,
+            result.score.notes[0].articulation
+        )
+        assertTrue(
+            "应在 warnings 中包含强音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("强音") || it.contains("marcato") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects marcato alongside other articulations`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 三个音符：断奏、强音、保持音
+        drawStemmedFilled(img, 100, 60)
+        drawStaccatoDot(img, 100, 75)
+
+        drawStemmedFilled(img, 210, 60)
+        drawMarcatoMark(img, 210, 72)
+
+        drawStemmedFilled(img, 320, 60)
+        drawTenutoMark(img, 320, 74)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应识别出 3 个音符", 3, result.score.notes.size)
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(
+            "第一个音符应为 STACCATO",
+            com.pianocompanion.data.model.Articulation.STACCATO,
+            sorted[0].articulation
+        )
+        assertEquals(
+            "第二个音符应为 MARCATO",
+            com.pianocompanion.data.model.Articulation.MARCATO,
+            sorted[1].articulation
+        )
+        assertEquals(
+            "第三个音符应为 TENUTO",
+            com.pianocompanion.data.model.Articulation.TENUTO,
+            sorted[2].articulation
+        )
+    }
 }
