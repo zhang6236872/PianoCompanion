@@ -4,10 +4,12 @@ import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.OtsuThresholder
+import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -951,6 +953,76 @@ class OmrPipelineTest {
             "three notes at same x must be ordered by system, not interleaved",
             listOf(0L, 500L, 1000L),
             result.score.notes.map { it.startTime }
+        )
+    }
+
+    // ---- 反复跳房子(volta)端到端集成测试 ------------------------------------- //
+    // 验证完整 OMR 管线能够检测到顶线上方的跳房子括号并在 warnings 中报告。
+
+    /** 在 [y] 行画一条从 [startX] 到 [endX] 的水平线，两端各画一条向下竖钩。 */
+    private fun drawVoltaBracket(
+        img: BinaryImage, startX: Int, endX: Int, y: Int,
+        hookLen: Int = 6, leftHook: Boolean = true, rightHook: Boolean = true
+    ) {
+        for (x in startX..endX) img.set(x, y, true)
+        if (leftHook) for (dy in 1..hookLen) img.set(startX, y + dy, true)
+        if (rightHook) for (dy in 1..hookLen) img.set(endX, y + dy, true)
+    }
+
+    /** 用 5×7 模板按 [scale] 放大绘制跳房子序号，右下角加句点「.」。 */
+    private fun drawVoltaNumber(img: BinaryImage, digit: Int, x0: Int, y0: Int, scale: Int = 2) {
+        val tmpl = SignatureDetector.DIGIT_TEMPLATES[digit] ?: error("no template for $digit")
+        for (r in 0 until SignatureDetector.GRID_H) {
+            for (c in 0 until SignatureDetector.GRID_W) {
+                if (!tmpl[r * SignatureDetector.GRID_W + c]) continue
+                for (dy in 0 until scale) for (dx in 0 until scale) {
+                    val x = x0 + c * scale + dx
+                    val yy = y0 + r * scale + dy
+                    if (x in 0 until width && yy in 0 until height) img.set(x, yy, true)
+                }
+            }
+        }
+        // 句点：数字右下方
+        val dotX = x0 + SignatureDetector.GRID_W * scale + 1
+        val dotY = y0 + (SignatureDetector.GRID_H - 1) * scale
+        for (dx in 0..1) for (dy in 0..1) {
+            if (dotX + dx in 0 until width && dotY + dy in 0 until height) {
+                img.set(dotX + dx, dotY + dy, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects volta brackets and reports them in warnings`() {
+        // 顶线 y=30，间距=10 → 跳房子括号在 y=20（顶线上方 1 个间距）。
+        val img = blankScore()
+        drawStaff(img)
+        val bracketY = lineYs.first() - 10   // 20
+
+        // 第 1 结尾跳房子：括号 + 序号「1.」
+        drawVoltaBracket(img, startX = 80, endX = 160, y = bracketY)
+        drawVoltaNumber(img, digit = 1, x0 = 84, y0 = bracketY - 16)
+        // 第 2 结尾跳房子
+        drawVoltaBracket(img, startX = 170, endX = 260, y = bracketY)
+        drawVoltaNumber(img, digit = 2, x0 = 174, y0 = bracketY - 16)
+
+        // 放一个音符确保管线正常执行（否则可能触发"未找到音符"分支）
+        drawEllipse(img, 100, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        val voltaWarning = result.warnings.find { it.contains("反复跳房子") }
+        assertNotNull(
+            "应在 warnings 中包含跳房子提示，实际 warnings=${result.warnings}",
+            voltaWarning
+        )
+        assertTrue(
+            "跳房子提示应提到 2 个跳房子，实际=$voltaWarning",
+            voltaWarning!!.contains("2 个反复跳房子")
+        )
+        assertTrue(
+            "跳房子提示应包含第1结尾和第2结尾，实际=$voltaWarning",
+            voltaWarning.contains("第1结尾") && voltaWarning.contains("第2结尾")
         )
     }
 }
