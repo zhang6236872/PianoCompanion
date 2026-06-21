@@ -273,4 +273,246 @@ class BarlineDetectorTest {
             bars[0].width in 3..4  // 允许 1px 的分组边界误差
         )
     }
+
+    // ---- 反复记号（repeat）测试 ---------------------------------------------- //
+
+    /** 反复记号圆点：在谱线间（间）内的小型实心圆。 */
+    private fun dot(img: BinaryImage, cx: Int, cy: Int, r: Int = 2) {
+        ellipse(img, cx, cy, rx = r, ry = r)
+    }
+
+    /**
+     * 在竖线 [cx] 右侧绘制一对反复记号圆点（标准位置：中央线上下各一间）。
+     * 圆点位于第 2、3 间（y≈45、55），竖直相距约 1 个谱线间距。
+     */
+    private fun dotsRightOf(img: BinaryImage, cx: Int, offsetX: Int = 9) {
+        val dx = cx + offsetX
+        dot(img, dx, 45)
+        dot(img, dx, 55)
+    }
+
+    /** 在竖线 [cx] 左侧绘制一对反复记号圆点。 */
+    private fun dotsLeftOf(img: BinaryImage, cx: Int, offsetX: Int = 9) {
+        val dx = cx - offsetX
+        dot(img, dx, 45)
+        dot(img, dx, 55)
+    }
+
+    @Test
+    fun `repeat start with dots on right is classified as REPEAT_START`() {
+        val img = blank()
+        drawStaff(img)
+        // 细线 + 粗线 + 右侧两点（‖:）
+        barline(img, cx = 148, lineWidth = 2)   // 细
+        barline(img, cx = 156, lineWidth = 6)   // 粗
+        dotsRightOf(img, cx = 156, offsetX = 9) // 圆点在 x=165
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals("应检测到 1 条小节线（反复开始）", 1, bars.size)
+        assertEquals("应为反复开始", BarlineType.REPEAT_START, bars[0].type)
+    }
+
+    @Test
+    fun `repeat end with dots on left is classified as REPEAT_END`() {
+        val img = blank()
+        drawStaff(img)
+        // 左侧两点 + 细线 + 粗线（:‖）
+        barline(img, cx = 150, lineWidth = 2)   // 细
+        barline(img, cx = 158, lineWidth = 6)   // 粗
+        dotsLeftOf(img, cx = 150, offsetX = 10) // 圆点在 x=140
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals("应检测到 1 条小节线（反复结束）", 1, bars.size)
+        assertEquals("应为反复结束", BarlineType.REPEAT_END, bars[0].type)
+    }
+
+    @Test
+    fun `simple repeat start single thin line plus dots is REPEAT_START`() {
+        val img = blank()
+        drawStaff(img)
+        // 单细线 + 右侧两点（|:）
+        barline(img, cx = 150, lineWidth = 2)
+        dotsRightOf(img, cx = 150, offsetX = 10) // 圆点在 x=160
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals(BarlineType.REPEAT_START, bars[0].type)
+        assertEquals(149.0, bars[0].centerX.toDouble(), 1.0)
+    }
+
+    @Test
+    fun `simple repeat end single thin line plus left dots is REPEAT_END`() {
+        val img = blank()
+        drawStaff(img)
+        barline(img, cx = 160, lineWidth = 2)
+        dotsLeftOf(img, cx = 160, offsetX = 12) // 圆点在 x=148
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals(BarlineType.REPEAT_END, bars[0].type)
+    }
+
+    @Test
+    fun `thin plus thick without dots is FINAL not repeat`() {
+        val img = blank()
+        drawStaff(img)
+        // 细 + 粗，但无圆点 → 应为终止线，不是反复
+        barline(img, cx = 145, lineWidth = 2)
+        barline(img, cx = 156, lineWidth = 6)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals("无圆点应为终止线", BarlineType.FINAL, bars[0].type)
+    }
+
+    @Test
+    fun `single dot is not enough for repeat`() {
+        val img = blank()
+        drawStaff(img)
+        barline(img, cx = 150, lineWidth = 2)
+        // 仅 1 个圆点（不足 2 个）→ 不应判为反复
+        dot(img, 160, 45)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals("单个圆点不足以判反复，应为单竖线", BarlineType.SINGLE, bars[0].type)
+    }
+
+    @Test
+    fun `large notehead near barline does not create false repeat`() {
+        val img = blank()
+        drawStaff(img)
+        barline(img, cx = 150, lineWidth = 2)
+        // 右侧放一个大符头（半径 4，直径 >0.5 间距），不应被当作圆点
+        ellipse(img, 165, 50, rx = 4, ry = 4)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals("大符头不应触发反复判定", BarlineType.SINGLE, bars[0].type)
+    }
+
+    @Test
+    fun `repeat start and end coexist in same staff`() {
+        val img = blank()
+        drawStaff(img)
+        // 反复开始（左）
+        barline(img, cx = 80, lineWidth = 2)
+        barline(img, cx = 88, lineWidth = 6)
+        dotsRightOf(img, cx = 88, offsetX = 9)
+        // 反复结束（右）
+        barline(img, cx = 220, lineWidth = 2)
+        barline(img, cx = 228, lineWidth = 6)
+        dotsLeftOf(img, cx = 220, offsetX = 12)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(2, bars.size)
+        assertEquals(BarlineType.REPEAT_START, bars[0].type)
+        assertEquals(BarlineType.REPEAT_END, bars[1].type)
+        assertTrue("反复开始应在左侧", bars[0].centerX < bars[1].centerX)
+    }
+
+    // ---- 虚线/段线（dashed）测试 -------------------------------------------- //
+
+    /**
+     * 虚线小节线：在 [cx] 处按 dashLen/gapLen 交替绘制贯穿谱高的竖线段。
+     * 宽度 [lineWidth]px，从 top-margin 到 bot+margin。
+     */
+    private fun dashedBarline(
+        img: BinaryImage,
+        cx: Int,
+        lineWidth: Int = 2,
+        dashLen: Int = 5,
+        gapLen: Int = 4,
+        margin: Int = 2
+    ) {
+        val x0 = cx - lineWidth / 2
+        val x1 = x0 + lineWidth - 1
+        val top = lineYs.first() - margin
+        val bot = lineYs.last() + margin
+        var y = top
+        while (y <= bot) {
+            val dashEnd = minOf(y + dashLen - 1, bot)
+            for (x in x0..x1) for (yy in y..dashEnd) {
+                if (x in 0 until w && yy in 0 until h) img.set(x, yy, true)
+            }
+            y = dashEnd + gapLen + 1
+        }
+    }
+
+    @Test
+    fun `dashed barline is classified as DASHED`() {
+        val img = blank()
+        drawStaff(img)
+        dashedBarline(img, cx = 150, lineWidth = 2, dashLen = 5, gapLen = 4)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals("应检测到 1 条虚线小节线", 1, bars.size)
+        assertEquals("应为虚线", BarlineType.DASHED, bars[0].type)
+        assertEquals(149.0, bars[0].centerX.toDouble(), 1.0)
+    }
+
+    @Test
+    fun `dashed barline with wider dashes is detected`() {
+        val img = blank()
+        drawStaff(img)
+        // 更长的墨段（6px）、更短的间隙（3px）
+        dashedBarline(img, cx = 200, lineWidth = 2, dashLen = 6, gapLen = 3)
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals(1, bars.size)
+        assertEquals(BarlineType.DASHED, bars[0].type)
+    }
+
+    @Test
+    fun `continuous stem is not detected as dashed`() {
+        val img = blank()
+        drawStaff(img)
+        // 2px 宽连续符干（y=33-57），填充率 ~68%（在虚线候选区间），但无间隙
+        stem(img, x = 150, fromY = 33, toY = 57)
+        stem(img, x = 151, fromY = 33, toY = 57)
+        val bars = BarlineDetector.detect(img, system())
+        // 连续符干间内全黑，无跳变，不应判为虚线
+        assertTrue("连续符干不应被检测为虚线小节线", bars.none { it.type == BarlineType.DASHED })
+    }
+
+    @Test
+    fun `dashed and solid barlines coexist`() {
+        val img = blank()
+        drawStaff(img)
+        barline(img, cx = 100)                  // 实心单竖线
+        dashedBarline(img, cx = 200)            // 虚线
+        val bars = BarlineDetector.detect(img, system())
+        assertEquals("应检测到 2 条小节线", 2, bars.size)
+        assertEquals(BarlineType.SINGLE, bars[0].type)
+        assertEquals(BarlineType.DASHED, bars[1].type)
+        assertEquals(100.0, bars[0].centerX.toDouble(), 1.0)
+        assertEquals(199.0, bars[1].centerX.toDouble(), 1.0)
+    }
+
+    @Test
+    fun `dashed barline excluded by notehead overlap filter`() {
+        val img = blank()
+        drawStaff(img)
+        dashedBarline(img, cx = 150)
+        // 传入符头 X 后，虚线列被排除
+        val bars = BarlineDetector.detect(img, system(), noteheadXs = listOf(149))
+        assertTrue("与符头重叠的虚线应被排除", bars.none { it.type == BarlineType.DASHED })
+    }
+
+    @Test
+    fun `dashed barline in signature region is excluded`() {
+        val img = blank()
+        drawStaff(img)
+        dashedBarline(img, cx = 50)
+        val bars = BarlineDetector.detect(img, system(), signatureEndX = 80)
+        assertTrue("签名区内的虚线不应被检测", bars.none { it.type == BarlineType.DASHED })
+    }
+
+    @Test
+    fun `empty staff has no dashed false positives`() {
+        val img = blank()
+        drawStaff(img)
+        // 仅谱线，无任何竖线内容
+        val bars = BarlineDetector.detect(img, system())
+        assertTrue("空谱表不应有虚线误报", bars.none { it.type == BarlineType.DASHED })
+    }
+
+    @Test
+    fun `single notehead column is not detected as dashed`() {
+        val img = blank()
+        drawStaff(img)
+        ellipse(img, 150, 50)  // 单个符头，填充率 ~27% < 35%
+        val bars = BarlineDetector.detect(img, system())
+        assertTrue("单个符头不应被检测为虚线", bars.none { it.type == BarlineType.DASHED })
+    }
 }

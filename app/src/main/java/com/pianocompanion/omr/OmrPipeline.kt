@@ -159,7 +159,9 @@ object OmrPipeline {
             val endX = signatures.perSystem.getOrElse(idx) { null }?.signatureEndX ?: 0
             BarlineDetector.detect(warped, system, endX, noteheadsBySystem[idx].map { it.centerX })
         }
-        val totalBarlines = barlinesBySystem.sumOf { it.size }
+        // 虚线/段线（DASHED）是小节内细分，不计入 measureIndex；
+        // 仅 SINGLE / DOUBLE / FINAL / REPEAT_START / REPEAT_END 是真正的小节边界。
+        val totalBarlines = barlinesBySystem.sumOf { bars -> bars.count { it.type != BarlineType.DASHED } }
 
         // 每系统的累积小节偏移：系统 0 从 0 开始，系统 1 的偏移 = 系统 0 的小节线数，
         // 以此类推（多系统页面的乐谱从上到下、系统内从左到右流动）。
@@ -168,7 +170,7 @@ object OmrPipeline {
             var base = 0
             for (idx in systems.indices) {
                 measureBaseBySystem[idx] = base
-                base += barlinesBySystem[idx].size
+                base += barlinesBySystem[idx].count { it.type != BarlineType.DASHED }
             }
         }
 
@@ -249,7 +251,8 @@ object OmrPipeline {
                     // 未检测到小节线时回退到旧的 startTime/measureMs 时间估算。
                     val measureIndex = if (totalBarlines > 0) {
                         measureBaseBySystem[ln.systemIdx] +
-                            barlinesBySystem[ln.systemIdx].count { it.centerX < ln.nh.centerX }
+                            barlinesBySystem[ln.systemIdx]
+                                .count { it.centerX < ln.nh.centerX && it.type != BarlineType.DASHED }
                     } else {
                         (startTime / measureMs).toInt()
                     }
@@ -345,6 +348,9 @@ object OmrPipeline {
                         BarlineType.SINGLE -> "单竖线"
                         BarlineType.DOUBLE -> "双竖线"
                         BarlineType.FINAL -> "终止线"
+                        BarlineType.REPEAT_START -> "反复开始"
+                        BarlineType.REPEAT_END -> "反复结束"
+                        BarlineType.DASHED -> "虚线"
                     }
                     "${list.size} 条$name"
                 }
