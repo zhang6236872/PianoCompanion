@@ -21,6 +21,7 @@ import com.pianocompanion.omr.image.RhythmAnalyzer
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
+import com.pianocompanion.omr.image.VoltaDetector
 import com.pianocompanion.util.MusicUtils
 import kotlin.math.abs
 
@@ -173,6 +174,24 @@ object OmrPipeline {
                 base += barlinesBySystem[idx].count { it.type != BarlineType.DASHED }
             }
         }
+
+        // --- 6.6. 反复跳房子(volta)检测 --------------------------------------
+        // 跳房子是顶线上方的方括号，标记反复时第几遍走哪几个小节。搜索带限制在该系统
+        // 顶线上方、且不低于上一个系统底线（多系统页面避免把上方谱表内容误判）。
+        //
+        // 注意：VoltaDetector 的搜索带本身就在顶线上方（1~2 个谱线间距），而签名区
+        // （谱号/调号/拍号）位于谱线**之间**——两者在竖直方向天然分离，故**不传**
+        // signatureEndX。若传入，谱号上方残留的跳房子序号数字可能被 SignatureDetector
+        // 误判为拍号数字、推高 signatureEndX，进而切掉跳房子括号的左竖钩导致漏检。
+        val voltasBySystem = systems.mapIndexed { idx, system ->
+            val upperLimit = if (idx > 0) {
+                systems[idx - 1].bottomLine.center + lineSpacing
+            } else {
+                0
+            }
+            VoltaDetector.detect(warped, system, upperLimit)
+        }
+        val allVoltas = voltasBySystem.flatten()
 
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
@@ -355,6 +374,11 @@ object OmrPipeline {
                     "${list.size} 条$name"
                 }
             warnings += "检测到 $totalBarlines 条小节线（$typeSummary），乐谱约 $maxMeasure 个小节，已据此计算小节归属"
+        }
+        // 跳房子提示：告知用户检测到的反复结尾结构。
+        if (allVoltas.isNotEmpty()) {
+            val voltaSummary = allVoltas.joinToString("、") { "第${it.number}结尾" }
+            warnings += "检测到 ${allVoltas.size} 个反复跳房子（$voltaSummary），已标注反复结构"
         }
 
         return Result(

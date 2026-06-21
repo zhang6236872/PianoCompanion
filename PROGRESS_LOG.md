@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.18.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测)
+- 当前版本: **v2.19.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测)
 - 当前分支: main
 - 最新 tag: v2.18.0
 
 ## 健康状态 (2026-06-21 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 293 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 315 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0
 - Kotlin 文件: 70 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -485,10 +485,41 @@
   - 已知限制：真实照片中圆点/虚线的几何特征可能与符头/符干混淆，需人工校对；
     反复记号的「跳房子」（voltas/ending brackets）暂不支持
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0) 已完成！** 代码已合并到 main。
+### 2026-06-21 (自主开发)
+- **后续增强 (v2.19.0): OMR 反复「跳房子」(volta / ending bracket) 检测 — ✅ 完成**
+  - 补齐 v2.18.0 列出的待完善项「反复跳房子(voltas/ending brackets)支持」。跳房子是
+    乐谱中标记反复结尾的方括号——顶线上方的水平线，两端各有向下竖钩，左钩上方标
+    序号(1./2./3.)。第一遍走第 1 结尾，从反复记号跳回后走第 2 结尾跳过第 1 结尾。
+    v2.18.0 解决了竖线层面的反复结构(`‖:`/`:‖`)，但完全忽略了水平方向的跳房子标记。
+  - 新增 `VoltaDetector`（纯 Kotlin，无 Android 依赖，完全可单元测试）：
+    - **数据模型** `Volta(startX, endX, number, y)`：括号左右端 X、结尾序号、括号线 Y
+    - **括号检测**：在含谱线的二值图上，于顶线上方搜索带内（1~2 个谱线间距）逐行扫描
+      长水平黑色游程（≥2 个谱线间距），竖直相邻且水平重叠的游程归为同一括号候选
+    - **竖钩验证**（关键鲁棒性）：必须有左竖钩（从括号下方向下延伸 ≥0.4 谱线间距）；
+      且右竖钩或括号长度 ≥3 谱线间距（兼容最后一组结尾的开口跳房子）
+    - **序号识别**：左钩上方区域做连通块标记，取最大连通块（排除句点「.」等小墨块），
+      降采样到 5×7 网格与 `SignatureDetector.DIGIT_TEMPLATES` 做汉明距离匹配（复用已有
+      拍号数字模板），要求最近距离够小且与次近拉开差距；匹配失败时默认 1
+    - **多系统安全**：搜索带上界为 `max(0, topLineY - 2*spacing)`，且不低于上一个系统
+      底线 + 1 间距（避免把上方谱表内容误判）
+  - **管线集成修复**（重要）：发现并修复了 VoltaDetector 与 SignatureDetector 的交互 bug——
+    跳房子序号数字「1.」位于顶线上方但仍在 SignatureDetector 的竖直搜索带内
+    (`top - 2*spacing`)，被误判为拍号数字推高 `signatureEndX`，进而切掉跳房子括号的左竖钩
+    导致漏检。根本原因：签名区（谱号/调号/拍号）位于谱线**之间**，而跳房子在谱线**之上**，
+    两者竖直分离，VoltaDetector 搜索带已天然排除签名区，无需再传 `signatureEndX`
+  - `OmrPipeline` 新增步骤「6.6 反复跳房子检测」，检测结果在 warnings 中提示用户
+    （"检测到 N 个反复跳房子（第1结尾、第2结尾），已标注反复结构"）
+  - 新增 21 个单元测试 `VoltaDetectorTest` + 1 个端到端管线集成测试 `OmrPipelineTest`：
+    - 括号识别 + 序号识别(1/2/3)、无序号默认1、开口跳房子(长跨度/短跨度)、
+      无钩水平线排除、连音线排除、谱线排除、多跳房子同系统、多系统上界、
+      签名区排除、端到端管线双跳房子检测 + warning 验证
+  - 单元测试 293 → **315** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：真实照片中跳房子括号可能因抗锯齿/噪点导致竖钩断裂，需人工校对
 
-## 单元测试明细 (293 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (315 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -497,7 +528,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 34
+- OmrPipelineTest: 35
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -509,6 +540,7 @@
 - BinaryDenoiserTest: 15
 - KeystoneCorrectorTest: 12
 - BarlineDetectorTest: 34
+- VoltaDetectorTest: 21
 
 ## 阻塞
 （无）
@@ -533,6 +565,7 @@
   - 待完善：真实照片噪声鲁棒性、高度 >1.5 间距的三十二分休止符与四分休止符区分
 - OMR 小节线检测 ✅ (v2.17.0 已完成：竖直列投影检测 SINGLE/DOUBLE/FINAL 三种小节线，measureIndex 从视觉小节线位置计算)
   - ✅ 反复记号/虚线小节线/段线 (v2.18.0 已完成：`‖:`/`:‖` 反复记号 + `┊` 虚线小节线，含反复圆点连通性过滤)
-  - 待完善：真实照片鲁棒性、反复「跳房子」(voltas/ending brackets) 支持
+  - ✅ 反复「跳房子」(voltas/ending brackets) (v2.19.0 已完成：顶线上方方括号 + 左右竖钩验证 + 序号连通块识别，管线集成发现并修复 SignatureDetector 误判序号数字为拍号的 bug)
+  - 待完善：真实照片鲁棒性
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
