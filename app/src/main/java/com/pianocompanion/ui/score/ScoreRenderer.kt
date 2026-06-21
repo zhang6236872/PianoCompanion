@@ -234,6 +234,15 @@ private fun StaffView(
                     }
                     drawPath(spade, color = noteColor)
                 }
+                com.pianocompanion.data.model.Articulation.MARCATO -> {
+                    val my = y + noteRadius * 2.8f
+                    val caret = Path().apply {
+                        moveTo(x - noteRadius * 0.55f, my)
+                        lineTo(x, my - noteRadius * 0.7f)
+                        lineTo(x + noteRadius * 0.55f, my)
+                    }
+                    drawPath(caret, color = noteColor, style = Stroke(width = 2.5f))
+                }
                 else -> { /* NONE: no mark */ }
             }
 

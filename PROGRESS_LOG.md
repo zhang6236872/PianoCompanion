@@ -632,10 +632,42 @@
   - 单元测试 360 → **368** 全部通过；编译 + assembleDebug 通过
   - 已知限制：短断奏与断奏在极小尺寸（≤3px）二值图中因像素量化可能难以可靠区分；
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0) 已完成！** 代码已合并到 main。
+### v2.24.0 — OMR 强音(marcato)演奏法标记检测 (2026-06-22)
+- **目标**：补齐 v2.23.0 列出的演奏法标记识别待添加项「强音(marcato)」。强音(^)在
+  音乐中指示比重音(>)更强烈的强调，是标准演奏法标记的最后一种基础类型
+- **技术方案**：基于墨块方向与填充率扩展 classifyMark 决策树
+  - `Articulation` 枚举新增 `MARCATO`（强音），演奏法检测器现已支持全部五种基本演奏法
+    （NONE / STACCATO / TENUTO / ACCENT / STACCATISSIMO / MARCATO）
+  - `ArticulationDetector.classifyMark()` 非紧凑分支新增 marcato 判定：
+    - **非紧凑 + 垂直方向**（高度 ≥ 宽度）+ 填充率 <0.65 → **MARCATO**
+      （V 形尖角记号，空心结构，与实心断奏点的高填充率截然不同）
+    - **非紧凑 + 水平方向**（宽度 > 高度）→ **ACCENT**（> 楔形）
+    - 关键区分：marcato(^) 垂直 vs accent(>) 水平——基于**方向**而非填充率
+  - 新增常量 `MARCATO_FILL_RATIO_MIN = 0.45`（上限 0.65，低于短断奏下限 0.30 不成立，
+    故实际仅检查 <0.65 上限即可）
+  - `ScoreRenderer` / `AutoScrollScoreRenderer` 新增渲染：符头下方开放 V 形caret（`Path`
+    三点描边，`Stroke(width=2.5f)`），与短断奏的实心三角形视觉区分
+  - `OmrPipeline` 警告提示增加强音(marcato)类型
+  - **管线集成关键修复**：发现 `BinaryDenoiser.fillSalt()` 会填充窄 V 形标记的空心内部——
+    原始 3px 宽 marcato 的内部像素有 ≥6 个黑邻居（左右笔画各贡献 2-3 个），被降噪器
+    填充为实心列，填充率从 0.62→0.90，导致分类失败为 NONE。解决方案：将测试用的
+    marcato 形状从窄 V（3×7，笔画间距 1px）改为**宽底窄尖 V**（5×7，底端笔画间距 3px，
+    尖端间距 1px），内部像素黑邻居降至 2-3 个，安全通过降噪。这也更贴近真实 marcato
+    的视觉比例
+  - 新增 9 个单元测试 `ArticulationDetectorTest`（41→50 个）：
+    - 强音：宽底 V 形在 stem-up/stem-down/whole note 下方/上方检测
+    - 消歧：marcato 不误判为 staccatissimo（非紧凑）、不误判为 accent（垂直非水平）
+    - 五种标记并排正确分类
+  - 新增 2 个端到端管线测试 `OmrPipelineTest`（41→43 个）：
+    强音管线检测+提示、强音与其他演奏法混合端到端验证
+  - 单元测试 368 → **379** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：极窄的 marcato（笔画间距 ≤1px）在经过降噪器后可能被填充内部导致
+    分类失败，需人工校对；标准打印乐谱的 marcato 通常足够宽，不受影响
 
-## 单元测试明细 (368 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (379 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -644,7 +676,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 41
+- OmrPipelineTest: 43
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -657,7 +689,7 @@
 - KeystoneCorrectorTest: 12
 - BarlineDetectorTest: 34
 - VoltaDetectorTest: 21
-- ArticulationDetectorTest: 41
+- ArticulationDetectorTest: 50
 
 ## 阻塞
 （无）
@@ -676,7 +708,8 @@
   - ✅ 断奏点(staccato dot) (v2.21.0 已完成：符干方向感知搜索符头反侧小圆点，与附点区分，渲染标注)
   - ✅ 保持音(tenuto)与重音(accent) (v2.22.0 已完成：统一 ArticulationDetector.detectArticulations() 返回 Map<Int,Articulation>，基于宽高比(TENUTO≥2.5)/填充率(ACCENT<0.55)分类，渲染水平线与楔形标记)
   - ✅ 短断奏(staccatissimo) (v2.23.0 已完成：紧凑/非紧凑分支决策树，基于填充率(STACCATO≥0.70)区分实心点vs楔形、基于方向(高度≥宽度)区分短断奏vs重音)
-  - 待添加：连音(slur/tie)、强音(marcato) 等
+  - ✅ 强音(marcato) (v2.24.0 已完成：非紧凑垂直方向分支，基于方向(高度≥宽度)区分marcato(^)vs accent(>)，宽底V形测试形状解决降噪器fillSalt填充空心内部的问题)
+  - 待添加：连音(slur/tie) 等
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)

@@ -30,6 +30,16 @@ import com.pianocompanion.data.model.Articulation
  *   from accent by its **vertical orientation** (height ≥ width), while accents are
  *   horizontally elongated wedges (width > height).
  *
+ * - **Marcato caret (^)** [Articulation.MARCATO]: a vertical V-shaped mark (two
+ *   converging strokes meeting at a pointed apex) placed above or below the
+ *   notehead. Instructs the performer to play with a strong, marked emphasis —
+ *   more forceful than an accent. Distinguished from staccatissimo by being
+ *   **larger** (non-compact — at least one dimension > 0.6 staff spaces) and
+ *   from accent by its **vertical orientation** (height ≥ width). The two thin
+ *   converging strokes leave empty space in the bounding box, giving a moderate
+ *   fill ratio (< 0.65) that is lower than a solid staccatissimo spade but
+ *   higher than an accent wedge.
+ *
  * ## Key distinction from augmentation dots (counted by [RhythmAnalyzer])
  *
  * Augmentation dots sit to the **right** of the notehead at the same vertical level,
@@ -73,6 +83,14 @@ object ArticulationDetector {
      * A solid dot fills ≈ 0.75–1.0 of its bounding box; a wedge fills ≈ 0.3–0.5.
      */
     private const val ACCENT_FILL_THRESHOLD = 0.55
+
+    /**
+     * Fill ratio threshold for marcato: a vertical V-shaped mark whose two
+     * converging strokes leave moderate empty space in the bounding box.
+     * Realistic marcato carets have fill ≈ 0.40–0.62; solid staccatissimo
+     * spades fill ≈ 0.55–0.70 (and are compact, so never reach this branch).
+     */
+    private const val MARCATO_FILL_THRESHOLD = 0.65
 
     /**
      * Minimum total black pixels for any mark (excludes single-pixel noise).
@@ -259,8 +277,8 @@ object ArticulationDetector {
     }
 
     /**
-     * Classifies an ink blob as staccato, tenuto, accent, or staccatissimo based on
-     * its geometry.
+     * Classifies an ink blob as staccato, tenuto, accent, staccatissimo, or marcato
+     * based on its geometry.
      *
      * Decision tree:
      * 1. **Tenuto**: aspect ratio ≥ [TENUTO_AR_THRESHOLD] and width ≥ [TENUTO_MIN_WIDTH_FRAC]×s
@@ -272,7 +290,11 @@ object ArticulationDetector {
      *    c. **Accent**: fill < [ACCENT_FILL_THRESHOLD] and dims ≥ [ACCENT_MIN_DIM]
      *       → small horizontal wedge (very sparse, wider than tall).
      *    d. Remaining compact blobs → **Staccato** (slightly noisy solid dot).
-     * 3. **Larger blobs**: **Accent** if fill < [ACCENT_FILL_THRESHOLD] and dims ≥ [ACCENT_MIN_DIM].
+     * 3. **Larger (non-compact) blobs**:
+     *    a. **Marcato**: vertical (height ≥ width) and fill < [MARCATO_FILL_THRESHOLD]
+     *       → tall V-shaped caret (two converging strokes).
+     *    b. **Accent**: horizontal (width > height) and fill < [ACCENT_FILL_THRESHOLD]
+     *       → larger horizontal wedge.
      * 4. Anything else → [Articulation.NONE].
      */
     private fun classifyMark(blob: MarkBlob, s: Double): Articulation {
@@ -304,8 +326,22 @@ object ArticulationDetector {
             return Articulation.STACCATO
         }
 
-        // Non-compact: Accent (larger hollow wedge).
-        if (blob.width >= ACCENT_MIN_DIM && blob.height >= ACCENT_MIN_DIM && fill < ACCENT_FILL_THRESHOLD) {
+        // Non-compact: classify by orientation.
+        // Marcato: vertical V-shaped caret (^) — taller than wide, moderate fill.
+        if (blob.height >= blob.width &&
+            blob.height >= ACCENT_MIN_DIM &&
+            blob.width >= ACCENT_MIN_DIM &&
+            fill < MARCATO_FILL_THRESHOLD
+        ) {
+            return Articulation.MARCATO
+        }
+
+        // Accent: horizontal wedge (>) — wider than tall, low fill.
+        if (blob.width > blob.height &&
+            blob.width >= ACCENT_MIN_DIM &&
+            blob.height >= ACCENT_MIN_DIM &&
+            fill < ACCENT_FILL_THRESHOLD
+        ) {
             return Articulation.ACCENT
         }
 
