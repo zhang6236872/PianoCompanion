@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.25.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测)
+- 当前版本: **v2.28.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测)
 - 当前分支: main
-- 最新 tag: v2.25.0
+- 最新 tag: v2.28.0
 
-## 健康状态 (2026-06-22 核验)
+## 健康状态 (2026-06-23 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 401 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 450 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0
 - Kotlin 文件: 72 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -735,10 +735,50 @@
   - 已知限制：slur 仅产生 warning，未在 Note 模型上标记 legato 属性（未来可扩展
     ScoreNote 添加 legato 字段用于 UI 标注）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0) 已完成！** 代码已合并到 main。
+### v2.27.0 — OMR 力度记号(dynamic marking)检测 (2026-06-22)
+- **目标**：在 OMR 管线中添加力度记号检测能力，识别谱表下方的文字形式力度标记
+  （pp/p/mp/mf/f/ff 等）。这是 OMR 功能增强列表中「力度记号(动态标记)」的待添加项。
+- **技术方案**：5×7 点阵模板匹配
+  - 新增纯 Kotlin `DynamicMarkingDetector`（无 Android 依赖，完全可单元测试）：
+    - 为字母 p/m/f 设计 5×7 点阵模板（所有行列至少有 1 像素，保证降采样完美往返）
+    - 在谱表下方搜索区域内找连通块，按水平邻近度分组为字母序列
+    - 对每个连通块降采样到 5×7 网格，与模板做汉明距离匹配
+    - 将字母按从左到右拼接，匹配已知力度记号集合
+  - **OmrPipeline 步骤 6.10 集成**：检测到力度记号时产生 warning 提示
+    （不修改 Note 数据模型，与 articulation 一致）
+  - 新增 9 个单元测试 `DynamicMarkingDetectorTest` + 3 个端到端管线测试
+  - 单元测试 423 → **435** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (423 个, 全部通过)
+### v2.28.0 — OMR 反复次数标注(×N)检测 (2026-06-23)
+- **目标**：识别反复结束小节线（`:‖`）上方的「×N」（或「N×」）标注，表示该反复段
+  共演奏 N 遍（而非标准反复的 2 遍）。此前 OMR 管线（v2.18.0）已能检测反复记号竖线，
+  但完全忽略上方的次数标注——无法区分标准反复（2 遍）与多次反复（3/4/… 遍）。
+- **技术方案**：乘号模板 + 数字识别 + 连续字形解析
+  - 新增纯 Kotlin `RepeatCountDetector`（无 Android 依赖，完全可单元测试）：
+    - **检测原理**：对每条 `REPEAT_END` 小节线，在其上方标注带搜索文字类墨块
+    - 用 5×7 点阵 `MULTIPLIER_TEMPLATE` 识别乘号「×」，复用 `SignatureDetector.classifyDigit`
+      识别数字 0-9
+    - **连续数字解析**：以实际字形间距（current.minX - prev.maxX ≤ 0.8×spacing）判断
+      字形相邻性，支持多位数字（如 ×12），即使每个字形宽度接近一整个间距
+    - **与跳房子(volta)序号的区分**：乘号「×」是反复次数标注的标志特征——
+      据此将反复次数与跳房子序号、指法数字、小节号等纯数字区分开来，杜绝误判
+    - **N× 形式支持**：右侧（×N）优先，若无则取左侧（N×）的连续数字
+    - **合理性过滤**：count ≥ 2（反复至少 2 遍），×1 被拒绝
+    - **多系统安全**：标注带不越过上一个系统的底线 + 1 间距
+  - **OmrPipeline 步骤 6.7 集成**：检测到反复次数时产生 warning 提示
+    （不修改 Note 数据模型）
+  - 新增 15 个单元测试 `RepeatCountDetectorTest`：
+    - ×N 形式（×2/×3/×4）、N× 形式（3×）、多位数字（×12）
+    - 误判防护：纯数字无乘号不检测（volta 保护）、仅乘号无数字不检测、
+      ×1 被拒绝、非反复小节线上方忽略、乘号与数字间距过大不组合
+    - 多系统、空白图像、MULTIPLIER_TEMPLATE 属性验证
+    - 端到端集成：BarlineDetector + RepeatCountDetector 联合检测真实反复结束小节线上方的 ×3
+  - 单元测试 435 → **450** 全部通过；编译 + assembleDebug 通过
+
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (450 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -747,7 +787,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 51
+- OmrPipelineTest: 54
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -763,6 +803,8 @@
 - ArticulationDetectorTest: 50
 - TieDetectorTest: 17
 - SlurDetectorTest: 6
+- DynamicMarkingDetectorTest: 9
+- RepeatCountDetectorTest: 15
 
 ## 阻塞
 （无）
@@ -784,7 +826,8 @@
   - ✅ 强音(marcato) (v2.24.0 已完成：非紧凑垂直方向分支，基于方向(高度≥宽度)区分marcato(^)vs accent(>)，宽底V形测试形状解决降噪器fillSalt填充空心内部的问题)
   - ✅ 延音线(tie) (v2.25.0 已完成：列投影覆盖率法检测同音高符头间的连续弧线，覆盖率≥75%判定为tie，被tie的第二个音符时值合并到第一个音符)
   - ✅ 连音(slur) (v2.26.0 已完成：逐列插值搜索跟随音高斜率检测不同音高符头间的弧线，与tie通过音高差异(PITCH_Y_TOLERANCE_FRAC=0.15)区分，支持多音符连音组，仅产生warning不修改时值)
-  - 待添加：更多力度记号(动态标记如 p/mp/mf/f 等)、反复次数标注(如 "×3") 等
+  - 待添加：更多力度记号(如 sfz/rf/cresc./decresc. 等非常规动态标记)、渐强/渐弱符号(< > / hairpin) 等
+  - ✅ 反复次数标注(如 "×3") (v2.28.0 已完成：5×7 乘号点阵模板 + 数字识别 + 连续字形间距解析，支持 ×N/N× 两种形式和多位数字，仅对反复结束小节线(:‖)上方搜索，乘号为标志特征杜绝与跳房子序号混淆，仅产生warning)
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
