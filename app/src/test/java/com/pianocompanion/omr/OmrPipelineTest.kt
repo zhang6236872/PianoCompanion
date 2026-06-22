@@ -1292,4 +1292,166 @@ class OmrPipelineTest {
             sorted[2].articulation
         )
     }
+
+    // ---- 延音线(tie)集成测试 ------------------------------------------------
+
+    /**
+     * 在两个同音高符头之间绘制延音线弧（向下弯弧）。弧从 [x1] 到 [x2]，
+     * 以半正弦曲线弯向下，起始 Y 为 [y]+2（避免与谱线 y 重合），最大偏移 [maxOffset]。
+     * 每列 2 像素厚，确保弧线在列投影检测中几乎 100% 覆盖。
+     */
+    private fun drawTieArcBelow(
+        img: BinaryImage, x1: Int, x2: Int, y: Int, maxOffset: Int = 6
+    ) {
+        for (x in x1..x2) {
+            val t = if (x2 > x1) (x - x1).toDouble() / (x2 - x1) else 0.0
+            val offset = (maxOffset * kotlin.math.sin(Math.PI * t)).toInt()
+            val arcY = y + 2 + offset
+            if (arcY in 0 until height) {
+                img.set(x, arcY, true)
+                if (arcY + 1 in 0 until height) img.set(x, arcY + 1, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline merges two tied quarter notes into one sustained note`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个同音高(G4, y=60)的四分音符，中间有延音线
+        drawStemmedFilled(img, 120, 60)
+        drawStemmedFilled(img, 250, 60)
+        // 延音线弧（向下弯弧，在符头下方，远离符干）
+        drawTieArcBelow(img, 126, 244, 60, maxOffset = 6)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "两个延音线连接的音符应合并为 1 个音符",
+            1, result.score.notes.size
+        )
+        assertEquals(
+            "合并后时值应为两个四分音符之和(500+500=1000ms)",
+            1000L, result.score.notes[0].duration
+        )
+        assertEquals(
+            "起始时间应为 0",
+            0L, result.score.notes[0].startTime
+        )
+        assertTrue(
+            "应在 warnings 中包含延音线提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("延音线") || it.contains("tie") }
+        )
+    }
+
+    @Test
+    fun `pipeline keeps two separate notes when no tie arc present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+        drawStemmedFilled(img, 250, 60)
+        // 不绘制延音线弧
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "无延音线时应保留 2 个独立音符",
+            2, result.score.notes.size
+        )
+        assertEquals(
+            "每个四分音符的时值应为 500ms",
+            500L, result.score.notes[0].duration
+        )
+        assertEquals(
+            "第二个音符的起始时间应为 500ms",
+            500L, result.score.notes[1].startTime
+        )
+        assertFalse(
+            "不应有延音线提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("延音线") || it.contains("tie") }
+        )
+    }
+
+    @Test
+    fun `pipeline merges tie chain of three notes into one`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 三个同音高的四分音符，前两个和后两个之间都有延音线
+        drawStemmedFilled(img, 80, 60)
+        drawStemmedFilled(img, 180, 60)
+        drawStemmedFilled(img, 280, 60)
+        drawTieArcBelow(img, 86, 174, 60, maxOffset = 6)
+        drawTieArcBelow(img, 186, 274, 60, maxOffset = 6)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "三个延音线链连接的音符应合并为 1 个音符",
+            1, result.score.notes.size
+        )
+        assertEquals(
+            "合并后时值应为三个四分音符之和(500×3=1500ms)",
+            1500L, result.score.notes[0].duration
+        )
+        assertTrue(
+            "应在 warnings 中检测到 2 条延音线",
+            result.warnings.any { it.contains("2 个延音线") }
+        )
+    }
+
+    @Test
+    fun `pipeline does not merge different-pitch notes into tie`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个不同音高的四分音符（G4 vs D5）
+        drawStemmedFilled(img, 120, 60)  // G4 (y=60)
+        drawStemmedFilled(img, 250, 40)  // D5 (y=40, 不同音高)
+        // 注意：此处不绘制弧线。绘制穿过谱表系统的薄弧线会产生降噪填充(fillSalt)
+        // 和谱号误检等副作用，与延音线检测无关。TieDetector 的音高判别能力已由
+        // TieDetectorTest 的「different pitch noteheads not tied even with arc between them」
+        // 用例直接验证。
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "不同音高的音符不应被合并为延音线",
+            2, result.score.notes.size
+        )
+        assertFalse(
+            "不应有延音线提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("延音线") || it.contains("tie") }
+        )
+    }
+
+    @Test
+    fun `pipeline merges tied notes and sequences subsequent note correctly`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 第一个音符 + 被延音线连接的第二个 + 独立的第三个音符
+        drawStemmedFilled(img, 80, 60)
+        drawStemmedFilled(img, 180, 60)
+        drawStemmedFilled(img, 320, 60)
+        // 延音线连接第一和第二个音符
+        drawTieArcBelow(img, 86, 174, 60, maxOffset = 6)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "前两个音符被延音线合并，加上独立的第三个 = 2 个音符",
+            2, result.score.notes.size
+        )
+        val sorted = result.score.notes.sortedBy { it.startTime }
+        assertEquals(
+            "合并音符时值应为 1000ms",
+            1000L, sorted[0].duration
+        )
+        assertEquals(
+            "第三个音符应在合并音符结束后开始(1000ms)",
+            1000L, sorted[1].startTime
+        )
+        assertEquals(
+            "第三个音符时值应为 500ms",
+            500L, sorted[1].duration
+        )
+    }
 }

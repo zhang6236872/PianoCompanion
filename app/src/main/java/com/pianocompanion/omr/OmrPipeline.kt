@@ -23,6 +23,7 @@ import com.pianocompanion.omr.image.RhythmAnalyzer
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
+import com.pianocompanion.omr.image.TieDetector
 import com.pianocompanion.omr.image.VoltaDetector
 import com.pianocompanion.util.MusicUtils
 import kotlin.math.abs
@@ -210,6 +211,17 @@ object OmrPipeline {
             cleaned, located.map { it.nh }, rhythms, lineSpacing
         )
 
+        // --- 6.8. 延音线(tie)检测 -------------------------------------------
+        // 延音线是连接两个同音高音符的弧线，指示将两个音符的时值合并为一个持续音符。
+        // 在 cleaned 图像上检测，使用列投影覆盖率法（弧线在每个列都有墨迹）。
+        // 检测到的 tie 在步骤 8 的时间轴循环中合并：跳过第二个音符，将其时值加到
+        // 第一个音符上——否则 score follower 会期待一个永远不会出现的第二个 onset。
+        val ties = TieDetector.detect(
+            cleaned, located.map { it.nh }, located.map { it.systemIdx }, lineSpacing
+        )
+        val tiedToNoteheads = ties.map { it.secondNoteIdx }.toSet()
+        val tieFromMap = ties.associate { it.secondNoteIdx to it.firstNoteIdx }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -251,6 +263,9 @@ object OmrPipeline {
         timeline.sortWith(compareBy({ it.systemIdx }, { it.x }))
 
         val notes = ArrayList<ScoreNote>()
+        // 延音线(tie)合并：notehead 索引 → notes 列表中的位置。
+        // 被 tie 连接的第二个音符不产生新的 ScoreNote，而是将其时值累加到第一个音符。
+        val noteIdxToNotesPos = HashMap<Int, Int>()
         var cursor = 0L
         var i = 0
         while (i < timeline.size) {
@@ -275,7 +290,23 @@ object OmrPipeline {
                 located[timeline[j].noteIdx].systemIdx == leadSystemIdx &&
                 located[timeline[j].noteIdx].nh.centerX - columnX <= xTolerance
             ) {
-                val ln = located[timeline[j].noteIdx]
+                val curNoteIdx = timeline[j].noteIdx
+                // 延音线(tie)合并：被 tie 的第二个音符跳过创建，将其时值加到第一个音符。
+                // 支持延音线链（A→B→C）：每个被 tie 的 notehead 都映射到链首音符的位置。
+                if (curNoteIdx in tiedToNoteheads) {
+                    val fromNhIdx = tieFromMap[curNoteIdx]!!
+                    val fromPos = noteIdxToNotesPos[fromNhIdx]
+                    if (fromPos != null && fromPos >= 0) {
+                        notes[fromPos] = notes[fromPos].copy(
+                            duration = notes[fromPos].duration + duration
+                        )
+                    }
+                    // 将此 notehead 映射到同一音符位置（支持延音线链 A→B→C）。
+                    noteIdxToNotesPos[curNoteIdx] = fromPos ?: -1
+                    j++
+                    continue
+                }
+                val ln = located[curNoteIdx]
                 val system = systems[ln.systemIdx]
                 val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
                 if (midi in 21..108) {
@@ -296,8 +327,9 @@ object OmrPipeline {
                         duration = duration,
                         staff = ln.staff,
                         measureIndex = measureIndex,
-                        articulation = articulations[timeline[j].noteIdx] ?: Articulation.NONE
+                        articulation = articulations[curNoteIdx] ?: Articulation.NONE
                     )
+                    noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
                 j++
             }
@@ -410,6 +442,10 @@ object OmrPipeline {
                     "${list.size} 个$name"
                 }
             warnings += "检测到 ${articulations.size} 个演奏法标记（$parts），已标注"
+        }
+        // 延音线提示：告知用户检测到的延音线，说明已合并时值。
+        if (ties.isNotEmpty()) {
+            warnings += "检测到 ${ties.size} 个延音线(tie)，已合并相同音高音符的时值"
         }
 
         return Result(
