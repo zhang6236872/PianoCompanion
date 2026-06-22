@@ -23,6 +23,7 @@ import com.pianocompanion.omr.image.RhythmAnalyzer
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
+import com.pianocompanion.omr.image.SlurDetector
 import com.pianocompanion.omr.image.TieDetector
 import com.pianocompanion.omr.image.VoltaDetector
 import com.pianocompanion.util.MusicUtils
@@ -221,6 +222,15 @@ object OmrPipeline {
         )
         val tiedToNoteheads = ties.map { it.secondNoteIdx }.toSet()
         val tieFromMap = ties.associate { it.secondNoteIdx to it.firstNoteIdx }
+
+        // --- 6.9. 连音(slur)检测 ---------------------------------------------
+        // 连音是连接不同音高音符的弧线，指示 legato（连奏）奏法。与延音线(tie)
+        // 不同，连音不改变音符时值或 onset——它纯粹是表情/奏法指示。
+        // 在 cleaned 图像上检测，使用逐列插值搜索带跟随音高斜率（两个不同高度
+        // 的符头之间的弧线会随高度变化倾斜）。检测到的 slur 段被合并为多音符组。
+        val slurs = SlurDetector.detect(
+            cleaned, located.map { it.nh }, located.map { it.systemIdx }, lineSpacing
+        )
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -446,6 +456,11 @@ object OmrPipeline {
         // 延音线提示：告知用户检测到的延音线，说明已合并时值。
         if (ties.isNotEmpty()) {
             warnings += "检测到 ${ties.size} 个延音线(tie)，已合并相同音高音符的时值"
+        }
+        // 连音提示：告知用户检测到的连音(slur)，说明已标注连奏段。
+        if (slurs.isNotEmpty()) {
+            val noteCount = slurs.sumOf { it.lastNoteIdx - it.firstNoteIdx + 1 }
+            warnings += "检测到 ${slurs.size} 个连音(slur)，覆盖 $noteCount 个音符，已标注连奏(legato)段"
         }
 
         return Result(

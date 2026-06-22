@@ -1454,4 +1454,92 @@ class OmrPipelineTest {
             500L, sorted[1].duration
         )
     }
+
+    // ---- 连音(slur)集成测试 ------------------------------------------------
+
+    /**
+     * 在两个不同音高符头之间绘制连音弧（向下弯弧）。弧从 (x1,y1) 到 (x2,y2)，
+     * 以半正弦曲线弯向下（baseY + 2 + bulge）。每列 2 像素厚。
+     */
+    private fun drawSlurArcBelow(
+        img: BinaryImage, x1: Int, y1: Int, x2: Int, y2: Int, maxBulge: Int = 8
+    ) {
+        val span = (x2 - x1).coerceAtLeast(1)
+        for (x in x1..x2) {
+            val t = (x - x1).toDouble() / span
+            val baseY = (y1 + (y2 - y1) * t).toInt()
+            val bulge = (maxBulge * kotlin.math.sin(Math.PI * t)).toInt()
+            val arcY = baseY + 2 + bulge
+            if (arcY in 0 until height) {
+                img.set(x, arcY, true)
+                if (arcY + 1 in 0 until height) img.set(x, arcY + 1, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects slur between different-pitch notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个不同音高的四分音符（G4 vs E4），中间有连音弧
+        drawStemmedFilled(img, 120, 60)  // G4 (y=60)
+        drawStemmedFilled(img, 250, 70)  // E4 (y=70, 不同音高)
+        // 连音弧（向下弯弧，在符头下方）
+        drawSlurArcBelow(img, 126, 60, 244, 70, maxBulge = 8)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "连音不合并音符，应保留 2 个独立音符",
+            2, result.score.notes.size
+        )
+        assertTrue(
+            "应在 warnings 中包含连音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("连音") || it.contains("slur") }
+        )
+    }
+
+    @Test
+    fun `pipeline has no slur warning when no arc present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)  // G4
+        drawStemmedFilled(img, 250, 70)  // E4 (不同音高)
+        // 不绘制连音弧
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals(
+            "应保留 2 个独立音符",
+            2, result.score.notes.size
+        )
+        assertFalse(
+            "无弧线时不应有连音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("连音") || it.contains("slur") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects multi-note slur group`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 三个不同音高的四分音符，均在谱线间空隙处（避免弧线穿过过多谱线）
+        drawStemmedFilled(img, 80, 55)   // A4 (between lines 50-60)
+        drawStemmedFilled(img, 180, 65)  // F4 (between lines 60-70)
+        drawStemmedFilled(img, 280, 55)  // A4 again (between lines 50-60)
+        // 连音弧（小 bulge，弧线仅在 y≈57-67 之间，只穿过 y=60 一条谱线）
+        drawSlurArcBelow(img, 86, 55, 174, 65, maxBulge = 3)
+        drawSlurArcBelow(img, 186, 65, 274, 55, maxBulge = 3)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到连音(slur)，实际=${result.warnings}",
+            result.warnings.any { it.contains("连音") || it.contains("slur") }
+        )
+        assertEquals(
+            "连音不合并音符，应保留 3 个独立音符",
+            3, result.score.notes.size
+        )
+    }
 }
