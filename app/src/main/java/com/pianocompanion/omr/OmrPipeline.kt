@@ -18,6 +18,7 @@ import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.PitchMapper
+import com.pianocompanion.omr.image.RepeatCountDetector
 import com.pianocompanion.omr.image.Rest
 import com.pianocompanion.omr.image.RestDetector
 import com.pianocompanion.omr.image.RhythmAnalyzer
@@ -197,6 +198,15 @@ object OmrPipeline {
             VoltaDetector.detect(warped, system, upperLimit)
         }
         val allVoltas = voltasBySystem.flatten()
+
+        // --- 6.7. 反复次数标注(×N)检测 --------------------------------------
+        // 当反复段需演奏超过两遍时，反复结束小节线(:‖)上方会标注 "×N"。
+        // 在 cleaned 图像上检测乘号 "×" + 数字的组合（复用连通块 + 数字模板）。
+        // 乘号是反复次数标注的标志特征，可据此与跳房子序号(纯数字)区分。
+        // 不修改音符数据模型，仅产生提示信息。
+        val repeatCounts = RepeatCountDetector.detect(
+            cleaned, blobs, barlinesBySystem, systems, lineSpacing
+        )
 
         // --- 节奏分析：符干/横梁/符尾 → 真实时值（不再清一色四分音符）---------
         val rhythms = RhythmAnalyzer.analyze(cleaned, located.map { it.nh }, lineSpacing)
@@ -445,6 +455,11 @@ object OmrPipeline {
         if (allVoltas.isNotEmpty()) {
             val voltaSummary = allVoltas.joinToString("、") { "第${it.number}结尾" }
             warnings += "检测到 ${allVoltas.size} 个反复跳房子（$voltaSummary），已标注反复结构"
+        }
+        // 反复次数提示：告知用户检测到的 "×N" 多次反复标注。
+        if (repeatCounts.isNotEmpty()) {
+            val summary = repeatCounts.joinToString("、") { "${it.count}遍" }
+            warnings += "检测到 ${repeatCounts.size} 个反复次数标注（$summary），已标注多次反复结构"
         }
         // 演奏法标记提示：告知用户检测到的断奏/保持音/重音标记。
         if (articulations.isNotEmpty()) {
