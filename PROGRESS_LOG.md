@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.28.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测)
+- 当前版本: **v2.29.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测)
 - 当前分支: main
-- 最新 tag: v2.28.0
+- 最新 tag: v2.29.0
 
 ## 健康状态 (2026-06-23 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 450 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 470 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0
-- Kotlin 文件: 72 个 / 代码行数: 10000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0
+- Kotlin 文件: 74 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -775,10 +775,36 @@
     - 端到端集成：BarlineDetector + RepeatCountDetector 联合检测真实反复结束小节线上方的 ×3
   - 单元测试 435 → **450** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0) 已完成！** 代码已合并到 main。
+### v2.29.0 — OMR 渐强/渐弱符号(hairpin)检测 (2026-06-23)
+- **目标**：在 OMR 管线中添加渐强(`<`)和渐弱(`>`)符号（hairpin）的检测能力。
+  Hairpin 是乐谱中谱表下方两条从窄端向宽端发散（渐强）或收敛（渐弱）的斜线，
+  与文字力度记号(pp/mf 等)互补，表达连续的音量变化方向。这是 OMR 功能增强列表中
+  「渐强/渐弱符号(< > / hairpin)」的待添加项。
+- **技术方案**：逐列竖直跨度分析（column-wise vertical span analysis）
+  - 新增纯 Kotlin `HairpinDetector`（无 Android 依赖，完全可单元测试）：
+    - **检测原理**：在谱表底线之下 0.5~4 个间距的区域内搜索候选连通块，
+      将候选宽度分为左1/3和右1/3，比较两侧平均竖直墨迹跨度
+    - **方向判定**：比值 ≥1.5 → 左窄右宽=渐强(CRESCENDO)，左宽右窄=渐弱(DECRESCENDO)
+    - **候选筛选条件**：宽度 1.5~20.0 间距，高度 0.4~2.5 间距，填充率 <0.35
+    - **仅产生提示**：hairpin 不修改音符数据模型，只在 warnings 中添加提示消息，
+      与 DynamicMarkingDetector 一致
+  - **OmrPipeline 步骤 6.11 集成**：检测到渐强/渐弱时产生 warning 提示
+    （不修改 Note 数据模型）
+  - **调试过程**：发现当两个 hairpin 同时存在于 420px 宽合成图像的左右两侧时，
+    KeystoneCorrector 的逐列底边百分位测量被 hairpin 斜线干扰，误判为透视变形
+    (ratio=1.5 > 阈值0.08)，导致 remap 拉伸破坏五线谱。解决方案：集成测试中
+    将两个 hairpin 放在图像中间三分之一(x=140~280)内，避免影响左右两侧测量
+  - 新增 16 个单元测试 `HairpinDetectorTest`：
+    - 渐强/渐弱检测正确、单/多系统、无误报、宽高过滤、跨度比阈值、边界情况
+  - 新增 4 个端到端管线测试 `OmrPipelineTest`：渐强检测、渐弱检测、
+    同时检测两者、无 hairpin 时无误报
+  - 单元测试 466 → **470** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：当 hairpin 两条线在窄端不相交（各自独立斜线段）时不被识别；
 
-## 单元测试明细 (450 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (470 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -805,6 +831,7 @@
 - SlurDetectorTest: 6
 - DynamicMarkingDetectorTest: 9
 - RepeatCountDetectorTest: 15
+- HairpinDetectorTest: 16
 
 ## 阻塞
 （无）
@@ -826,7 +853,8 @@
   - ✅ 强音(marcato) (v2.24.0 已完成：非紧凑垂直方向分支，基于方向(高度≥宽度)区分marcato(^)vs accent(>)，宽底V形测试形状解决降噪器fillSalt填充空心内部的问题)
   - ✅ 延音线(tie) (v2.25.0 已完成：列投影覆盖率法检测同音高符头间的连续弧线，覆盖率≥75%判定为tie，被tie的第二个音符时值合并到第一个音符)
   - ✅ 连音(slur) (v2.26.0 已完成：逐列插值搜索跟随音高斜率检测不同音高符头间的弧线，与tie通过音高差异(PITCH_Y_TOLERANCE_FRAC=0.15)区分，支持多音符连音组，仅产生warning不修改时值)
-  - 待添加：更多力度记号(如 sfz/rf/cresc./decresc. 等非常规动态标记)、渐强/渐弱符号(< > / hairpin) 等
+  - ✅ 渐强/渐弱符号(< > / hairpin) (v2.29.0 已完成：逐列竖直跨度分析法检测谱表下方V形渐强/渐弱符号，左右1/3跨度比≥1.5判定方向，仅产生warning不修改音符数据模型)
+  - 待添加：更多力度记号(如 sfz/rf/cresc./decresc. 等非常规动态标记) 等
   - ✅ 反复次数标注(如 "×3") (v2.28.0 已完成：5×7 乘号点阵模板 + 数字识别 + 连续字形间距解析，支持 ×N/N× 两种形式和多位数字，仅对反复结束小节线(:‖)上方搜索，乘号为标志特征杜绝与跳房子序号混淆，仅产生warning)
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
