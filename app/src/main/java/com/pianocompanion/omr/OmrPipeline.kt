@@ -12,6 +12,7 @@ import com.pianocompanion.omr.image.BinaryDenoiser
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
+import com.pianocompanion.omr.image.DynamicMarkingDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
@@ -230,6 +231,14 @@ object OmrPipeline {
         // 的符头之间的弧线会随高度变化倾斜）。检测到的 slur 段被合并为多音符组。
         val slurs = SlurDetector.detect(
             cleaned, located.map { it.nh }, located.map { it.systemIdx }, lineSpacing
+        )
+
+        // --- 6.10. 力度记号(dynamic marking)检测 ------------------------------
+        // 力度记号(pp/p/mp/mf/f/ff 等)是谱表下方的文字标记，指示演奏音量。
+        // 使用 5×7 点阵模板匹配识别字母 'p'/'m'/'f'，组合成力度文本。
+        // 不修改音符数据模型，仅产生提示信息。
+        val dynamicMarkings = DynamicMarkingDetector.detect(
+            cleaned, blobs, systems, lineSpacing
         )
 
         // --- 7. 休止符检测 ---------------------------------------------------
@@ -461,6 +470,11 @@ object OmrPipeline {
         if (slurs.isNotEmpty()) {
             val noteCount = slurs.sumOf { it.lastNoteIdx - it.firstNoteIdx + 1 }
             warnings += "检测到 ${slurs.size} 个连音(slur)，覆盖 $noteCount 个音符，已标注连奏(legato)段"
+        }
+        // 力度记号提示：告知用户检测到的力度变化标记。
+        if (dynamicMarkings.isNotEmpty()) {
+            val summary = dynamicMarkings.joinToString("、") { it.text }
+            warnings += "检测到 ${dynamicMarkings.size} 个力度记号（$summary），已标注音量变化"
         }
 
         return Result(

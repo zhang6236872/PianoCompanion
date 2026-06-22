@@ -3,6 +3,7 @@ package com.pianocompanion.omr
 import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
+import com.pianocompanion.omr.image.DynamicMarkingDetector
 import com.pianocompanion.omr.image.OtsuThresholder
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
@@ -1540,6 +1541,77 @@ class OmrPipelineTest {
         assertEquals(
             "连音不合并音符，应保留 3 个独立音符",
             3, result.score.notes.size
+        )
+    }
+
+    // ---- 力度记号(dynamic marking)集成测试 ---------------------------------
+
+    /**
+     * 把字母模板按指定倍率渲染到二值图像中（用于合成力度记号测试图）。
+     */
+    private fun renderDynamicLetter(img: BinaryImage, char: Char, x: Int, y: Int, scale: Int) {
+        val tmpl = DynamicMarkingDetector.LETTER_TEMPLATES[char] ?: return
+        for (r in 0 until 7) {
+            for (c in 0 until 5) {
+                if (tmpl[r * 5 + c]) {
+                    for (dy in 0 until scale) {
+                        for (dx in 0 until scale) {
+                            val px = x + c * scale + dx
+                            val py = y + r * scale + dy
+                            if (px in 0 until width && py in 0 until height) {
+                                img.set(px, py, true)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects forte marking below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)  // 四分音符 G4
+        // 力度记号 f 在谱表下方
+        renderDynamicLetter(img, 'f', 115, 85, 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("力度记号") || it.contains("dynamic") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects mezzo-forte marking below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+        // mf: 两个相邻字母
+        renderDynamicLetter(img, 'm', 110, 85, 2)
+        renderDynamicLetter(img, 'f', 124, 85, 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 mf 力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("mf") }
+        )
+    }
+
+    @Test
+    fun `pipeline has no dynamic warning when none present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无力度记号时不应有提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("力度记号") || it.contains("dynamic") }
         )
     }
 }
