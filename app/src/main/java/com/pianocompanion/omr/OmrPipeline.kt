@@ -13,6 +13,7 @@ import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
+import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
@@ -250,6 +251,13 @@ object OmrPipeline {
         val dynamicMarkings = DynamicMarkingDetector.detect(
             cleaned, blobs, systems, lineSpacing
         )
+
+        // --- 6.11. 渐强/渐弱符号(hairpin)检测 -------------------------------
+        // Hairpin 是谱表下方的图形化渐强(`<`)/渐弱(`>`)标记——两条从窄端向宽端
+        // 发散（渐强）或收敛（渐弱）的斜线。与文字力度记号互补：hairpin 表达
+        // 连续的音量变化方向。逐列竖直跨度分析判定方向（左窄右宽=渐强，
+        // 左宽右窄=渐弱），低填充率过滤排除实心形状。不修改音符数据模型，仅产生提示。
+        val hairpins = HairpinDetector.detect(cleaned, blobs, systems, lineSpacing)
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -490,6 +498,16 @@ object OmrPipeline {
         if (dynamicMarkings.isNotEmpty()) {
             val summary = dynamicMarkings.joinToString("、") { it.text }
             warnings += "检测到 ${dynamicMarkings.size} 个力度记号（$summary），已标注音量变化"
+        }
+        // 渐强/渐弱符号提示：告知用户检测到的 hairpin，说明已标注渐变方向。
+        if (hairpins.isNotEmpty()) {
+            val crescCount = hairpins.count { it.type == HairpinDetector.HairpinType.CRESCENDO }
+            val decrescCount = hairpins.count { it.type == HairpinDetector.HairpinType.DECRESCENDO }
+            val parts = buildList {
+                if (crescCount > 0) add("$crescCount 个渐强(crescendo)")
+                if (decrescCount > 0) add("$decrescCount 个渐弱(decrescendo)")
+            }
+            warnings += "检测到 ${hairpins.size} 个渐强/渐弱符号（${parts.joinToString("、")}），已标注音量渐变方向"
         }
 
         return Result(

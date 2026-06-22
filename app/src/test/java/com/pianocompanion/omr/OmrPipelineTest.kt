@@ -1614,4 +1614,110 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("力度记号") || it.contains("dynamic") }
         )
     }
+
+    // ---- 渐强/渐弱符号(hairpin)集成测试 ------------------------------------
+
+    /**
+     * 在谱表下方绘制渐强(crescendo) hairpin：两条从左端交汇点向右端发散的斜线。
+     */
+    private fun drawCrescendoHairpin(
+        img: BinaryImage, leftX: Int, rightX: Int, midY: Int, halfHeight: Int, thickness: Int = 2
+    ) {
+        val span = rightX - leftX
+        for (t in 0..span) {
+            val x = leftX + t
+            val frac = t.toDouble() / span
+            val topY = (midY - halfHeight * frac).toInt()
+            val botY = (midY + halfHeight * frac).toInt()
+            for (dy in 0 until thickness) {
+                if (topY + dy in 0 until height) img.set(x, topY + dy, true)
+                if (botY + dy in 0 until height) img.set(x, botY + dy, true)
+            }
+        }
+    }
+
+    /**
+     * 在谱表下方绘制渐弱(decrescendo) hairpin：两条从左端发散向右端交汇的斜线。
+     */
+    private fun drawDecrescendoHairpin(
+        img: BinaryImage, leftX: Int, rightX: Int, midY: Int, halfHeight: Int, thickness: Int = 2
+    ) {
+        val span = rightX - leftX
+        for (t in 0..span) {
+            val x = leftX + t
+            val frac = t.toDouble() / span
+            val topY = (midY - halfHeight * (1.0 - frac)).toInt()
+            val botY = (midY + halfHeight * (1.0 - frac)).toInt()
+            for (dy in 0 until thickness) {
+                if (topY + dy in 0 until height) img.set(x, topY + dy, true)
+                if (botY + dy in 0 until height) img.set(x, botY + dy, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects crescendo hairpin below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 100, 60)  // 四分音符
+        // 渐强 hairpin 在谱表下方（底线 y=70，搜索区 75~110）
+        drawCrescendoHairpin(img, 200, 300, 90, 8, thickness = 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到渐强/渐弱符号，实际=${result.warnings}",
+            result.warnings.any { it.contains("渐强") || it.contains("渐弱") || it.contains("hairpin") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects decrescendo hairpin below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 100, 60)
+        // 渐弱 hairpin 在谱表下方
+        drawDecrescendoHairpin(img, 200, 300, 90, 8, thickness = 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到渐弱符号，实际=${result.warnings}",
+            result.warnings.any { it.contains("渐弱") || it.contains("渐强") || it.contains("hairpin") }
+        )
+    }
+
+    @Test
+    fun `pipeline has no hairpin warning when none present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无 hairpin 时不应有渐强/渐弱提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("渐强") || it.contains("渐弱") || it.contains("hairpin") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects crescendo and decrescendo together`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 50, 60)
+        // 两个 hairpin 都放在中间三分之一 (x=140~280)，
+        // 避免干扰 KeystoneCorrector 的左右两侧谱表边界测量
+        // 左侧渐强
+        drawCrescendoHairpin(img, 150, 200, 90, 7, thickness = 2)
+        // 右侧渐弱
+        drawDecrescendoHairpin(img, 220, 270, 90, 7, thickness = 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应检测到渐强和渐弱，实际=${result.warnings}",
+            result.warnings.any { it.contains("渐强") && it.contains("渐弱") }
+        )
+    }
 }
