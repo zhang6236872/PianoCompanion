@@ -20,6 +20,7 @@ import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
+import com.pianocompanion.omr.image.OctavaDetector
 import com.pianocompanion.omr.image.PitchMapper
 import com.pianocompanion.omr.image.RepeatCountDetector
 import com.pianocompanion.omr.image.Rest
@@ -313,6 +314,14 @@ object OmrPipeline {
             }
         }
 
+        // --- 6.16. 八度记号(8va/8vb/15ma/15mb)检测 -----------------------------
+        // 八度记号是指示演奏者将一段音符移高或移低一个/两个八度的标记。
+        // 由数字"8"或"15"加虚线组成，位置在谱表上方（移高）或下方（移低）。
+        // 这是**音高正确性**的关键：若不识别 8va，被标记的音符会被读取为比实际
+        // 演奏低一个八度——score follower 会完全匹配错误。
+        // 检测到的八度移位会在步骤 8 的时间轴循环中应用到音符的 MIDI 音高上。
+        val ottavaShifts = OctavaDetector.detect(cleaned, blobs, systems, lineSpacing)
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -375,7 +384,12 @@ object OmrPipeline {
                 val ln = located[gnIdx]
                 val system = systems[ln.systemIdx]
                 val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
-                if (midi in 21..108) {
+                // 应用八度记号移位（8va/8vb/15ma/15mb）
+                val octaveShift = OctavaDetector.semitoneShiftForNote(
+                    ottavaShifts, ln.systemIdx, ln.nh.centerX
+                )
+                val shiftedMidi = (midi + octaveShift).coerceIn(21, 108)
+                if (shiftedMidi in 21..108) {
                     val measureIndex = if (totalBarlines > 0) {
                         measureBaseBySystem[ln.systemIdx] +
                             barlinesBySystem[ln.systemIdx]
@@ -384,14 +398,15 @@ object OmrPipeline {
                         (cursor / measureMs).toInt()
                     }
                     notes += ScoreNote(
-                        midiNumber = midi,
-                        noteName = MusicUtils.midiToNoteName(midi),
+                        midiNumber = shiftedMidi,
+                        noteName = MusicUtils.midiToNoteName(shiftedMidi),
                         startTime = cursor,
                         duration = (quarterMs / 8).coerceAtLeast(1L),
                         staff = ln.staff,
                         measureIndex = measureIndex,
                         isGraceNote = true,
-                        articulation = articulations[gnIdx] ?: Articulation.NONE
+                        articulation = articulations[gnIdx] ?: Articulation.NONE,
+                        octaveShift = octaveShift
                     )
                 }
                 // 不推进 cursor——装饰音与主音符共享起始时间。
@@ -438,7 +453,12 @@ object OmrPipeline {
                 val ln = located[curNoteIdx]
                 val system = systems[ln.systemIdx]
                 val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
-                if (midi in 21..108) {
+                // 应用八度记号移位（8va/8vb/15ma/15mb）
+                val octaveShift = OctavaDetector.semitoneShiftForNote(
+                    ottavaShifts, ln.systemIdx, ln.nh.centerX
+                )
+                val shiftedMidi = (midi + octaveShift).coerceIn(21, 108)
+                if (shiftedMidi in 21..108) {
                     // 小节线检测到时，用视觉小节线位置精确计算 measureIndex
                     // （该音符之前有多少条小节线 = 该音符所在小节序号）；
                     // 未检测到小节线时回退到旧的 startTime/measureMs 时间估算。
@@ -450,14 +470,15 @@ object OmrPipeline {
                         (startTime / measureMs).toInt()
                     }
                     notes += ScoreNote(
-                        midiNumber = midi,
-                        noteName = MusicUtils.midiToNoteName(midi),
+                        midiNumber = shiftedMidi,
+                        noteName = MusicUtils.midiToNoteName(shiftedMidi),
                         startTime = startTime,
                         duration = duration,
                         staff = ln.staff,
                         measureIndex = measureIndex,
                         articulation = articulations[curNoteIdx] ?: Articulation.NONE,
-                        tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0
+                        tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0,
+                        octaveShift = octaveShift
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
