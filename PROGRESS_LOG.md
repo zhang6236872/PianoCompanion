@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.31.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测)
+- 当前版本: **v2.32.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测)
 - 当前分支: main
-- 最新 tag: v2.31.0
+- 最新 tag: v2.32.0
 
 ## 健康状态 (2026-06-23 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 506 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 528 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0
-- Kotlin 文件: 75 个 / 代码行数: 10000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
+- Kotlin 文件: 77 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -862,10 +862,46 @@
   - 已知限制：真实照片中 fermata 弧线可能因抗锯齿/噪点导致穹顶形状验证失败，
     需人工校对
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0) 已完成！** 代码已合并到 main。
+### v2.32.0 — OMR 装饰音(grace note)检测 (2026-06-23)
+- **目标**：在 OMR 管线中添加装饰音(grace note / grace note)检测能力。
+  装饰音是出现在主音符正前方的小音符，在钢琴及古典音乐中极为常见。分为：
+  - **短前倚音(acciaccatura)**：符干上有斜线(slash)，演奏时极短促
+  - **长前倚音(appoggiatura)**：无斜线，占用主音符一半时值
+  此前数据模型 `ScoreNote.isGraceNote` 字段存在但从未被 OMR 管线填充。
+- **技术方案**：相对尺寸 + 邻近性 + 斜线检测（slash detection）
+  - 新增纯 Kotlin `GraceNoteDetector`（无 Android 依赖，完全可单元测试）：
+    - **尺寸判别**：按系统分组，计算每个系统内最大符头面积（最大值一定是
+      普通音符）。候选装饰音面积 < 最大值 × 0.55
+    - **邻近性约束**：候选装饰音必须在右侧 0.2s~2.0s 范围内有一个普通音符
+      （面积 ≥ 最大值 × 0.85），竖直差异 ≤ 2.5s
+    - **和弦成员排除**：和弦成员在同一 X 列（dx ≈ 0），不满足 dx > minGap
+    - **斜线检测**：在装饰音符干搜索区域内，检查是否同时存在窄行（裸符干，
+      ≤2px）和宽行（斜杠穿过，≥4px 水平跨度）。有斜线 → acciaccatura，
+      无斜线 → appoggiatura
+    - **系统隔离**：装饰音与主音符必须在同一系统
+  - **OmrPipeline 步骤 6.13 集成**：在 fermata 检测后、休止符检测前调用。
+    时间轴循环中检测到装饰音时：
+    - 创建 ScoreNote 标记 `isGraceNote=true`，时值 `quarterMs/8`
+    - **不推进时间游标**——装饰音与主音符共享起始时间（装饰音"偷取"主音符时间）
+    - 保留演奏法标记(articulation)标注
+    - warnings 中提示短前倚音/长前倚音数量
+  - 新增 21 个单元测试 `GraceNoteDetectorTest`：
+    - 基本检测：小符头+大符头检测为装饰音、等大符头不检测
+    - 邻近性：太远/太近/右侧/竖直超限 拒绝
+    - 斜线检测：stem-up 斜杠=acciaccatura、stem-down 斜杠=acciaccatura、
+      无斜杠=appoggiatura、粗符干无对角线≠acciaccatura
+    - 多装饰音：两组装饰音各附着最近主音符、链式两个装饰音
+    - 多系统：不同系统独立检测、跨系统不匹配
+    - 边界：空列表、单符头、零间距、短系统索引列表
+    - 回归：和弦成员同X排除、中等大小符头不检测
+  - 单元测试 506 → **528** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：真实照片中小符头大小可能因手写体而与普通音符差异不足，
+    斜线检测对手写斜线笔画鲁棒性有限
 
-## 单元测试明细 (506 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (528 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -894,6 +930,7 @@
 - RepeatCountDetectorTest: 15
 - HairpinDetectorTest: 16
 - FermataDetectorTest: 15
+- GraceNoteDetectorTest: 21
 
 ## 阻塞
 （无）
@@ -931,5 +968,7 @@
   - ✅ 反复记号/虚线小节线/段线 (v2.18.0 已完成：`‖:`/`:‖` 反复记号 + `┊` 虚线小节线，含反复圆点连通性过滤)
   - ✅ 反复「跳房子」(voltas/ending brackets) (v2.19.0 已完成：顶线上方方括号 + 左右竖钩验证 + 序号连通块识别，管线集成发现并修复 SignatureDetector 误判序号数字为拍号的 bug)
   - 待完善：真实照片鲁棒性
+- OMR 装饰音(grace note)识别 ✅ (v2.32.0 已完成：相对尺寸(<55%最大符头面积)+邻近性(紧邻更大音符右侧)+竖直对齐(≤2.5s)识别装饰音，斜线检测区分短前倚音(acciaccatura)与长前倚音(appoggiatura)，装饰音不推进时间轴游标)
+  - 待完善：真实照片中小符头大小可能因手写体与普通音符差异不足，斜线检测对手写斜线笔画鲁棒性有限
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
