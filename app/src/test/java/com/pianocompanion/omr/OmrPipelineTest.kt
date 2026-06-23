@@ -1795,4 +1795,74 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("渐强") && it.contains("渐弱") }
         )
     }
+
+    // ---- Fermata (延音记号/停留号) 管线集成测试 -------------------------------
+
+    /**
+     * 绘制 fermata 半圆弧（半正弦穹顶）。正立 fermata 弧顶朝上（Y 减小），
+     * 倒立 fermata 弧顶朝下（Y 增大）。thickness 向 baseY 方向延伸保证连通性。
+     */
+    private fun drawFermataArc(
+        img: BinaryImage, cx: Int, baseY: Int,
+        halfWidth: Int = 10, peakHeight: Int = 10,
+        thickness: Int = 3, inverted: Boolean = false
+    ) {
+        val dir = if (inverted) 1 else -1
+        for (x in (cx - halfWidth)..(cx + halfWidth)) {
+            if (x !in 0 until width) continue
+            val t = (x - (cx - halfWidth)).toDouble() / (2 * halfWidth)
+            val offset = (peakHeight * kotlin.math.sin(Math.PI * t)).toInt()
+            val arcY = baseY + dir * offset
+            for (dy in 0 until thickness) {
+                val y = if (inverted) arcY - dy else arcY + dy
+                if (y in 0 until height) img.set(x, y, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects upright fermata above notehead`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 100, 60)
+        // 正立 fermata 在谱表上方（搜索区 y≈0..25）
+        drawFermataArc(img, 100, baseY = 22)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 fermata，实际=${result.warnings}",
+            result.warnings.any { it.contains("延音记号") || it.contains("fermata") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects inverted fermata below notehead`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 100, 50)
+        // 倒立 fermata 在谱表下方（搜索区 y≈75..110）
+        drawFermataArc(img, 100, baseY = 80, inverted = true)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到倒立 fermata，实际=${result.warnings}",
+            result.warnings.any { it.contains("倒立") || it.contains("fermata") }
+        )
+    }
+
+    @Test
+    fun `pipeline has no fermata warning when none present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无 fermata 时不应有延音记号提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("延音记号") || it.contains("fermata") }
+        )
+    }
 }
