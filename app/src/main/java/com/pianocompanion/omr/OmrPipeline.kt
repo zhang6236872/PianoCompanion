@@ -245,8 +245,9 @@ object OmrPipeline {
         )
 
         // --- 6.10. 力度记号(dynamic marking)检测 ------------------------------
-        // 力度记号(pp/p/mp/mf/f/ff 等)是谱表下方的文字标记，指示演奏音量。
-        // 使用 5×7 点阵模板匹配识别字母 'p'/'m'/'f'，组合成力度文本。
+        // 力度记号(pp/p/mp/mf/f/ff/sfz/rf/cresc./decresc. 等)是谱表下方的文字标记，
+        // 指示演奏音量。使用 5×7 点阵模板匹配识别 9 个字母(p/m/f/s/z/r/c/e/d)，
+        // 组合成力度文本，缩写标记末尾句点被单独检测。
         // 不修改音符数据模型，仅产生提示信息。
         val dynamicMarkings = DynamicMarkingDetector.detect(
             cleaned, blobs, systems, lineSpacing

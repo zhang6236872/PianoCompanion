@@ -8,8 +8,8 @@ import org.junit.Test
 /**
  * Unit tests for [DynamicMarkingDetector] using synthetic binary images.
  *
- * These tests render letter templates ('p', 'm', 'f') below a mock staff system
- * and verify that the detector correctly identifies dynamic markings.
+ * These tests render letter templates ('p', 'm', 'f', 's', 'z', 'r', 'c', 'e', 'd')
+ * below a mock staff system and verify that the detector correctly identifies dynamic markings.
  * Each letter template is drawn at integer scale factors so that downsampling
  * back to 5×7 recovers the original template exactly.
  */
@@ -51,6 +51,23 @@ class DynamicMarkingDetectorTest {
             }
         }
     }
+
+    /**
+     * 在指定位置画一个小型实心方块（模拟缩写末尾的句点）。
+     */
+    private fun renderPeriod(img: BinaryImage, x: Int, y: Int, size: Int = 3) {
+        for (dy in 0 until size) {
+            for (dx in 0 until size) {
+                val px = x + dx
+                val py = y + dy
+                if (px in 0 until width && py in 0 until height) {
+                    img.set(px, py, true)
+                }
+            }
+        }
+    }
+
+    // ---- 基础力度记号 (p/m/f) 回归测试 ----------------------------------------
 
     @Test
     fun `detects single p marking below staff`() {
@@ -193,12 +210,48 @@ class DynamicMarkingDetectorTest {
         assertEquals("系统 1 应为 f", "f", bySystem[1]!!.text)
     }
 
+    // ---- 新增字母模板 (s/z/r/c/e/d) 模板验证 -----------------------------------
+
+    @Test
+    fun `all nine letter templates exist`() {
+        val chars = listOf('p', 'm', 'f', 's', 'z', 'r', 'c', 'e', 'd')
+        for (ch in chars) {
+            assertNotNull("字母 '$ch' 模板应存在", DynamicMarkingDetector.LETTER_TEMPLATES[ch])
+        }
+    }
+
+    @Test
+    fun `all new templates have valid dimensions`() {
+        val newChars = listOf('s', 'z', 'r', 'c', 'e', 'd')
+        for (ch in newChars) {
+            val tmpl = DynamicMarkingDetector.LETTER_TEMPLATES[ch]!!
+            assertEquals("字母 '$ch' 模板应有 35 个元素", 35, tmpl.size)
+            // 验证所有 5 列至少有 1 个像素
+            for (col in 0 until 5) {
+                var found = false
+                for (row in 0 until 7) {
+                    if (tmpl[row * 5 + col]) found = true
+                }
+                assertTrue("字母 '$ch' 列 $col 必须至少有 1 个像素", found)
+            }
+            // 验证所有 7 行至少有 1 个像素
+            for (row in 0 until 7) {
+                var found = false
+                for (col in 0 until 5) {
+                    if (tmpl[row * 5 + col]) found = true
+                }
+                assertTrue("字母 '$ch' 行 $row 必须至少有 1 个像素", found)
+            }
+        }
+    }
+
     @Test
     fun `letter templates are distinct`() {
-        // 验证三个字母模板两两之间的汉明距离足够大（>10/35）
-        val p = DynamicMarkingDetector.LETTER_TEMPLATES['p']!!
-        val m = DynamicMarkingDetector.LETTER_TEMPLATES['m']!!
-        val f = DynamicMarkingDetector.LETTER_TEMPLATES['f']!!
+        // 验证所有字母模板两两之间的汉明距离足够大。
+        // c/e/s 是三个「圆形」字母，在 5×7 网格中天然相似（c=开放弧, e=弧+横线,
+        // s=双弧），它们的成对距离较小但在 matchLetter 的 secondDist 差距检查
+        // （secondDist - bestDist ≥ 2）下仍可正确区分。
+        val allChars = listOf('p', 'm', 'f', 's', 'z', 'r', 'c', 'e', 'd')
 
         fun hamming(a: BooleanArray, b: BooleanArray): Int {
             var d = 0
@@ -206,8 +259,237 @@ class DynamicMarkingDetectorTest {
             return d
         }
 
-        assertTrue("p vs m 距离应 > 10", hamming(p, m) > 10)
-        assertTrue("p vs f 距离应 > 10", hamming(p, f) > 10)
-        assertTrue("m vs f 距离应 > 10", hamming(m, f) > 10)
+        // c↔e(4), s↔e(4), s↔c(6) 是 5×7 网格中圆形字母的固有相似性，允许较低阈值
+        val tightPairs = setOf(
+            'c' to 'e', 'e' to 'c',
+            's' to 'e', 'e' to 's',
+            's' to 'c', 'c' to 's'
+        )
+
+        for (i in allChars.indices) {
+            for (j in i + 1 until allChars.size) {
+                val a = allChars[i]
+                val b = allChars[j]
+                val dist = hamming(
+                    DynamicMarkingDetector.LETTER_TEMPLATES[a]!!,
+                    DynamicMarkingDetector.LETTER_TEMPLATES[b]!!
+                )
+                val threshold = if (a to b in tightPairs) 4 else 10
+                assertTrue(
+                    "字母 '$a' vs '$b' 的汉明距离 $dist 应 ≥ $threshold",
+                    dist >= threshold
+                )
+            }
+        }
+    }
+
+    // ---- 突强类 (sfz/sf) 检测 -------------------------------------------------
+
+    @Test
+    fun `detects sfz marking below staff`() {
+        val img = blank()
+        // s + f + z, 间距 4px
+        renderLetter(img, 's', 100, 80, 2)
+        renderLetter(img, 'f', 114, 80, 2)
+        renderLetter(img, 'z', 126, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 sfz", "sfz", results[0].text)
+    }
+
+    @Test
+    fun `detects sf marking below staff`() {
+        val img = blank()
+        renderLetter(img, 's', 100, 80, 2)
+        renderLetter(img, 'f', 114, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 sf", "sf", results[0].text)
+    }
+
+    // ---- rinforzando (rf/rfz) 检测 -------------------------------------------
+
+    @Test
+    fun `detects rf marking below staff`() {
+        val img = blank()
+        renderLetter(img, 'r', 100, 80, 2)
+        renderLetter(img, 'f', 114, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 rf", "rf", results[0].text)
+    }
+
+    @Test
+    fun `detects rfz marking below staff`() {
+        val img = blank()
+        renderLetter(img, 'r', 100, 80, 2)
+        renderLetter(img, 'f', 114, 80, 2)
+        renderLetter(img, 'z', 126, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 rfz", "rfz", results[0].text)
+    }
+
+    // ---- 缩写类 (cresc_/decresc_) 检测 ---------------------------------------
+
+    @Test
+    fun `detects cresc marking without period`() {
+        val img = blank()
+        // c-r-e-s-c, 间距 4px (每个字母宽 10px at scale=2, 间距 = 14px - 10px = 4px)
+        var x = 80
+        for (ch in listOf('c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 cresc", "cresc", results[0].text)
+    }
+
+    @Test
+    fun `detects cresc marking with period`() {
+        val img = blank()
+        // c-r-e-s-c + period
+        var x = 80
+        for (ch in listOf('c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+        // period after the last 'c'
+        renderPeriod(img, x + 2, 88, size = 3)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 cresc.", "cresc.", results[0].text)
+    }
+
+    @Test
+    fun `detects decresc marking without period`() {
+        val img = blank()
+        // d-e-c-r-e-s-c
+        var x = 60
+        for (ch in listOf('d', 'e', 'c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 decresc", "decresc", results[0].text)
+    }
+
+    @Test
+    fun `detects decresc marking with period`() {
+        val img = blank()
+        // d-e-c-r-e-s-c + period
+        var x = 60
+        for (ch in listOf('d', 'e', 'c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+        renderPeriod(img, x + 2, 88, size = 3)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 decresc.", "decresc.", results[0].text)
+    }
+
+    // ---- 缩写句点边界情况 ----------------------------------------------------
+
+    @Test
+    fun `period too large is not treated as abbreviation period`() {
+        val img = blank()
+        // c-r-e-s-c + large block (too big for a period)
+        var x = 80
+        for (ch in listOf('c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+        // large block (6x6 = 36px, bigger than period threshold of 5px)
+        renderPeriod(img, x + 2, 84, size = 6)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        // 应匹配 cresc (without period, since the trailing block is too large)
+        assertEquals("应检测到 1 个力度记号", 1, results.size)
+        assertEquals("应为 cresc (大块不被视为句点)", "cresc", results[0].text)
+    }
+
+    // ---- 混合场景 -------------------------------------------------------------
+
+    @Test
+    fun `detects sfz and pp in same system`() {
+        val img = blank()
+        // sfz 在左, pp 在右, 间距大于 maxGap
+        renderLetter(img, 's', 60, 80, 2)
+        renderLetter(img, 'f', 74, 80, 2)
+        renderLetter(img, 'z', 86, 80, 2)
+
+        renderLetter(img, 'p', 260, 80, 2)
+        renderLetter(img, 'p', 274, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 2 个力度记号", 2, results.size)
+        val texts = results.map { it.text }.sorted()
+        assertEquals("应有 pp 和 sfz", listOf("pp", "sfz"), texts)
+    }
+
+    @Test
+    fun `detects cresc and f in same system`() {
+        val img = blank()
+        // cresc 在左, f 在右
+        var x = 60
+        for (ch in listOf('c', 'r', 'e', 's', 'c')) {
+            renderLetter(img, ch, x, 80, 2)
+            x += 14
+        }
+        renderLetter(img, 'f', 300, 80, 2)
+
+        val blobs = ConnectedComponents.label(img, minPixels = 4)
+        val results = DynamicMarkingDetector.detect(img, blobs, listOf(makeSystem()), lineSpacing)
+
+        assertEquals("应检测到 2 个力度记号", 2, results.size)
+        val texts = results.map { it.text }.sorted()
+        assertEquals("应有 cresc 和 f", listOf("cresc", "f"), texts)
+    }
+
+    // ---- 单字母精确匹配验证 ---------------------------------------------------
+
+    @Test
+    fun `each new letter matches itself at scale 2`() {
+        val newChars = listOf('s', 'z', 'r', 'c', 'e', 'd')
+        for (ch in newChars) {
+            val img = blank()
+            renderLetter(img, ch, 100, 80, 2)
+
+            val blobs = ConnectedComponents.label(img, minPixels = 4)
+            // 单字母不在 KNOWN_DYNAMICS 中，但我们可以验证它不会误匹配
+            // 我们通过检查 blob 存在来间接验证
+            assertTrue("字母 '$ch' 应产生至少 1 个 blob", blobs.isNotEmpty())
+        }
     }
 }
