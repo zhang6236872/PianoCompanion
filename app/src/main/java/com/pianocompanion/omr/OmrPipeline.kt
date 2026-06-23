@@ -14,6 +14,7 @@ import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
 import com.pianocompanion.omr.image.FermataDetector
+import com.pianocompanion.omr.image.GraceNoteDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
@@ -271,6 +272,17 @@ object OmrPipeline {
             located.map { it.systemIdx }, systems, lineSpacing
         )
 
+        // --- 6.13. 装饰音(grace note)检测 -----------------------------------
+        // 装饰音是出现在主音符正前方的小音符（短前倚音 acciaccatura 有斜杠 /
+        // 长前倚音 appoggiatura 无斜杠），在钢琴音乐中极为常见。
+        // 通过相对尺寸（面积 < 中位数 55%）+ 邻近性（紧邻更大音符右侧）识别。
+        // 检测到的装饰音在步骤 8 的时间轴循环中标记 isGraceNote=true，并赋予
+        // 极短时值且不推进时间游标——装饰音"偷取"主音符时间而非独立占拍。
+        val graceNotes = GraceNoteDetector.detect(
+            located.map { it.nh }, located.map { it.systemIdx }, cleaned, lineSpacing
+        )
+        val graceNoteheadIndices = graceNotes.map { it.noteheadIdx }.toSet()
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -322,6 +334,37 @@ object OmrPipeline {
             if (item.noteIdx < 0) {
                 // 休止符：推进时间轴但不产生音符。
                 cursor += item.restDuration!!.toMillis(quarterMs)
+                i++
+                continue
+            }
+            // 装饰音(grace note)：标记 isGraceNote=true，赋予极短时值，不推进时间游标。
+            // 装饰音不独立占拍——它"偷取"主音符的时间，因此主音符与装饰音共享同一个
+            // startTime（装饰音在主音符之前极短地演奏）。score follower 可据此特殊处理。
+            if (item.noteIdx in graceNoteheadIndices) {
+                val gnIdx = item.noteIdx
+                val ln = located[gnIdx]
+                val system = systems[ln.systemIdx]
+                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
+                if (midi in 21..108) {
+                    val measureIndex = if (totalBarlines > 0) {
+                        measureBaseBySystem[ln.systemIdx] +
+                            barlinesBySystem[ln.systemIdx]
+                                .count { it.centerX < ln.nh.centerX && it.type != BarlineType.DASHED }
+                    } else {
+                        (cursor / measureMs).toInt()
+                    }
+                    notes += ScoreNote(
+                        midiNumber = midi,
+                        noteName = MusicUtils.midiToNoteName(midi),
+                        startTime = cursor,
+                        duration = (quarterMs / 8).coerceAtLeast(1L),
+                        staff = ln.staff,
+                        measureIndex = measureIndex,
+                        isGraceNote = true,
+                        articulation = articulations[gnIdx] ?: Articulation.NONE
+                    )
+                }
+                // 不推进 cursor——装饰音与主音符共享起始时间。
                 i++
                 continue
             }
@@ -529,6 +572,15 @@ object OmrPipeline {
             if (normalCount > 0) parts.add("$normalCount 个正立fermata")
             if (invertedCount > 0) parts.add("$invertedCount 个倒立fermata")
             warnings += "检测到 ${fermatas.size} 个延音记号/停留号(fermata)（${parts.joinToString("、")}），已标注停留"
+        }
+        // 装饰音提示：告知用户检测到的装饰音，区分短前倚音/长前倚音。
+        if (graceNotes.isNotEmpty()) {
+            val acciaccaturaCount = graceNotes.count { it.hasSlash }
+            val appoggiaturaCount = graceNotes.count { !it.hasSlash }
+            val parts = ArrayList<String>()
+            if (acciaccaturaCount > 0) parts.add("$acciaccaturaCount 个短前倚音(acciaccatura)")
+            if (appoggiaturaCount > 0) parts.add("$appoggiaturaCount 个长前倚音(appoggiatura)")
+            warnings += "检测到 ${graceNotes.size} 个装饰音(grace note)（${parts.joinToString("、")}），已标记为装饰音不占拍"
         }
 
         return Result(
