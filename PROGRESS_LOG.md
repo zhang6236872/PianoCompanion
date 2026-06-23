@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.30.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测)
+- 当前版本: **v2.31.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测)
 - 当前分支: main
-- 最新 tag: v2.30.0
+- 最新 tag: v2.31.0
 
 ## 健康状态 (2026-06-23 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 488 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 506 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0
-- Kotlin 文件: 74 个 / 代码行数: 10000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0
+- Kotlin 文件: 75 个 / 代码行数: 10000+ 行
 
 ## 开发历史
 
@@ -827,10 +827,45 @@
   - 新增 4 个端到端管线测试 `OmrPipelineTest`：sfz、rfz、cresc、decresc 管线集成
   - 单元测试 470 → **488** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0) 已完成！** 代码已合并到 main。
+### v2.31.0 — OMR 延音记号/停留号(fermata)检测 (2026-06-23)
+- **目标**：在 OMR 管线中添加延音记号(fermata)检测能力。Fermata 是乐谱中放在
+  符头上方（正立 `⌒`）或下方（倒立 `⌣`）的半圆弧线（弧线中心下方有圆点），
+  指示演奏者在该音符/休止符上停留比记谱时值更长的时间。此前 OMR 管线完全
+  忽略 fermata 符号，无法识别这种重要的表情记号。
+- **技术方案**：圆顶形状验证（dome shape verification）
+  - 新增纯 Kotlin `FermataDetector`（无 Android 依赖，完全可单元测试）：
+    - **检测原理**：对每个符头，在其上方（正立 fermata）或下方（倒立 fermata）
+      的搜索区域内找候选连通块。候选必须满足尺寸约束（宽 0.7~2.5 间距、
+      高 0.3~1.5 间距、宽 ≥ 高）、X 居中对齐（偏差 ≤0.5 间距）
+    - **圆顶形状验证**（核心判据）：将墨块宽度分为左1/4、中心1/2、右1/4三段，
+      分别检查每段的最顶（正立）/最底（倒立）黑像素 Y 坐标。正立 fermata
+      中心列顶部应高于两侧边缘顶部（穹顶形状），差值 ≥ 墨块高度 × 0.20；
+      倒立 fermata 中心列底部应低于两侧边缘底部（倒置穹顶）
+    - **与其他符号的区分**：断奏点/保持音/重音位于符干相反一侧（由
+      ArticulationDetector 处理），连音/延音线跨度远大于 fermata，
+      谱号位于签名区，符干宽高比远小于 1（竖向）
+    - **多系统安全**：每个符头的搜索区域基于其所属系统的顶线/底线计算，
+      不跨系统搜索
+  - **OmrPipeline 步骤 6.12 集成**：在 hairpin 检测后调用 FermataDetector，
+    检测到 fermata 时在 warnings 中提示（区分正立/倒立 fermata 数量），
+    不修改音符数据模型
+  - 新增 15 个单元测试 `FermataDetectorTest`：
+    - 基础检测：正立/倒立 fermata 检测、无 fermata 返回空
+    - 多重/选择性：两个符头各有 fermata、仅一个有 fermata
+    - 拒绝：平坦水平条（无穹顶）、高竖直块（宽 < 高）、过窄 blob、偏离中心
+    - 多系统：两系统各有 fermata、一系统 fermata 不匹配另一系统符头
+    - 边界：空符头列表、零间距、无效系统索引、仅有倒立 fermata
+  - 新增 3 个端到端管线测试 `OmrPipelineTest`：
+    正立 fermata 管线检测+提示、倒立 fermata 管线检测+提示、
+    无 fermata 时无误报
+  - 单元测试 488 → **506** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：真实照片中 fermata 弧线可能因抗锯齿/噪点导致穹顶形状验证失败，
+    需人工校对
 
-## 单元测试明细 (488 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (506 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -839,7 +874,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 58
+- OmrPipelineTest: 65
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -854,10 +889,11 @@
 - VoltaDetectorTest: 21
 - ArticulationDetectorTest: 50
 - TieDetectorTest: 17
-- SlurDetectorTest: 6
-- DynamicMarkingDetectorTest: 14
+- SlurDetectorTest: 19
+- DynamicMarkingDetectorTest: 23
 - RepeatCountDetectorTest: 15
 - HairpinDetectorTest: 16
+- FermataDetectorTest: 15
 
 ## 阻塞
 （无）
