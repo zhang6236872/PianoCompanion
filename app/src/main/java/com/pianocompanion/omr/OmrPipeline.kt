@@ -13,6 +13,7 @@ import com.pianocompanion.omr.image.BinaryImage
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
+import com.pianocompanion.omr.image.FermataDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NoteDuration
@@ -259,6 +260,16 @@ object OmrPipeline {
         // 连续的音量变化方向。逐列竖直跨度分析判定方向（左窄右宽=渐强，
         // 左宽右窄=渐弱），低填充率过滤排除实心形状。不修改音符数据模型，仅产生提示。
         val hairpins = HairpinDetector.detect(cleaned, blobs, systems, lineSpacing)
+
+        // --- 6.12. 延音记号/停留号(fermata)检测 -------------------------------
+        // Fermata 是符头上方（正立 `⌒`）或下方（倒立 `⌣`）的半圆弧+圆点符号，
+        // 指示演奏者在该音符上停留比记谱时值更长的时间。
+        // 通过圆顶形状验证（中心列顶部高于两侧边缘顶部）区分弧形与其他墨块。
+        // 不修改音符数据模型，仅产生提示信息。
+        val fermatas = FermataDetector.detect(
+            cleaned, blobs, located.map { it.nh },
+            located.map { it.systemIdx }, systems, lineSpacing
+        )
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -509,6 +520,15 @@ object OmrPipeline {
                 if (decrescCount > 0) add("$decrescCount 个渐弱(decrescendo)")
             }
             warnings += "检测到 ${hairpins.size} 个渐强/渐弱符号（${parts.joinToString("、")}），已标注音量渐变方向"
+        }
+        // 延音记号(fermata)提示：告知用户检测到的停留号，说明已标注。
+        if (fermatas.isNotEmpty()) {
+            val normalCount = fermatas.count { f -> !f.inverted }
+            val invertedCount = fermatas.count { f -> f.inverted }
+            val parts = ArrayList<String>()
+            if (normalCount > 0) parts.add("$normalCount 个正立fermata")
+            if (invertedCount > 0) parts.add("$invertedCount 个倒立fermata")
+            warnings += "检测到 ${fermatas.size} 个延音记号/停留号(fermata)（${parts.joinToString("、")}），已标注停留"
         }
 
         return Result(
