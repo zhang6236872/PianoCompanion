@@ -30,6 +30,7 @@ import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.omr.image.SlurDetector
 import com.pianocompanion.omr.image.TieDetector
+import com.pianocompanion.omr.image.TrillDetector
 import com.pianocompanion.omr.image.VoltaDetector
 import com.pianocompanion.util.MusicUtils
 import kotlin.math.abs
@@ -282,6 +283,16 @@ object OmrPipeline {
             located.map { it.nh }, located.map { it.systemIdx }, cleaned, lineSpacing
         )
         val graceNoteheadIndices = graceNotes.map { it.noteheadIdx }.toSet()
+
+        // --- 6.14. 颤音(trill)检测 ------------------------------------------
+        // 颤音(trill)用符头上方的字母"tr"标记（有时后接波浪线），指示演奏者
+        // 快速交替演奏本音与其上方相邻音。在巴洛克/古典钢琴音乐中极为常见。
+        // 通过字母"t"+"r"的模板匹配识别（复用 DynamicMarkingDetector 的模板方法），
+        // 搜索区域限定在谱表顶线上方 0.5~4.0 谱线间距内。不修改音符数据模型，仅产生提示。
+        val trills = TrillDetector.detect(
+            cleaned, blobs, located.map { it.nh },
+            located.map { it.systemIdx }, systems, lineSpacing
+        )
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -581,6 +592,15 @@ object OmrPipeline {
             if (acciaccaturaCount > 0) parts.add("$acciaccaturaCount 个短前倚音(acciaccatura)")
             if (appoggiaturaCount > 0) parts.add("$appoggiaturaCount 个长前倚音(appoggiatura)")
             warnings += "检测到 ${graceNotes.size} 个装饰音(grace note)（${parts.joinToString("、")}），已标记为装饰音不占拍"
+        }
+        // 颤音(trill)提示：告知用户检测到的颤音标记，区分有无波浪线延长。
+        if (trills.isNotEmpty()) {
+            val withLine = trills.count { it.hasWavyLine }
+            val withoutLine = trills.count { !it.hasWavyLine }
+            val parts = ArrayList<String>()
+            if (withLine > 0) parts.add("$withLine 个带波浪线")
+            if (withoutLine > 0) parts.add("$withoutLine 个无波浪线")
+            warnings += "检测到 ${trills.size} 个颤音标记(trill)（${parts.joinToString("、")}），已标注颤音"
         }
 
         return Result(
