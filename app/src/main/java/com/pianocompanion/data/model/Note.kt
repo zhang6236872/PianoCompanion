@@ -12,6 +12,9 @@ import com.pianocompanion.util.MusicUtils
  * @param velocity MIDI velocity (0-127), used for dynamics.
  * @param staff Which staff (treble/bass) for piano.
  * @param tuplet 连音组类型（0=非连音, 3=三连音, 2=二连音, 5=五连音等）。
+ * @param octaveShift 八度移位量（0=无移位, +12=8va, -12=8vb, +24=15ma, -24=15mb）。
+ *   记录该音符因八度记号(ottava)而应用的半音移位，用于 UI 标注和调试。
+ *   midiNumber 已包含此移位，此字段仅用于信息追溯。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -23,7 +26,8 @@ data class ScoreNote(
     val measureIndex: Int = 0,
     val isGraceNote: Boolean = false,
     val articulation: Articulation = Articulation.NONE,
-    val tuplet: Int = 0
+    val tuplet: Int = 0,
+    val octaveShift: Int = 0
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)
