@@ -11,6 +11,7 @@ import com.pianocompanion.util.MusicUtils
  * @param duration Note duration in milliseconds.
  * @param velocity MIDI velocity (0-127), used for dynamics.
  * @param staff Which staff (treble/bass) for piano.
+ * @param tuplet 连音组类型（0=非连音, 3=三连音, 2=二连音, 5=五连音等）。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -21,7 +22,8 @@ data class ScoreNote(
     val staff: Staff = Staff.TREBLE,
     val measureIndex: Int = 0,
     val isGraceNote: Boolean = false,
-    val articulation: Articulation = Articulation.NONE
+    val articulation: Articulation = Articulation.NONE,
+    val tuplet: Int = 0
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)

@@ -31,6 +31,7 @@ import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.omr.image.SlurDetector
 import com.pianocompanion.omr.image.TieDetector
 import com.pianocompanion.omr.image.TrillDetector
+import com.pianocompanion.omr.image.TupletDetector
 import com.pianocompanion.omr.image.VoltaDetector
 import com.pianocompanion.util.MusicUtils
 import kotlin.math.abs
@@ -294,6 +295,24 @@ object OmrPipeline {
             located.map { it.systemIdx }, systems, lineSpacing
         )
 
+        // --- 6.15. 三连音/连音组(tuplet)检测 --------------------------------
+        // 连音组(tuplet)是在正常应该容纳 M 个音符的时间段内挤入 N 个等时值音符的记法，
+        // 最常见的是三连音(triplet, 3 in 2)。标注为谱表上方的数字（可能带方括号）。
+        // 检测到的连音组成员的时值会按比例调整：三连音每个音符 ×2/3。
+        // 复用 SignatureDetector.classifyDigit 做数字识别，确保与拍号数字模板一致。
+        val tuplets = TupletDetector.detect(
+            cleaned, blobs, located.map { it.nh },
+            located.map { it.systemIdx }, systems, lineSpacing
+        )
+        // 构建 notehead 索引 → (tuplet数字, 缩放比例) 的映射，供时间轴循环使用。
+        val tupletByNotehead = HashMap<Int, Pair<Int, Double>>()
+        for (tuplet in tuplets) {
+            val ratio = TupletDetector.tupletRatio(tuplet.number)
+            for (nhIdx in tuplet.noteheadIndices) {
+                tupletByNotehead[nhIdx] = tuplet.number to ratio
+            }
+        }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -386,7 +405,14 @@ object OmrPipeline {
             // 同一列（和弦）共享起始时间与时值；取首成员的时值（含附点倍率）。
             // 和弦成员必须属于同一系统且 X 在容差范围内——跨系统的音符即使 X 较小
             // （多系统排序后下方系统的音符 X 小于上方系统末尾音符）也不能合并。
-            val duration = rhythms[leadIdx].effectiveMillis(quarterMs)
+            // 连音组(tuplet)成员的时值按比例缩减（三连音 ×2/3、五连音 ×4/5 等）。
+            val baseDuration = rhythms[leadIdx].effectiveMillis(quarterMs)
+            val leadTuplet = tupletByNotehead[leadIdx]
+            val duration = if (leadTuplet != null) {
+                (baseDuration * leadTuplet.second).toLong().coerceAtLeast(1L)
+            } else {
+                baseDuration
+            }
             val startTime = cursor
             var j = i
             while (j < timeline.size && timeline[j].noteIdx >= 0 &&
@@ -430,7 +456,8 @@ object OmrPipeline {
                         duration = duration,
                         staff = ln.staff,
                         measureIndex = measureIndex,
-                        articulation = articulations[curNoteIdx] ?: Articulation.NONE
+                        articulation = articulations[curNoteIdx] ?: Articulation.NONE,
+                        tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
@@ -601,6 +628,24 @@ object OmrPipeline {
             if (withLine > 0) parts.add("$withLine 个带波浪线")
             if (withoutLine > 0) parts.add("$withoutLine 个无波浪线")
             warnings += "检测到 ${trills.size} 个颤音标记(trill)（${parts.joinToString("、")}），已标注颤音"
+        }
+        // 三连音/连音组(tuplet)提示：告知用户检测到的连音组，说明已按比例调整时值。
+        if (tuplets.isNotEmpty()) {
+            val tupletSummary = tuplets.groupBy { it.number }
+                .entries.joinToString("、") { (num, list) ->
+                    val name = when (num) {
+                        2 -> "二连音(duplet)"
+                        3 -> "三连音(triplet)"
+                        4 -> "四连音(quadruplet)"
+                        5 -> "五连音(quintuplet)"
+                        6 -> "六连音(sextuplet)"
+                        7 -> "七连音(septuplet)"
+                        else -> "${num}连音"
+                    }
+                    "$name ×${list.size}"
+                }
+            val totalNotes = tuplets.sumOf { it.noteheadIndices.size }
+            warnings += "检测到 ${tuplets.size} 个连音组（$tupletSummary，共 $totalNotes 个音符），已按连音比例调整时值"
         }
 
         return Result(
