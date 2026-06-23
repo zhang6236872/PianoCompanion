@@ -1615,6 +1615,81 @@ class OmrPipelineTest {
         )
     }
 
+    @Test
+    fun `pipeline detects sforzando sfz marking below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)  // 四分音符 G4
+        // sfz 力度记号在谱表下方
+        renderDynamicLetter(img, 's', 110, 85, 2)
+        renderDynamicLetter(img, 'f', 124, 85, 2)
+        renderDynamicLetter(img, 'z', 136, 85, 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 sfz 力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("sfz") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects rinforzando rfz marking below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+        renderDynamicLetter(img, 'r', 110, 85, 2)
+        renderDynamicLetter(img, 'f', 124, 85, 2)
+        renderDynamicLetter(img, 'z', 136, 85, 2)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 rfz 力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("rfz") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects cresc abbreviation below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+        // c-r-e-s-c
+        var x = 100
+        for (ch in listOf('c', 'r', 'e', 's', 'c')) {
+            renderDynamicLetter(img, ch, x, 85, 2)
+            x += 14
+        }
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 cresc 力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("cresc") }
+        )
+    }
+
+    @Test
+    fun `pipeline detects decresc abbreviation below staff`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 120, 60)
+        // d-e-c-r-e-s-c
+        var x = 80
+        for (ch in listOf('d', 'e', 'c', 'r', 'e', 's', 'c')) {
+            renderDynamicLetter(img, ch, x, 85, 2)
+            x += 14
+        }
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到 decresc 力度记号，实际=${result.warnings}",
+            result.warnings.any { it.contains("decresc") }
+        )
+    }
+
     // ---- 渐强/渐弱符号(hairpin)集成测试 ------------------------------------
 
     /**

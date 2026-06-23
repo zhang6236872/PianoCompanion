@@ -10,8 +10,10 @@ package com.pianocompanion.omr.image
  * **检测原理**：
  * 1. 在每个谱表系统的下方（底线之下 0.5~4 个谱线间距）搜索文字类墨块
  * 2. 将水平方向上相邻的墨块分组为字母序列
- * 3. 对每个墨块的边界框做 5×7 降采样，与字母模板 'p'/'m'/'f' 做汉明距离匹配
+ * 3. 对每个墨块的边界框做 5×7 降采样，与字母模板
+ *    'p'/'m'/'f'/'s'/'z'/'r'/'c'/'e'/'d' 做汉明距离匹配
  * 4. 将匹配到的字母按从左到右的顺序拼接，判断是否为已知力度记号
+ * 5. 缩写类标记（如 cresc. / decresc.）末尾的句点被单独检测并附加到文本中
  *
  * **与符头/休止符/符干的区分**：
  * - 符干是细长竖线（1-2px 宽），降采样后与任何字母模板的汉明距离都很大
@@ -39,8 +41,14 @@ object DynamicMarkingDetector {
     /** 已知的标准力度记号集合。不在列表中的字母组合会被忽略。 */
     private val KNOWN_DYNAMICS = setOf(
         "ppp", "pp", "p", "mp", "mf", "f", "ff", "fff",  // 基本强弱梯度
-        "sfz", "sf", "sfp", "fp"  // 突强类
+        "sfz", "sf", "sfp", "fp",  // 突强类(sforzando)
+        "rf", "rfz",  // rinforzando(突强)
+        "cresc", "cresc.",  // crescendo(渐强)
+        "decresc", "decresc."  // decrescendo(渐弱)
     )
+
+    /** 以句点结尾的缩写标记。当末尾检测到句点时会尝试附加 "." 形式匹配。 */
+    private val ABBREVIATION_ROOTS = setOf("cresc", "decresc")
 
     private const val GRID_W = 5
     private const val GRID_H = 7
@@ -111,11 +119,28 @@ object DynamicMarkingDetector {
             // 对每组墨块做字母匹配
             for (group in groups) {
                 if (group.isEmpty()) continue
-                val letters = group.mapNotNull { blob ->
-                    matchLetter(image, blob, lineSpacing)
-                }
+
+                // 逐个匹配字母，记录哪些 blob 匹配成功
+                val matched = group.map { blob -> blob to matchLetter(image, blob, lineSpacing) }
+                val letters = matched.mapNotNull { it.second }
                 if (letters.isEmpty()) continue
-                val text = letters.joinToString("")
+
+                var text = letters.joinToString("")
+
+                // 缩写标记末尾的句点检测：最后一个匹配的字母之后，若有未匹配的小型
+                // 紧凑墨块（句点），且当前文本是缩写词根，则附加 "."。
+                // 句点在标准音乐排版中是标记缩写的句点，不是字母。
+                if (text in ABBREVIATION_ROOTS) {
+                    val lastMatchedIdx = matched.indexOfLast { it.second != null }
+                    if (lastMatchedIdx >= 0 && lastMatchedIdx < group.size - 1) {
+                        val hasTrailingPeriod = group.subList(lastMatchedIdx + 1, group.size)
+                            .any { isPeriod(it, lineSpacing) }
+                        if (hasTrailingPeriod) {
+                            text += "."
+                        }
+                    }
+                }
+
                 if (text in KNOWN_DYNAMICS) {
                     val centerX = (group.first().minX + group.last().maxX) / 2
                     results += DynamicMarking(text, centerX, sysIdx)
@@ -162,6 +187,15 @@ object DynamicMarkingDetector {
         return bestChar
     }
 
+    /**
+     * 判断一个墨块是否为缩写末尾的句点（period）。
+     * 句点是小型紧凑实心墨块——宽高均不超过 0.5 个谱线间距，且面积 ≥ 2 像素。
+     */
+    private fun isPeriod(blob: Blob, lineSpacing: Int): Boolean {
+        val maxDim = (lineSpacing * 0.5).toInt().coerceAtLeast(3)
+        return blob.width in 2..maxDim && blob.height in 2..maxDim
+    }
+
     /** 把矩形区域降采样到 cols×rows 布尔网格（每格按黑像素占比 ≥ 0.4 判定）。 */
     private fun downsampleRegion(
         image: BinaryImage, minX: Int, minY: Int, maxX: Int, maxY: Int,
@@ -195,7 +229,7 @@ object DynamicMarkingDetector {
         // 这样渲染后的 blob 边界框恰好是 5×scale × 7×scale，
         // 降采样时每个输出格精确映射回一个模板格，保证完美往返（hamming距离=0）。
         val glyphs = mapOf(
-            // p: 圆碗（上5行）+ 左侧下降笔画（下2行）
+            // p: 圆碗（上5行）+ 左侧下降笔画(descender)
             'p' to arrayOf(
                 "01110",
                 "10001",
@@ -224,6 +258,66 @@ object DynamicMarkingDetector {
                 "00010",
                 "00010",
                 "00100"
+            ),
+            // s: S 形曲线（上弧 → 中间过渡 → 下弧）
+            's' to arrayOf(
+                "01110",
+                "10001",
+                "10000",
+                "01110",
+                "00001",
+                "10001",
+                "01110"
+            ),
+            // z: 顶部水平线 + 对角线 + 底部水平线
+            'z' to arrayOf(
+                "11111",
+                "00001",
+                "00010",
+                "00100",
+                "01000",
+                "10000",
+                "11111"
+            ),
+            // r: 顶部小弯钩 + 竖笔画（意大利体小写 r）
+            'r' to arrayOf(
+                "00010",
+                "00110",
+                "01000",
+                "11100",
+                "01000",
+                "01000",
+                "01001"
+            ),
+            // c: 左侧开放的圆弧
+            'c' to arrayOf(
+                "01110",
+                "10001",
+                "10000",
+                "10000",
+                "10000",
+                "10001",
+                "01110"
+            ),
+            // e: 圆弧 + 中央水平线（与 c 的区别仅在中间行全填充）
+            'e' to arrayOf(
+                "01110",
+                "10001",
+                "10000",
+                "11111",
+                "10000",
+                "10001",
+                "01110"
+            ),
+            // d: 右侧上升笔画(ascender) + 左下圆碗
+            'd' to arrayOf(
+                "00001",
+                "00001",
+                "00001",
+                "01111",
+                "10001",
+                "10001",
+                "01111"
             )
         )
         val out = LinkedHashMap<Char, BooleanArray>()
