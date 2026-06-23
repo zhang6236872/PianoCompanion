@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.33.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测)
+- 当前版本: **v2.34.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测)
 - 当前分支: main
-- 最新 tag: v2.32.0 (待打 v2.33.0)
+- 最新 tag: v2.32.0 (待打 v2.33.0/v2.34.0)
 
-## 健康状态 (2026-06-23 核验)
+## 健康状态 (2026-06-24 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 548 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 575 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
 - Kotlin 文件: 79 个 / 代码行数: 10000+ 行
@@ -925,10 +925,43 @@
   - 单元测试 528 → **548** 全部通过；编译 + assembleDebug 通过
   - 已知限制：手写体"tr"与模板差异较大时可能漏检，真实照片鲁棒性待验证
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0) 已完成！** 代码已合并到 main。
+### v2.34.0 — OMR 三连音/连音组(tuplet)检测 (2026-06-24)
+- **目标**：在 OMR 管道中新增三连音/连音组(tuplet)检测能力，使扫描的乐谱能正确
+  识别三连音等连音组标记并按比例调整音符时值。
+  连音组(tuplet)是在正常应容纳 M 个音符的时间段内挤入 N 个等时值音符的记法。
+  最常见的是三连音(triplet)：在原本 2 个音符的时间内挤入 3 个音符。
+- **实现内容**：
+  - 新建 `TupletDetector.kt`（纯 Kotlin，无 Android 依赖，完全可单元测试）
+    - 复用 `SignatureDetector.classifyDigit`（internal）和 `DIGIT_TEMPLATES`（5×7）
+      做数字识别，支持二连音(2)~七连音(7)
+    - 搜索区域：谱表顶线上方 0.5~3.0 个谱线间距，多系统安全（不低于上一系统底线+1间距）
+    - 成员识别：从数字中心 X 出发，在按 X 排序的符头中找连续 N 个使其几何中心最接近数字 X
+      （滑动窗口算法，排除已分配符头，跨度限制 6.0 个间距）
+    - 方括号检测：在数字上方 0~0.5 个间距内搜索水平墨迹 ≥ 2.0 个间距判定为 bracket
+    - tupletRatio 映射：三连音(3)→2/3、二连音(2)→3/2、四连音(4)→3/4、五连音(5)→4/5、
+      六连音(6)→4/6、七连音(7)→4/7
+  - `OmrPipeline.kt` 集成：
+    - 在 trill 检测后(step 6.15)添加 tuplet 检测步骤
+    - 构建 `tupletByNotehead` 映射，在 duration 计算中按比例缩放音符时值
+    - ScoreNote 创建时设置 `tuplet` 字段
+    - 添加 tuplet 检测结果的用户提示(warning)，含连音组类型名称和总数统计
+  - `Note.kt`：ScoreNote 新增 `tuplet: Int = 0` 字段
+  - `TupletDetectorTest.kt`：27 个单元测试覆盖：
+    - 三连音/二连音/五连音基本检测
+    - 无数字返回空、成员索引正确分配
+    - 两组连音同时检测、成员数不匹配拒绝、不支持的数字(8/9)拒绝
+    - 位置约束：谱表下方/谱线区域内的数字不检测
+    - 方括号检测（有/无 bracket）
+    - 多系统：不同系统独立检测、跨系统不匹配
+    - 边界：空列表、零间距、无效系统索引、空系统列表
+    - 比例计算：所有支持数字 + 不支持数字返回 1.0
+  - 单元测试 548 → **575** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 
-## 单元测试明细 (548 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (575 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -959,6 +992,7 @@
 - FermataDetectorTest: 15
 - GraceNoteDetectorTest: 21
 - TrillDetectorTest: 20
+- TupletDetectorTest: 27
 
 ## 阻塞
 （无）
@@ -1000,5 +1034,7 @@
   - 待完善：真实照片中小符头大小可能因手写体与普通音符差异不足，斜线检测对手写斜线笔画鲁棒性有限
 - OMR 颤音(trill)识别 ✅ (v2.33.0 已完成：5×7 字母模板匹配识别符头上方"tr"文字标记，波浪线检测判断持续时间指示，搜索区域限定谱表顶线上方0.5~4.0谱线间距，仅产生warning不修改音符数据模型)
   - 待完善：手写体"tr"与模板差异较大时可能漏检，真实照片鲁棒性待验证
+- OMR 三连音/连音组(tuplet)识别 ✅ (v2.34.0 已完成：复用 SignatureDetector.classifyDigit 做数字识别，支持二连音(2)~七连音(7)的检测，从数字中心X出发滑动窗口找连续N个符头使几何中心最接近数字X，检测方括号(bracket)水平线，按 tupletRatio 缩放音符时值，搜索区域限定谱表顶线上方0.5~3.0谱线间距)
+  - 待完善：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
