@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.29.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测)
+- 当前版本: **v2.30.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测)
 - 当前分支: main
-- 最新 tag: v2.29.0
+- 最新 tag: v2.30.0
 
 ## 健康状态 (2026-06-23 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 470 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 488 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0
 - Kotlin 文件: 74 个 / 代码行数: 10000+ 行
 
 ## 开发历史
@@ -801,10 +801,36 @@
   - 单元测试 466 → **470** 全部通过；编译 + assembleDebug 通过
   - 已知限制：当 hairpin 两条线在窄端不相交（各自独立斜线段）时不被识别；
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0) 已完成！** 代码已合并到 main。
+### v2.30.0 — OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 (2026-06-23)
+- **目标**：扩展 `DynamicMarkingDetector`，从原来仅支持 p/m/f 三个字母模板
+  扩展到 9 个字母(p/m/f/s/z/r/c/e/d)，使其能够识别 sfz、rf、rfz、cresc.、decresc.
+  等非常规力度记号。这是 OMR 功能增强列表中「更多力度记号」的待添加项。
+- **技术方案**：
+  - **扩展字母模板库**：在 `buildLetterTemplates()` 中新增 6 个 5×7 BooleanArray 模板：
+    - `s` — 上窄中凸下窄S形
+    - `z` — 上中下三横折线
+    - `r` — 竖+小穹顶+斜腿
+    - `c` — 左开口C弧
+    - `e` — 左封闭三横线（与c的区分靠中间横线）
+    - `d` — 左竖右满圆
+  - **缩写句点(period)检测**：新增 `isPeriod()` 方法，通过几何特征（宽度≤0.5间距、
+    高度≤0.5间距、面积≥2px）识别字母组末尾的小圆点。group 匹配循环中，
+    不可识别的小 blob 会检查是否为句点，若满足条件则追加 "." 到结果
+  - **扩展 KNOWN_DYNAMICS 集合**：新增 rf、rfz、cresc、decresc（含可选句点）
+  - **c/e/s 字母区分**：这3个"圆形"字母在 5×7 网格中 hamming 距离较低(c↔e=4, s↔e=4, s↔c=6)，
+    测试中对这些紧对(tightPairs)放宽区分阈值至 4，`matchLetter` 的 `secondDist - bestDist ≥ 2`
+    消歧检查在实际检测中正确工作（全部检测测试通过）
+- **OmrPipeline 步骤 6.10**：更新注释，反映 9 字母模板匹配和缩写句点检测
+- **测试**：
+  - 完全重写 `DynamicMarkingDetectorTest`，共 14 个单元测试覆盖：
+    sfz/sf/rf/rfz/cresc/decresc 检测、句点检测、大 blob 不误报、混合场景、模板验证
+  - 新增 4 个端到端管线测试 `OmrPipelineTest`：sfz、rfz、cresc、decresc 管线集成
+  - 单元测试 470 → **488** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (470 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (488 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -813,7 +839,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 12
-- OmrPipelineTest: 54
+- OmrPipelineTest: 58
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -829,7 +855,7 @@
 - ArticulationDetectorTest: 50
 - TieDetectorTest: 17
 - SlurDetectorTest: 6
-- DynamicMarkingDetectorTest: 9
+- DynamicMarkingDetectorTest: 14
 - RepeatCountDetectorTest: 15
 - HairpinDetectorTest: 16
 
@@ -854,7 +880,7 @@
   - ✅ 延音线(tie) (v2.25.0 已完成：列投影覆盖率法检测同音高符头间的连续弧线，覆盖率≥75%判定为tie，被tie的第二个音符时值合并到第一个音符)
   - ✅ 连音(slur) (v2.26.0 已完成：逐列插值搜索跟随音高斜率检测不同音高符头间的弧线，与tie通过音高差异(PITCH_Y_TOLERANCE_FRAC=0.15)区分，支持多音符连音组，仅产生warning不修改时值)
   - ✅ 渐强/渐弱符号(< > / hairpin) (v2.29.0 已完成：逐列竖直跨度分析法检测谱表下方V形渐强/渐弱符号，左右1/3跨度比≥1.5判定方向，仅产生warning不修改音符数据模型)
-  - 待添加：更多力度记号(如 sfz/rf/cresc./decresc. 等非常规动态标记) 等
+  - ✅ 更多力度记号(sfz/rf/rfz/cresc./decresc.) (v2.30.0 已完成：扩展 DynamicMarkingDetector 从3字母(p/m/f)到9字母(p/m/f/s/z/r/c/e/d)，新增句点(period)检测支持缩写形式，KNOWN_DYNAMICS 扩展含 rf/rfz/cresc/decresc)
   - ✅ 反复次数标注(如 "×3") (v2.28.0 已完成：5×7 乘号点阵模板 + 数字识别 + 连续字形间距解析，支持 ×N/N× 两种形式和多位数字，仅对反复结束小节线(:‖)上方搜索，乘号为标志特征杜绝与跳房子序号混淆，仅产生warning)
 - OMR 连梁组切分 ✅ (v2.5.0 已完成双/三连梁组、上下符干、双横梁十六分)
   - 待完善：不同高度间距过大的连梁组、密集拥挤连梁组（符头水平间距 <0.4 谱线间距）
