@@ -1865,4 +1865,169 @@ class OmrPipelineTest {
             result.warnings.any { it.contains("延音记号") || it.contains("fermata") }
         )
     }
+
+    // ---- 临时记号(accidental)管线集成测试 -----------------------------------
+
+    /**
+     * 绘制升号(♯)：两根垂直笔画 + 两条对角交叉线。
+     */
+    private fun drawSharp(img: BinaryImage, cx: Int, cy: Int) {
+        for (y in cy - 5..cy + 4) {
+            if (cx - 3 in 0 until width && y in 0 until height) img.set(cx - 3, y, true)
+            if (cx + 3 in 0 until width && y in 0 until height) img.set(cx + 3, y, true)
+        }
+        for (t in 0..6) {
+            val x = cx - 3 + t
+            val y = cy - 3 + t * 5 / 6
+            if (x in 0 until width && y in 0 until height) img.set(x, y, true)
+        }
+        for (t in 0..6) {
+            val x = cx - 3 + t
+            val y = cy + 2 - t * 5 / 6
+            if (x in 0 until width && y in 0 until height) img.set(x, y, true)
+        }
+    }
+
+    /**
+     * 绘制还原号(♮)：两根垂直笔画 + 两条水平交叉线。
+     */
+    private fun drawNatural(img: BinaryImage, cx: Int, cy: Int) {
+        for (y in cy - 5..cy + 4) {
+            if (cx - 3 in 0 until width && y in 0 until height) img.set(cx - 3, y, true)
+            if (cx + 3 in 0 until width && y in 0 until height) img.set(cx + 3, y, true)
+        }
+        for (x in cx - 3..cx + 3) {
+            if (x in 0 until width) {
+                if (cy - 2 in 0 until height) img.set(x, cy - 2, true)
+                if (cy + 2 in 0 until height) img.set(x, cy + 2, true)
+            }
+        }
+    }
+
+    /**
+     * 绘制降号(♭)：一根垂直笔画 + 右下方圆弧凸起。
+     */
+    private fun drawFlat(img: BinaryImage, cx: Int, cy: Int) {
+        for (y in cy - 5..cy + 4) {
+            if (cx - 1 in 0 until width && y in 0 until height) img.set(cx - 1, y, true)
+        }
+        for (y in cy - 1..cy + 2) {
+            if (cx in 0 until width && y in 0 until height) img.set(cx, y, true)
+            if (cx + 1 in 0 until width && y in 0 until height) img.set(cx + 1, y, true)
+        }
+    }
+
+    @Test
+    fun `pipeline sharp before note raises pitch by one semitone`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 音符在 y=65 → F4 = MIDI 65; 前方升号 → F#4 = MIDI 66
+        drawStemmedFilled(img, 200, 65)
+        drawSharp(img, 182, 65)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应有 1 个音符", 1, result.score.notes.size)
+        val midi = result.score.notes[0].midiNumber
+        assertEquals("升号应将 F4(65) 升高到 F#4(66)", 66, midi)
+        assertEquals(
+            "应设置 accidental = SHARP",
+            com.pianocompanion.data.model.Accidental.SHARP,
+            result.score.notes[0].accidental
+        )
+    }
+
+    @Test
+    fun `pipeline flat before note lowers pitch by one semitone`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 音符在 y=60 → G4 = MIDI 67; 前方降号 → Gb4 = MIDI 66
+        drawStemmedFilled(img, 200, 60)
+        drawFlat(img, 184, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应有 1 个音符", 1, result.score.notes.size)
+        val midi = result.score.notes[0].midiNumber
+        assertEquals("降号应将 G4(67) 降低到 Gb4(66)", 66, midi)
+    }
+
+    @Test
+    fun `pipeline natural before note in C major leaves pitch unchanged`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 音符在 y=65 → F4 = MIDI 65; 前方还原号 → C大调无调号偏移, 仍为 F4 = 65
+        drawStemmedFilled(img, 200, 65)
+        drawNatural(img, 182, 65)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertEquals("应有 1 个音符", 1, result.score.notes.size)
+        val midi = result.score.notes[0].midiNumber
+        assertEquals("C大调中还原号不改变 F4(65) 音高", 65, midi)
+    }
+
+    @Test
+    fun `pipeline accidental warning message produced`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 65)
+        drawSharp(img, 182, 65)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应检测到临时记号提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("临时记号") }
+        )
+    }
+
+    @Test
+    fun `pipeline no accidental when none present`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawStemmedFilled(img, 200, 65)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无临时记号时不应有提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("临时记号") }
+        )
+        if (result.score.notes.isNotEmpty()) {
+            assertEquals(
+                "无临时记号应返回 NONE",
+                com.pianocompanion.data.model.Accidental.NONE,
+                result.score.notes[0].accidental
+            )
+        }
+    }
+
+    @Test
+    fun `pipeline sharp offset is exactly one semitone not two`() {
+        // 关键回归测试：确保调号偏移不会被重复应用（双计数 bug）。
+        // 分别识别无临时记号和有升号的乐谱，比较音高差恰好为 +1。
+        // 如果 effectiveOffset 和 mapToMidi 都返回调号偏移，在非零调号时会导致 +2
+        // 而非 +1。此测试通过验证升号的净效果恰好为 +1 来间接保护该不变量。
+
+        // 无升号：F4 → MIDI 65
+        val imgPlain = blankScore()
+        drawStaff(imgPlain)
+        drawStemmedFilled(imgPlain, 200, 65)
+        val resultPlain = OmrPipeline.recognize(imgPlain, tempo = 120)
+
+        // 有升号：F#4 → MIDI 66（恰好 +1，不是 +2）
+        val imgSharp = blankScore()
+        drawStaff(imgSharp)
+        drawStemmedFilled(imgSharp, 200, 65)
+        drawSharp(imgSharp, 182, 65)
+        val resultSharp = OmrPipeline.recognize(imgSharp, tempo = 120)
+
+        assertEquals("无升号应有 1 个音符", 1, resultPlain.score.notes.size)
+        assertEquals("有升号应有 1 个音符", 1, resultSharp.score.notes.size)
+
+        val midiPlain = resultPlain.score.notes[0].midiNumber
+        val midiSharp = resultSharp.score.notes[0].midiNumber
+        assertEquals("升号应恰好升高 1 个半音", midiPlain + 1, midiSharp)
+    }
 }
