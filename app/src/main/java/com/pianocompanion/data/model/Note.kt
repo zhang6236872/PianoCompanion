@@ -18,6 +18,8 @@ import com.pianocompanion.util.MusicUtils
  * @param accidental 临时记号（升降号），记录该音符因前方临时记号而应用的半音修正类型。
  *   NONE 表示未检测到临时记号（沿用调号）。
  *   midiNumber 已包含此修正，此字段仅用于信息追溯和 UI 标注（显示 ♯/♭/♮）。
+ * @param fingering 指法编号（0=未标注, 1=拇指, 2=食指, 3=中指, 4=无名指, 5=小指）。
+ *   来自 OMR 指法数字检测，用于 UI 标注和辅助学习。不影响音高或时值。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -31,7 +33,8 @@ data class ScoreNote(
     val articulation: Articulation = Articulation.NONE,
     val tuplet: Int = 0,
     val octaveShift: Int = 0,
-    val accidental: Accidental = Accidental.NONE
+    val accidental: Accidental = Accidental.NONE,
+    val fingering: Int = 0
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)

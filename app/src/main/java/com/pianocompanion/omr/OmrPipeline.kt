@@ -16,6 +16,7 @@ import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
 import com.pianocompanion.omr.image.FermataDetector
+import com.pianocompanion.omr.image.FingeringDetector
 import com.pianocompanion.omr.image.GraceNoteDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
@@ -342,6 +343,17 @@ object OmrPipeline {
         )
         val accidentalsByNotehead = accidentalDetection.byNotehead
 
+        // --- 6.18. 指法数字(fingering)检测 -----------------------------------
+        // 指法数字是写在音符上方或下方的小数字（1–5），指示演奏者用哪根手指弹奏
+        // 该音符（1=拇指, 5=小指）。在钢琴教学乐谱和练习曲中极为常见。
+        // 通过小型孤立数字识别（复用 SignatureDetector.classifyDigit），仅接受 1–5。
+        // 不修改音高或时值，仅在 ScoreNote.fingering 字段中记录，供 UI 标注。
+        val fingerings = FingeringDetector.detect(
+            cleaned, blobs, located.map { it.nh },
+            located.map { it.systemIdx }, systems, lineSpacing
+        )
+        val fingeringByNotehead = fingerings.associate { it.noteheadIdx to it.finger }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -448,7 +460,8 @@ object OmrPipeline {
                         isGraceNote = true,
                         articulation = articulations[gnIdx] ?: Articulation.NONE,
                         accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
-                        octaveShift = octaveShift
+                        octaveShift = octaveShift,
+                        fingering = fingeringByNotehead[gnIdx] ?: 0
                     )
                 }
                 // 不推进 cursor——装饰音与主音符共享起始时间。
@@ -532,7 +545,8 @@ object OmrPipeline {
                         articulation = articulations[curNoteIdx] ?: Articulation.NONE,
                         tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0,
                         accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
-                        octaveShift = octaveShift
+                        octaveShift = octaveShift,
+                        fingering = fingeringByNotehead[curNoteIdx] ?: 0
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
@@ -732,6 +746,14 @@ object OmrPipeline {
                 }
             val totalNotes = tuplets.sumOf { it.noteheadIndices.size }
             warnings += "检测到 ${tuplets.size} 个连音组（$tupletSummary，共 $totalNotes 个音符），已按连音比例调整时值"
+        }
+        // 指法提示：告知用户检测到的指法数字，说明已标注到音符上。
+        if (fingerings.isNotEmpty()) {
+            val summary = fingerings.groupBy { it.finger }
+                .entries.joinToString("、") { (finger, list) ->
+                    "指${finger} ×${list.size}"
+                }
+            warnings += "检测到 ${fingerings.size} 个指法标注（$summary），已标注到对应音符"
         }
 
         return Result(
