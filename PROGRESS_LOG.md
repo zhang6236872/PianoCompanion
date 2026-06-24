@@ -1044,10 +1044,47 @@
     过滤解决），SignatureDetector 可能将某些位置的升号误判为低音谱号（测试中通过
     分离两张图像规避，真实场景中需进一步优化 SignatureDetector 的抗干扰能力）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0) 已完成！** 代码已合并到 main。
+### 2026-06-25 (自主开发)
+- **后续增强 (v2.37.0): OMR 指法数字(fingering number)检测 — ✅ 完成**
+  - 指法数字是乐谱中标注在音符上方或下方的小型数字（1–5），指示演奏者用哪根手指弹奏。
+    在钢琴教学乐谱和练习曲中极为常见——正确的指法是流畅演奏的基础。此前 OMR 管线
+    完全忽略指法数字，识别的乐谱缺少这一关键学习辅助信息。
+  - 新增 `FingeringDetector`（纯 Kotlin，无 Android 依赖，完全可单元测试）：
+    - **搜索区域**：对每个符头，在其上方和下方各搜索一个竖直区域（起始间隙 0.3 个
+      谱线间距，搜索范围 3.0 个间距），兼容右手 stem-up（指法在上方）和左手 stem-down
+      （指法在下方）两种情况
+    - **尺寸约束**：候选高度 0.4~1.2 个间距、宽度 ≤0.9 个间距、面积 ≥3px——
+      排除大型字形（和弦符号、歌词文字）和噪声碎片
+    - **数字识别**：复用 `SignatureDetector.classifyDigit` 做 5×7 点阵模板匹配
+      （与拍号、连音数字、八度数字使用同一套模板），保证一致性
+    - **范围过滤**：仅接受数字 1–5（有效手指编号），拒绝 0、6–9
+    - **水平对齐**：数字中心 X 与符头中心 X 的偏差 ≤0.5 个谱线间距
+    - **上方优先**：当符头上方和下方都有数字时，优先取上方
+    - **与其他数字标注的区分**：拍号数字位于签名区，跳房子序号在方括号上方，
+      连音数字跨多音符居中，八度数字带虚线——指法数字是单个音符正上方/下方的小型
+      孤立数字，在位置和尺度上天然不同
+  - `ScoreNote` 新增 `fingering: Int = 0` 字段（0=未标注, 1=拇指, 5=小指）
+  - `OmrPipeline` 步骤 6.18 集成：调用 `FingeringDetector.detect()` 构建
+    `fingeringByNotehead` 映射，在装饰音和常规音符两处 ScoreNote 创建时设置 fingering，
+    检测到指法时产生中文警告提示
+  - `ScoreRenderer` / `AutoScrollScoreRenderer` 新增渲染：在符头上方绘制蓝色
+    (#1565C0) 小号粗体数字
+  - 新增 18 个单元测试 `FingeringDetectorTest`：
+    - 基本检测：数字 3 上方/数字 1 下方/无数字返回空
+    - 多音符/选择性：两个符头各有指法、仅一个有指法
+    - 数字范围 1-5 全部可识别
+    - 无效数字拒绝：0/6/9 不是有效手指编号
+    - 尺寸过滤：过大(scale=5)/过小(scale=1)数字被拒绝
+    - X 对齐过滤：偏心数字不匹配
+    - 多系统：两系统各检测、一系统指法不匹配另一系统符头（充分间隔避免搜索区域重叠）
+    - 边界：空输入、零间距、无效系统索引、上方优先于下方
+  - 单元测试 622 → **640** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 
-## 单元测试明细 (622 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (640 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1081,6 +1118,7 @@
 - TupletDetectorTest: 27
 - OctavaDetectorTest: 17
 - AccidentalDetectorTest: 13
+- FingeringDetectorTest: 18
 
 ## 阻塞
 （无）
@@ -1128,5 +1166,7 @@
   - 待完善：手写体数字与模板差异较大时可能漏检，虚线断裂(真实照片抗锯齿)可能导致虚线检测提前终止，真实照片鲁棒性待验证
 - OMR 临时记号(升号/降号/还原号)检测 ✅ (v2.36.0 已完成：AccidentalDetector 基于连通块几何特征分类升号(♯)/降号(♭)/还原号(♮)，PitchMapper.letterForPosition+effectiveOffset 统一音高偏移计算(优先级: 显式>小节延续>调号)，修复调号偏移双计数bug，小节内延续(measure carryover)规则，accidentalBlobCenters 过滤被NoteheadDetector误判为符头的临时记号形状)
   - 待完善：SignatureDetector 可能将某些位置的升号误判为低音谱号(需进一步优化区分能力)，真实照片鲁棒性待验证
+- OMR 指法数字(fingering number)检测 ✅ (v2.37.0 已完成：FingeringDetector 对每个符头上方/下方搜索区域内的连通块做尺寸约束(高0.4~1.2间距/宽≤0.9间距)+数字识别(SignatureDetector.classifyDigit 5×7模板)+范围过滤(仅1-5)+X对齐(≤0.5间距)，ScoreNote 新增 fingering 字段，ScoreRenderer/AutoScrollScoreRenderer 渲染蓝色小号数字)
+  - 待完善：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架

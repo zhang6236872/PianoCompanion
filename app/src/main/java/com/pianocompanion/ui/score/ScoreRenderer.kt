@@ -246,6 +246,20 @@ private fun StaffView(
                 else -> { /* NONE: no mark */ }
             }
 
+            // Draw fingering number above the notehead
+            if (note.fingering in 1..5) {
+                drawContext.canvas.nativeCanvas.drawText(
+                    note.fingering.toString(),
+                    x - noteRadius * 0.5f,
+                    y - noteRadius * 3.0f,
+                    android.graphics.Paint().apply {
+                        color = android.graphics.Color.parseColor("#1565C0")
+                        textSize = noteRadius * 1.8f
+                        isFakeBoldText = true
+                    }
+                )
+            }
+
             // Highlight current note with a circle
             if (isCurrent) {
                 drawOval(
