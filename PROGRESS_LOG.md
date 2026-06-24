@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.35.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测)
+- 当前版本: **v2.36.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测)
 - 当前分支: main
 - 最新 tag: v2.32.0 (待打 v2.33.0/v2.34.0)
 
 ## 健康状态 (2026-06-24 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 592 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 622 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
 - Kotlin 文件: 81 个 / 代码行数: 10000+ 行
@@ -994,10 +994,60 @@
   - 已知限制：手写体数字与模板差异较大时可能漏检，虚线断裂(真实照片抗锯齿)可能导致虚线
     检测提前终止，真实照片鲁棒性待验证
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0) 已完成！** 代码已合并到 main。
+### 2026-06-24 (自主开发, 第二轮)
+- **后续增强 (v2.36.0): OMR 临时记号(升号/降号/还原号)检测 — ✅ 完成**
+  - 临时记号(accidental)是乐谱中写在音符前方的升降号（♯升号/♭降号/♮还原号），改变该音符的
+    音高。此前 OMR 管线完全忽略临时记号，导致所有含升降号的音符都被映射为错误的白键音高，
+    造成 score-following 音高匹配失败。
+  - 新增 `AccidentalDetector`（纯 Kotlin，无 Android 依赖，完全可单元测试）：
+    - **搜索策略**：对每个符头，向左搜索指定窗口内的连通块作为候选临时记号
+      （搜索窗口由 SEARCH_LEFT_FRAC=3.0s、SEARCH_GAP_FRAC=0.5s、SEARCH_Y_FRAC=1.0s 控制）
+    - **分类方法**：基于连通块几何特征分类——
+      - 升号(♯)：高宽比 ≈ 1.0，垂直笔画比高，两条交叉对角线
+      - 降号(♭)：高宽比 ≈ 2.0（偏高），垂直笔画为主 + 底部圆弧
+      - 还原号(♮)：高宽比 ≈ 1.0，垂直笔画比高 + 右上+左下对角线
+      - 使用水平扫描带内的像素密度分布区分三种记号
+    - **返回值**：`AccidentalDetection(byNotehead, accidentalBlobCenters)`
+      - `byNotehead`: 符头索引 → Accidental 类型的映射
+      - `accidentalBlobCenters`: 被识别为临时记号的连通块中心 X 坐标集合，
+        用于过滤被 NoteheadDetector 误判为符头的临时记号形状（升号有时被误判为符头）
+  - 新增 `PitchMapper.letterForPosition(centerY, system, staff)`：
+    - 根据谱表类型（高音/低音/中音/次中音）和 Y 坐标推算音名字母（0=C, 1=D, ..., 6=B）
+    - 用于支持临时记号的小节内延续（同音名继承）
+  - 新增 `PitchMapper.effectiveOffset(letter, key, explicitAcc, carriedAcc)`：
+    - 统一计算音高偏移量，优先级：显式临时记号 > 小节内延续 > 调号
+    - 当无显式临时记号且无延续时，回退到调号偏移（key.accidentalOffset）
+  - `OmrPipeline` 集成：
+    - 步骤 6.17 调用 `AccidentalDetector.detect()` 获取临时记号
+    - 时间轴构建时过滤被误判为符头的临时记号连通块
+    - 步骤 8 时间轴循环中（装饰音 + 普通音符两处）应用临时记号到 MIDI 音高
+    - **小节内延续(measure carryover)**：同一小节内同音名的后续音符继承显式临时记号，
+      进入新小节时清空
+    - **警告信息**：检测到临时记号时产生 "检测到 N 个临时记号" 警告
+  - **修复调号偏移双计数 bug**：
+    - 问题：`mapToMidi(y, system, staff, key)` 内部已应用调号偏移，
+      `effectiveOffset()` 作为回退也返回调号偏移 → 偏移被重复应用
+    - 修复：改用 3 参数 `mapToMidi(y, system, staff)`（不含 key），
+      调号修正统一由 `effectiveOffset()` 处理
+  - `ScoreNote` 已有 `accidental: Accidental` 字段（之前已添加）
+  - 测试（30 个新增）：
+    - `AccidentalDetectorTest`（13 个）：升号/降号/还原号检测、调号区域过滤、
+      空输入/零间距边界、不同距离的候选选择
+    - `PitchMapperTest`（+13 个）：letterForPosition 各种谱表、effectiveOffset 优先级链
+    - `OmrPipelineTest`（+4 个集成测试）：端到端验证
+      - 升号将音符升高 1 个半音（F4→F#4）
+      - 降号将音符降低 1 个半音（G4→Gb4）
+      - 还原号在 C 大调中不改变音高
+      - 升号偏移恰好 +1（回归测试，防止调号偏移双计数）
+  - 单元测试 592 → **622** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：升号形状有时被 NoteheadDetector 误判为符头（已通过 accidentalBlobCenters
+    过滤解决），SignatureDetector 可能将某些位置的升号误判为低音谱号（测试中通过
+    分离两张图像规避，真实场景中需进一步优化 SignatureDetector 的抗干扰能力）
 
-## 单元测试明细 (592 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (622 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1005,8 +1055,8 @@
 - OnlineDTWTest: 5
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
-- PitchMapperTest: 12
-- OmrPipelineTest: 65
+- PitchMapperTest: 25
+- OmrPipelineTest: 69
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -1030,6 +1080,7 @@
 - TrillDetectorTest: 20
 - TupletDetectorTest: 27
 - OctavaDetectorTest: 17
+- AccidentalDetectorTest: 13
 
 ## 阻塞
 （无）
@@ -1075,5 +1126,7 @@
   - 待完善：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 - OMR 八度记号(8va/8vb/15ma/15mb)识别 ✅ (v2.35.0 已完成：竖直位置判定方向(上方=移高/下方=移低)，复用 SignatureDetector.classifyDigit 识别数字 8 和 1+5 组合，虚线确认机制区分八度记号与指法数字(覆盖率10%~85%+跨度≥1.5间距)，semitoneShiftForNote 应用移位到 ScoreNote.midiNumber，ScoreNote 新增 octaveShift 字段)
   - 待完善：手写体数字与模板差异较大时可能漏检，虚线断裂(真实照片抗锯齿)可能导致虚线检测提前终止，真实照片鲁棒性待验证
+- OMR 临时记号(升号/降号/还原号)检测 ✅ (v2.36.0 已完成：AccidentalDetector 基于连通块几何特征分类升号(♯)/降号(♭)/还原号(♮)，PitchMapper.letterForPosition+effectiveOffset 统一音高偏移计算(优先级: 显式>小节延续>调号)，修复调号偏移双计数bug，小节内延续(measure carryover)规则，accidentalBlobCenters 过滤被NoteheadDetector误判为符头的临时记号形状)
+  - 待完善：SignatureDetector 可能将某些位置的升号误判为低音谱号(需进一步优化区分能力)，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
