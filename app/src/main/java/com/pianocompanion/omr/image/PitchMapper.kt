@@ -1,5 +1,6 @@
 package com.pianocompanion.omr.image
 
+import com.pianocompanion.data.model.Accidental
 import com.pianocompanion.data.model.Staff
 import com.pianocompanion.util.MusicUtils
 import kotlin.math.roundToInt
@@ -79,4 +80,40 @@ object PitchMapper {
     /** Convenience: staff-step index → human-readable note name. */
     fun staffPositionToNoteName(stepIndex: Int, staff: Staff): String =
         MusicUtils.midiToNoteName(staffPositionToMidi(stepIndex, staff))
+
+    /**
+     * 计算符头在指定谱表上的音名字母索引（C=0, D=1, E=2, F=3, G=4, A=5, B=6）。
+     * 用于临时记号的小节内延续（同一字母的后续音符继承显式临时记号）。
+     */
+    fun letterForPosition(noteheadY: Int, system: StaffSystem, staff: Staff): Int {
+        val spacing = system.lineSpacing
+        if (spacing <= 0) return 0
+        val stepPx = spacing / 2.0
+        val stepsFromBottom = ((system.bottomLine.center - noteheadY) / stepPx).roundToInt()
+        val gdc = bottomLineGdc(staff) + stepsFromBottom
+        return Math.floorMod(gdc, 7)
+    }
+
+    /**
+     * 计算临时记号的有效半音修正。
+     *
+     * 优先级：显式临时记号 > 小节内延续（carried）> 调号（key signature）。
+     * - 显式 SHARP → +1, FLAT → -1, NATURAL → 0, DOUBLE_SHARP → +2, DOUBLE_FLAT → -2
+     * - 延续（NATURAL 在小节内取消调号升降）
+     * - 无显式/延续时回退到调号的 [KeySignature.accidentalOffset]
+     */
+    fun effectiveOffset(
+        letter: Int,
+        key: KeySignature?,
+        explicitAccidental: Accidental?,
+        carriedAccidental: Accidental?
+    ): Int {
+        val acc = explicitAccidental ?: carriedAccidental
+            ?: return key?.accidentalOffset(letter) ?: 0
+        return if (acc == Accidental.NONE) {
+            key?.accidentalOffset(letter) ?: 0
+        } else {
+            acc.semitoneOffset
+        }
+    }
 }

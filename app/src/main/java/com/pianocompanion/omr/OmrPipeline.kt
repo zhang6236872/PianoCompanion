@@ -1,10 +1,12 @@
 package com.pianocompanion.omr
 
 import com.pianocompanion.data.model.Articulation
+import com.pianocompanion.data.model.Accidental
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
+import com.pianocompanion.omr.image.AccidentalDetector
 import com.pianocompanion.omr.image.ArticulationDetector
 import com.pianocompanion.omr.image.BarlineDetector
 import com.pianocompanion.omr.image.BarlineType
@@ -322,6 +324,24 @@ object OmrPipeline {
         // 检测到的八度移位会在步骤 8 的时间轴循环中应用到音符的 MIDI 音高上。
         val ottavaShifts = OctavaDetector.detect(cleaned, blobs, systems, lineSpacing)
 
+        // --- 6.17. 临时记号(accidental)检测 ----------------------------------
+        // 临时记号是写在音符前方的升降号（♯升号/♭降号/♮还原号），改变该音符的音高。
+        // 与调号(key signature)不同，临时记号是逐音符的——升号只影响紧随其后的那个
+        // 音符（及同小节内同音名的后续音符）。此前 OMR 管线完全忽略临时记号，
+        // 导致所有含升降号的音符都被映射为错误的白键音高。
+        //
+        // 检测到的临时记号在步骤 8 的时间轴循环中应用到 MIDI 音高上，并实现
+        // 小节内延续（measure carryover）：同一小节内同音名的后续音符继承该临时记号，
+        // 直到小节结束或被新的临时记号覆盖。
+        val accidentalDetection = AccidentalDetector.detect(
+            cleaned, blobs, located.map { it.nh }, located.map { it.systemIdx },
+            systems.mapIndexed { idx, _ ->
+                signatures.perSystem.getOrElse(idx) { null }?.signatureEndX ?: 0
+            },
+            lineSpacing
+        )
+        val accidentalsByNotehead = accidentalDetection.byNotehead
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -351,7 +371,16 @@ object OmrPipeline {
         // systemIdx 确保多系统时按谱表从上到下、系统内从左到右排序。
         data class TimelineItem(val systemIdx: Int, val x: Int, val noteIdx: Int, val restDuration: NoteDuration?)
         val timeline = ArrayList<TimelineItem>()
+        // 升号/降号/还原号等临时记号形状有时会被 NoteheadDetector 误判为符头。
+        // 用 AccidentalDetector 报告的临时记号连通块中心 X 坐标过滤掉这些伪符头。
+        val accidentalCenters = accidentalDetection.accidentalBlobCenters
+        val accidentalTolerance = (lineSpacing / 3).coerceAtLeast(2)
         for (idx in located.indices) {
+            // 跳过被误判为符头的临时记号连通块
+            val isFalseNotehead = accidentalCenters.any { bx ->
+                kotlin.math.abs(located[idx].nh.centerX - bx) <= accidentalTolerance
+            }
+            if (isFalseNotehead) continue
             timeline += TimelineItem(located[idx].systemIdx, located[idx].nh.centerX, idx, null)
         }
         // 休止符按所属系统索引配对（保留系统归属），而非使用丢失系统信息的 flattened 列表。
@@ -367,6 +396,10 @@ object OmrPipeline {
         // 被 tie 连接的第二个音符不产生新的 ScoreNote，而是将其时值累加到第一个音符。
         val noteIdxToNotesPos = HashMap<Int, Int>()
         var cursor = 0L
+        // 临时记号小节内延续（measure carryover）：同一小节内同音名的后续音符继承
+        // 显式临时记号。进入新小节时清空，被新临时记号覆盖时更新。
+        var carryMeasure = -1
+        val carryAccidentals = HashMap<Int, Accidental>()  // letter(0-6) → Accidental
         var i = 0
         while (i < timeline.size) {
             val item = timeline[i]
@@ -383,7 +416,15 @@ object OmrPipeline {
                 val gnIdx = item.noteIdx
                 val ln = located[gnIdx]
                 val system = systems[ln.systemIdx]
-                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
+                val key = keysBySystem[ln.systemIdx]
+                val letter = PitchMapper.letterForPosition(ln.nh.centerY, system, ln.staff)
+                val explicitAcc = accidentalsByNotehead[gnIdx]
+                val effOffset = PitchMapper.effectiveOffset(letter, key, explicitAcc, carryAccidentals[letter])
+                // 注意：使用 3 参数 mapToMidi（不含调号），调号修正已由 effectiveOffset 统一处理，
+                // 避免调号偏移被重复应用（mapToMidi(...,key) + effectiveOffset 都返回 key offset）。
+                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff) + effOffset
+                // 更新临时记号小节内延续状态
+                if (explicitAcc != null) carryAccidentals[letter] = explicitAcc
                 // 应用八度记号移位（8va/8vb/15ma/15mb）
                 val octaveShift = OctavaDetector.semitoneShiftForNote(
                     ottavaShifts, ln.systemIdx, ln.nh.centerX
@@ -406,6 +447,7 @@ object OmrPipeline {
                         measureIndex = measureIndex,
                         isGraceNote = true,
                         articulation = articulations[gnIdx] ?: Articulation.NONE,
+                        accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
                         octaveShift = octaveShift
                     )
                 }
@@ -452,23 +494,34 @@ object OmrPipeline {
                 }
                 val ln = located[curNoteIdx]
                 val system = systems[ln.systemIdx]
-                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff, keysBySystem[ln.systemIdx])
+                val key = keysBySystem[ln.systemIdx]
+                // 先计算 measureIndex（小节序号），用于临时记号小节内延续状态的清空。
+                val measureIndex = if (totalBarlines > 0) {
+                    measureBaseBySystem[ln.systemIdx] +
+                        barlinesBySystem[ln.systemIdx]
+                            .count { it.centerX < ln.nh.centerX && it.type != BarlineType.DASHED }
+                } else {
+                    (startTime / measureMs).toInt()
+                }
+                // 进入新小节时清空临时记号延续状态
+                if (measureIndex != carryMeasure) {
+                    carryAccidentals.clear()
+                    carryMeasure = measureIndex
+                }
+                // 临时记号处理：显式临时记号 > 小节内延续 > 调号。
+                // 注意：使用 3 参数 mapToMidi（不含调号），调号修正已由 effectiveOffset 统一处理，
+                // 避免调号偏移被重复应用（mapToMidi(...,key) + effectiveOffset 都返回 key offset）。
+                val letter = PitchMapper.letterForPosition(ln.nh.centerY, system, ln.staff)
+                val explicitAcc = accidentalsByNotehead[curNoteIdx]
+                val effOffset = PitchMapper.effectiveOffset(letter, key, explicitAcc, carryAccidentals[letter])
+                val midi = PitchMapper.mapToMidi(ln.nh.centerY, system, ln.staff) + effOffset
+                if (explicitAcc != null) carryAccidentals[letter] = explicitAcc
                 // 应用八度记号移位（8va/8vb/15ma/15mb）
                 val octaveShift = OctavaDetector.semitoneShiftForNote(
                     ottavaShifts, ln.systemIdx, ln.nh.centerX
                 )
                 val shiftedMidi = (midi + octaveShift).coerceIn(21, 108)
                 if (shiftedMidi in 21..108) {
-                    // 小节线检测到时，用视觉小节线位置精确计算 measureIndex
-                    // （该音符之前有多少条小节线 = 该音符所在小节序号）；
-                    // 未检测到小节线时回退到旧的 startTime/measureMs 时间估算。
-                    val measureIndex = if (totalBarlines > 0) {
-                        measureBaseBySystem[ln.systemIdx] +
-                            barlinesBySystem[ln.systemIdx]
-                                .count { it.centerX < ln.nh.centerX && it.type != BarlineType.DASHED }
-                    } else {
-                        (startTime / measureMs).toInt()
-                    }
                     notes += ScoreNote(
                         midiNumber = shiftedMidi,
                         noteName = MusicUtils.midiToNoteName(shiftedMidi),
@@ -478,6 +531,7 @@ object OmrPipeline {
                         measureIndex = measureIndex,
                         articulation = articulations[curNoteIdx] ?: Articulation.NONE,
                         tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0,
+                        accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
                         octaveShift = octaveShift
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
@@ -555,6 +609,17 @@ object OmrPipeline {
                     "${list.size} 个$label"
                 }
             warnings += "检测到 ${allRests.size} 个休止符（$restSummary），已计入时间轴"
+        }
+        // 临时记号提示：告知用户检测到多少临时记号（升号/降号/还原号），已修正音高。
+        if (accidentalsByNotehead.isNotEmpty()) {
+            val sharpCount = accidentalsByNotehead.values.count { it == Accidental.SHARP || it == Accidental.DOUBLE_SHARP }
+            val flatCount = accidentalsByNotehead.values.count { it == Accidental.FLAT || it == Accidental.DOUBLE_FLAT }
+            val naturalCount = accidentalsByNotehead.values.count { it == Accidental.NATURAL }
+            val parts = mutableListOf<String>()
+            if (sharpCount > 0) parts += "$sharpCount 个升号"
+            if (flatCount > 0) parts += "$flatCount 个降号"
+            if (naturalCount > 0) parts += "$naturalCount 个还原号"
+            warnings += "检测到 ${accidentalsByNotehead.size} 个临时记号（${parts.joinToString("、")}），已修正音高并应用小节内延续规则"
         }
         // 小节线提示：告知用户检测到的小节数，说明 measureIndex 基于视觉小节线。
         if (totalBarlines > 0) {

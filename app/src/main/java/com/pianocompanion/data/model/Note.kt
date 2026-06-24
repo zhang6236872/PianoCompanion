@@ -15,6 +15,9 @@ import com.pianocompanion.util.MusicUtils
  * @param octaveShift 八度移位量（0=无移位, +12=8va, -12=8vb, +24=15ma, -24=15mb）。
  *   记录该音符因八度记号(ottava)而应用的半音移位，用于 UI 标注和调试。
  *   midiNumber 已包含此移位，此字段仅用于信息追溯。
+ * @param accidental 临时记号（升降号），记录该音符因前方临时记号而应用的半音修正类型。
+ *   NONE 表示未检测到临时记号（沿用调号）。
+ *   midiNumber 已包含此修正，此字段仅用于信息追溯和 UI 标注（显示 ♯/♭/♮）。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -27,7 +30,8 @@ data class ScoreNote(
     val isGraceNote: Boolean = false,
     val articulation: Articulation = Articulation.NONE,
     val tuplet: Int = 0,
-    val octaveShift: Int = 0
+    val octaveShift: Int = 0,
+    val accidental: Accidental = Accidental.NONE
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)
@@ -44,6 +48,24 @@ data class ScoreNote(
  * - [MARCATO] 强音（^）：强烈的强调，比重音更用力
  */
 enum class Articulation { NONE, STACCATO, TENUTO, ACCENT, STACCATISSIMO, MARCATO }
+
+/**
+ * 临时记号（accidental），表示写在音符前方的升降号。
+ *
+ * - [NONE] 无临时记号（沿用调号 key signature）
+ * - [SHARP] 升号（♯）：升高半音
+ * - [FLAT] 降号（♭）：降低半音
+ * - [NATURAL] 还原号（♮）：取消调号中的升/降，回到白键
+ * - [DOUBLE_SHARP] 重升号（×）：升高全音（极少见）
+ * - [DOUBLE_FLAT] 重降号（♭♭）：降低全音（极少见）
+ *
+ * 临时记号在一小节内对同一音名的后续音符持续有效，直到小节结束或被新的
+ * 临时记号覆盖。OMR 管线先检测每个符头前方的显式临时记号，再在此基础
+ * 上实现小节内延续（measure carryover）。
+ */
+enum class Accidental(val semitoneOffset: Int) {
+    NONE(0), SHARP(1), FLAT(-1), NATURAL(0), DOUBLE_SHARP(2), DOUBLE_FLAT(-2)
+}
 
 data class DetectedNote(
     val midiNumber: Int,
