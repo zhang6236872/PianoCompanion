@@ -2057,6 +2057,125 @@ class OmrPipelineTest {
         }
     }
 
+    // ---- 滑音(glissando)管线集成测试 ----------------------------------------
+
+    /**
+     * 绘制从 (x0,y0) 到 (x1,y1) 的对角线（Bresenham 式采样），用于模拟滑音线。
+     */
+    private fun drawGlissandoLine(
+        img: BinaryImage, x0: Int, y0: Int, x1: Int, y1: Int,
+        thickness: Int = 1
+    ) {
+        val dx = kotlin.math.abs(x1 - x0)
+        val dy = kotlin.math.abs(y1 - y0)
+        val steps = kotlin.math.max(dx, dy)
+        if (steps == 0) return
+        for (i in 0..steps) {
+            val t = i.toDouble() / steps
+            val cx = (x0 + t * (x1 - x0)).toInt()
+            val cy = (y0 + t * (y1 - y0)).toInt()
+            for (ty in (cy - thickness)..(cy + thickness)) {
+                for (tx in (cx - thickness)..(cx + thickness)) {
+                    if (tx in 0 until width && ty in 0 until height) {
+                        img.set(tx, ty, true)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects glissando warning for diagonal line between notes`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个音符在不同音高：A 在底部(y=65)，B 在顶部(y=35)
+        // dy=30px=3*s，dx=70px=7*s（< 10*s 上限）
+        drawEllipse(img, 120, 65)  // 低音
+        drawEllipse(img, 190, 35)  // 高音（上方 3 谱线间距）
+        // 滑音线从 A 右边缘到 B 左边缘，留 3px 间隙避免与符头合并为同一连通块
+        drawGlissandoLine(img, 128, 63, 182, 37)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到滑音，实际=${result.warnings}",
+            result.warnings.any { it.contains("滑音") || it.contains("glissando") }
+        )
+    }
+
+    @Test
+    fun `pipeline no glissando warning when no diagonal line`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 120, 65)
+        drawEllipse(img, 190, 35)
+        // 不画滑音线
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无滑音线时不应有滑音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("滑音") || it.contains("glissando") }
+        )
+    }
+
+    @Test
+    fun `pipeline glissando notes have isGlissando flag`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 120, 65)
+        drawEllipse(img, 190, 35)
+        // 留 3px 间隙避免与符头合并为同一连通块
+        drawGlissandoLine(img, 128, 63, 182, 37)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        val glissNotes = result.score.notes.filter { it.isGlissando }
+        assertTrue(
+            "滑音端点音符应标记 isGlissando=true，notes=${result.score.notes.map { it.midiNumber to it.isGlissando }}",
+            glissNotes.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `pipeline detects descending glissando`() {
+        val img = blankScore()
+        drawStaff(img)
+        // A 在顶部(y=35)，B 在底部(y=65) — 下行滑音
+        drawEllipse(img, 120, 35)
+        drawEllipse(img, 190, 65)
+        // 留 3px 间隙避免与符头合并为同一连通块
+        drawGlissandoLine(img, 128, 37, 182, 63)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应检测到下行滑音，实际=${result.warnings}",
+            result.warnings.any { it.contains("滑音") || it.contains("glissando") }
+        )
+    }
+
+    @Test
+    fun `pipeline adjacent notes without glissando line are not falsely detected`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 两个相近的音符，没有滑音线
+        drawEllipse(img, 120, 65)
+        drawEllipse(img, 190, 35)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无滑音线时不应误报滑音，实际=${result.warnings}",
+            result.warnings.any { it.contains("滑音") || it.contains("glissando") }
+        )
+        // 音符应正常检测
+        assertTrue(
+            "应检测到至少 2 个音符，实际=${result.score.notes.size}",
+            result.score.notes.size >= 2
+        )
+    }
+
     @Test
     fun `pipeline detects arpeggio warning for rolled chord`() {
         val img = blankScore()
