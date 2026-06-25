@@ -33,6 +33,7 @@ import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.omr.image.SlurDetector
+import com.pianocompanion.omr.image.TempoMarkingDetector
 import com.pianocompanion.omr.image.TieDetector
 import com.pianocompanion.omr.image.TrillDetector
 import com.pianocompanion.omr.image.TupletDetector
@@ -124,6 +125,13 @@ object OmrPipeline {
 
         // --- 3. Connected components -------------------------------------------
         val blobs = ConnectedComponents.label(cleaned, minPixels = 4)
+
+        // --- 3.5. Tempo marking detection --------------------------------------
+        // 检测乐谱上方的速度记号（如 ♩=120），覆盖默认 tempo 值。
+        // 此值决定所有音符的时长计算（quarterMs = 60000 / tempo）。
+        // 若未检测到速度记号，回退到调用方传入的默认 tempo。
+        val detectedTempo = TempoMarkingDetector.detect(cleaned, blobs, systems, lineSpacing)
+        val effectiveTempo = detectedTempo?.bpm ?: tempo
 
         // --- 4. 每系统检测符头 -------------------------------------------------
         // 分两阶段：先用"紧凑主扫描"得到不含谱号/拍号等高大字形的干净符头，用于确定
@@ -374,7 +382,7 @@ object OmrPipeline {
         // 若仅按 x 排序，下方系统最左侧的音符（小 x）会被插到上方系统最右侧音符（大 x）
         // 之前，完全打乱音乐顺序。
         val xTolerance = (lineSpacing * 0.8).toInt().coerceAtLeast(2)
-        val quarterMs = 60_000L / tempo.coerceAtLeast(1)
+        val quarterMs = 60_000L / effectiveTempo.coerceAtLeast(1)
         // 拍号决定一个小节的时长；未识别到时默认 4/4。
         val quartersPerMeasure = detectedTimeSig?.quartersPerMeasure ?: 4.0
         val measureMs = (quarterMs * quartersPerMeasure).toLong().coerceAtLeast(1L)
@@ -762,7 +770,7 @@ object OmrPipeline {
                 title = title,
                 composer = "OMR",
                 notes = notes,
-                tempo = tempo,
+                tempo = effectiveTempo,
                 timeSignature = detectedTimeSig?.toString() ?: "4/4",
                 source = ScoreSource.OMR
             ),
