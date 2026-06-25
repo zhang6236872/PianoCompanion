@@ -20,6 +20,10 @@ import com.pianocompanion.util.MusicUtils
  *   midiNumber 已包含此修正，此字段仅用于信息追溯和 UI 标注（显示 ♯/♭/♮）。
  * @param fingering 指法编号（0=未标注, 1=拇指, 2=食指, 3=中指, 4=无名指, 5=小指）。
  *   来自 OMR 指法数字检测，用于 UI 标注和辅助学习。不影响音高或时值。
+ * @param isArpeggiated 是否为琶音和弦成员。
+ *   来自 OMR 琶音检测——和弦左方的垂直波浪线指示滚奏。琶音和弦中的音符
+ *   从下到上依次快速弹奏，而非同时。startTime 已包含序列延迟（每个音符
+ *   比前一个晚 ARPEGGIO_DELAY_MS 毫秒），此字段用于 UI 标注和 score-follower 特殊处理。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -34,7 +38,8 @@ data class ScoreNote(
     val tuplet: Int = 0,
     val octaveShift: Int = 0,
     val accidental: Accidental = Accidental.NONE,
-    val fingering: Int = 0
+    val fingering: Int = 0,
+    val isArpeggiated: Boolean = false
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)

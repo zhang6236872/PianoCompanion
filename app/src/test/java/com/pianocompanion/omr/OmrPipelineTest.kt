@@ -2030,4 +2030,132 @@ class OmrPipelineTest {
         val midiSharp = resultSharp.score.notes[0].midiNumber
         assertEquals("升号应恰好升高 1 个半音", midiPlain + 1, midiSharp)
     }
+
+    // ---- 琶音(arpeggio / rolled chord)管线集成测试 --------------------------
+
+    /**
+     * 绘制琶音竖线（波浪/zigzag 线），位于和弦左方。
+     *
+     * @param cx 竖线中心 X 坐标
+     * @param topY 顶部 Y
+     * @param bottomY 底部 Y
+     * @param wavy 是否为波浪线（true=zigzag, false=直线）
+     */
+    private fun drawArpeggioLine(
+        img: BinaryImage, cx: Int, topY: Int, bottomY: Int,
+        wavy: Boolean = true, amplitude: Int = 2
+    ) {
+        for (y in topY..bottomY) {
+            if (y !in 0 until height) continue
+            if (wavy) {
+                val offset = ((y - topY) / 3 % (2 * amplitude + 1)) - amplitude
+                val px = cx + offset
+                if (px in 0 until width) img.set(px, y, true)
+            } else {
+                if (cx in 0 until width) img.set(cx, y, true)
+            }
+        }
+    }
+
+    @Test
+    fun `pipeline detects arpeggio warning for rolled chord`() {
+        val img = blankScore()
+        drawStaff(img)
+        // 和弦：两个音符在同一 X 列，竖直跨度 = 2.5 谱线间距（> 1.5 间距阈值）
+        // 使用 drawEllipse（无符干），避免符干融合为单个连通块导致符头检测失败
+        drawEllipse(img, 200, 35) // 上方音符
+        drawEllipse(img, 200, 60) // 下方音符
+        // 琶音竖线在和弦左方
+        drawArpeggioLine(img, 188, 33, 62, wavy = true)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "应在 warnings 中检测到琶音，实际=${result.warnings}",
+            result.warnings.any { it.contains("琶音") || it.contains("arpeggio") }
+        )
+    }
+
+    @Test
+    fun `pipeline no arpeggio warning when no arpeggio line`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 35)
+        drawEllipse(img, 200, 60)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertFalse(
+            "无琶音线时不应有琶音提示，实际=${result.warnings}",
+            result.warnings.any { it.contains("琶音") || it.contains("arpeggio") }
+        )
+    }
+
+    @Test
+    fun `pipeline arpeggiated chord members have isArpeggiated flag`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 35)
+        drawEllipse(img, 200, 60)
+        drawArpeggioLine(img, 188, 33, 62, wavy = true)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        // 琶音和弦成员应标记 isArpeggiated = true
+        val arpNotes = result.score.notes.filter { it.isArpeggiated }
+        assertTrue(
+            "琶音和弦成员应标记 isArpeggiated=true，notes=${result.score.notes.map { it.midiNumber to it.isArpeggiated }}",
+            arpNotes.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `pipeline arpeggio applies sequential delay to chord members`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 35)
+        drawEllipse(img, 200, 60)
+        drawArpeggioLine(img, 188, 33, 62, wavy = true)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        // 琶音和弦中的两个音符应有不同的 startTime（底部音符先弹，延迟更小）
+        val arpNotes = result.score.notes.filter { it.isArpeggiated }
+        assertTrue(
+            "应有 ≥2 个琶音音符，实际=${arpNotes.size}",
+            arpNotes.size >= 2
+        )
+        if (arpNotes.size >= 2) {
+            // 底部音符（Y 更大 → 音高低 → MIDI 更小）延迟应为 0
+            // 顶部音符（Y 更小 → 音高高 → MIDI 更大）延迟应为 30ms
+            val bottomNote = arpNotes.minBy { it.midiNumber }
+            val topNote = arpNotes.maxBy { it.midiNumber }
+            assertTrue(
+                "顶部音符应比底部音符晚开始（序列延迟），bottom=${bottomNote.startTime}, top=${topNote.startTime}",
+                topNote.startTime > bottomNote.startTime
+            )
+        }
+    }
+
+    @Test
+    fun `pipeline detects arpeggio with three-note chord`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 200, 35)
+        drawEllipse(img, 200, 50)
+        drawEllipse(img, 200, 65)
+        drawArpeggioLine(img, 188, 33, 67, wavy = true)
+
+        val result = OmrPipeline.recognize(img, tempo = 120)
+
+        assertTrue(
+            "三音和弦琶音应被检测到，实际=${result.warnings}",
+            result.warnings.any { it.contains("琶音") || it.contains("arpeggio") }
+        )
+        // 应覆盖 3 个音符
+        assertTrue(
+            "提示中应提及覆盖 3 个音符，实际=${result.warnings}",
+            result.warnings.any { it.contains("3 个音符") }
+        )
+    }
 }
