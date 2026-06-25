@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.39.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测)
+- 当前版本: **v2.40.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测)
 - 当前分支: main
-- 最新 tag: v2.32.0 (待打 v2.33.0~v2.39.0)
+- 最新 tag: v2.32.0 (待打 v2.33.0~v2.40.0)
 
 ## 健康状态 (2026-06-25 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 682 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 706 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
 - Kotlin 文件: 83 个 / 代码行数: 11000+ 行
@@ -1201,5 +1201,7 @@
   - 待完善：手写体数字与模板差异较大时可能漏检，真实照片鲁棒性待验证
 - OMR 速度记号(tempo marking)检测 ✅ (v2.39.0 已完成：TempoMarkingDetector 在第一谱表系统顶线上方 0.5~5.0 谱线间距搜索区域检测速度记号(♩=120)。等号(=)检测为两条平行水平线段(宽高比≥1.5+X重叠≥40%线段宽度)，是区分速度记号与小节号/指法/连音的唯一可靠特征。复用 SignatureDetector.classifyDigit 做数字识别，BPM 范围 20~400，集成到 OmrPipeline step 3.5，effectiveTempo 替换 quarterMs 计算和 Score.tempo。27 个单元测试覆盖正常检测/位置变化/多系统/数字标注区分/BPM范围/边界情况)
   - 待完善：等号前方的音符符号(♩/♪)暂不识别(仅靠等号+数字组合已足够可靠)，手写体等号可能形状不规则，真实照片鲁棒性待验证
+- OMR 踏板记号(pedal marking)检测 ✅ (v2.40.0 已完成：PedalMarkingDetector 在每个谱表系统底线之下 0.5~4.0 谱线间距搜索区域检测延音踏板标记。踩下标记(Ped.)通过 P/e/d 三字母 5×7 模板匹配 + 水平分组 + 末尾句点检测识别，释放标记(∗)通过星形 RELEASE_TEMPLATE 模板匹配 + 几何约束(方形/中等填充率)识别。PedalMarking 包含 type(PRESS/RELEASE)/centerX/systemIdx，仅产生 warning 提示不修改音符数据模型。24 个单元测试覆盖检测/拒绝/多系统/模板验证/边界情况。修复了测试辅助函数中使用类级 height 常量而非图像实际尺寸导致截断的 bug)
+  - 待完善：手写体 "Ped." 斜体与模板差异较大时可能漏检，释放星形在真实乐谱中形态多样(有些用方括号替代星号)，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
