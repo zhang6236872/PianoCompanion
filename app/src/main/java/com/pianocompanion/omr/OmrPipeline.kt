@@ -24,6 +24,7 @@ import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.OctavaDetector
+import com.pianocompanion.omr.image.PedalMarkingDetector
 import com.pianocompanion.omr.image.PitchMapper
 import com.pianocompanion.omr.image.RepeatCountDetector
 import com.pianocompanion.omr.image.Rest
@@ -361,6 +362,14 @@ object OmrPipeline {
             located.map { it.systemIdx }, systems, lineSpacing
         )
         val fingeringByNotehead = fingerings.associate { it.noteheadIdx to it.finger }
+
+        // --- 6.19. 踏板记号(pedal marking)检测 --------------------------------
+        // 钢琴乐谱中的延音踏板(sustain pedal)是最重要的踏板控制。踩下标记为
+        // 谱表下方的 "Ped." 文字，释放标记为星形/花形符号(∗)。
+        // 对一个钢琴辅助应用来说，踏板是演奏的核心组成部分。
+        // 通过字母模板匹配识别 "Ped" + 句点，以及星形模板匹配识别释放标记。
+        // 不修改音符数据模型，仅产生提示信息（与力度记号、hairpin 等一致）。
+        val pedalMarkings = PedalMarkingDetector.detect(cleaned, blobs, systems, lineSpacing)
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -762,6 +771,15 @@ object OmrPipeline {
                     "指${finger} ×${list.size}"
                 }
             warnings += "检测到 ${fingerings.size} 个指法标注（$summary），已标注到对应音符"
+        }
+        // 踏板记号提示：告知用户检测到的踏板踩下/释放标记。
+        if (pedalMarkings.isNotEmpty()) {
+            val pressCount = pedalMarkings.count { it.type == PedalMarkingDetector.PedalType.PRESS }
+            val releaseCount = pedalMarkings.count { it.type == PedalMarkingDetector.PedalType.RELEASE }
+            val parts = ArrayList<String>()
+            if (pressCount > 0) parts.add("$pressCount 个踏板踩下(Ped.)")
+            if (releaseCount > 0) parts.add("$releaseCount 个踏板释放(∗)")
+            warnings += "检测到 ${pedalMarkings.size} 个踏板记号（${parts.joinToString("、")}），已标注延音踏板控制"
         }
 
         return Result(
