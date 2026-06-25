@@ -1189,10 +1189,33 @@
   - 已知限制：手写体斜线笔画可能形状不规则，真实照片中抗锯齿/噪点可能导致
     斜线行检测灵敏度变化，需人工校对
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0) 已完成！** 代码已合并到 main。
+### v2.43.0 — OMR 滑音(glissando)检测 (2026-06-26)
+- **新增** `GlissandoDetector` — 检测乐谱中连接两个音符的对角斜线（滑音/刮奏标记）
+- **检测原理**：
+  - 将符头按系统分组，同一系统内按 X 排序
+  - 对每对相邻符头检查：音高差 ≥1.5 谱线间距（排除同音/近音）、水平间距 1~10 间距
+  - 沿两符头中心间的对角线路径采样像素（步长 2px、窗口 ±0.4 间距）
+  - 墨迹覆盖率 ≥50% 判定为滑音线
+  - **与其他符号区分**：弧线(tie/slur)沿对角采样覆盖率低；竖线(stem)仅交叉点贡献；
+    水平线(beam)仅交叉高度贡献
+- **数据模型**：`ScoreNote` 新增 `isGlissando: Boolean = false`（仅用于 score-follower
+  宽松匹配模式，不渲染 UI）
+- **管线集成**：OmrPipeline 步骤 6.22 调用 `GlissandoDetector.detect()`，构建
+  `glissandoNoteheads` 索引集合，ScoreNote 构建时填入 `isGlissando`，
+  警告提示「检测到 N 个滑音(glissando)标记」
+- **测试**：新增 25 个测试（单元测试 743 → **768**）：
+  - `GlissandoDetectorTest` 20 个：上行/下行/波浪线/厚线检测、无线/近音高/同列和弦/
+    稀疏墨迹/断裂线/竖线/横梁排除、多滑音独立性、零间距边界、水平间距约束
+  - `OmrPipelineTest` 5 个：管线集成检测滑音警告、isGlissando 标记、下行滑音、
+    无线不误报、相邻音符不误报
+- **测试几何修正**：
+  - 单元测试：符头位置从 dx=120px(超出 MAX_GAP_FRAC=10*s)调整为 dx=90px(9*s)
+  - 管线测试：滑音线与符头椭圆之间留 3px 间隙，避免合并为同一连通块导致符头检测失败
 
-## 单元测试明细 (743 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (768 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1201,7 +1224,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 25
-- OmrPipelineTest: 74
+- OmrPipelineTest: 79
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -1230,6 +1253,7 @@
 - NoteheadDetectorTest: 17
 - ArpeggioDetectorTest: 16
 - TremoloDetectorTest: 16
+- GlissandoDetectorTest: 20
 
 ## 阻塞
 （无）
@@ -1287,5 +1311,7 @@
   - 待完善：真实照片中琶音竖线可能因抗锯齿/噪点导致特征变化，需人工校对
 - OMR 震音(tremolo)检测 ✅ (v2.42.0 已完成：TremoloDetector 检测音符符干上的 2~3 条短斜线。自适应水平墨迹投影法(逐行统计符干周围窗口黑像素数，以裸符干行为基线，墨迹超基线标记为斜线行)，连续斜线行归组，组数≥2判定为震音。排除无干/带横梁/短干音符。ScoreNote 新增 tremoloSlashCount 字段(0=无/2=八分震音/3=三十二分震音)。16 个单元测试)
   - 待完善：手写体斜线笔画可能形状不规则，真实照片鲁棒性待验证
+- OMR 滑音(glissando)检测 ✅ (v2.43.0 已完成：GlissandoDetector 检测连接两个音符的对角斜线（滑音/刮奏标记）。按系统分组符头并按 X 排序，对相邻符头检查音高差≥1.5间距+水平间距1~10间距约束，沿对角路径采样像素（步长2px、窗口±0.4间距），覆盖率≥50%判定滑音。ScoreNote 新增 isGlissando 字段（score-follower 宽松匹配用）。20 个单元测试 + 5 个管线集成测试)
+  - 待完善：波浪线形滑音在真实照片中可能因抗锯齿导致覆盖不连续，需人工校对
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架

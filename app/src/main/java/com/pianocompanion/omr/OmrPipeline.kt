@@ -18,6 +18,7 @@ import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
 import com.pianocompanion.omr.image.FermataDetector
 import com.pianocompanion.omr.image.FingeringDetector
+import com.pianocompanion.omr.image.GlissandoDetector
 import com.pianocompanion.omr.image.GraceNoteDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
@@ -408,6 +409,21 @@ object OmrPipeline {
             tremoloByNotehead[trem.noteheadIdx] = trem.slashCount
         }
 
+        // --- 6.22. 滑音(glissando)检测 ---------------------------------------
+        // 滑音是两音符间的斜向线，指示从一个音快速滑动到另一个音。
+        // 对 score-following 至关重要：滑音在演奏时产生大量连续快速 onset（手指
+        // 滑过每个琴键），而乐谱只标记起点和终点。检测到滑音后，score-follower
+        // 可进入宽松匹配模式。
+        val glissandos = GlissandoDetector.detect(
+            cleaned, located.map { it.nh }, located.map { it.systemIdx }, lineSpacing
+        )
+        // 收集所有被滑音连接的符头索引。
+        val glissandoNoteheads = HashSet<Int>()
+        for (gliss in glissandos) {
+            glissandoNoteheads.add(gliss.fromNoteheadIdx)
+            glissandoNoteheads.add(gliss.toNoteheadIdx)
+        }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -603,7 +619,8 @@ object OmrPipeline {
                         octaveShift = octaveShift,
                         fingering = fingeringByNotehead[curNoteIdx] ?: 0,
                         isArpeggiated = curNoteIdx in arpeggioDelayByNotehead,
-                        tremoloSlashCount = tremoloByNotehead[curNoteIdx] ?: 0
+                        tremoloSlashCount = tremoloByNotehead[curNoteIdx] ?: 0,
+                        isGlissando = curNoteIdx in glissandoNoteheads
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
@@ -834,6 +851,12 @@ object OmrPipeline {
                 if (twoSlash > 0 && threeSlash > 0) "（$twoSlash 个八分震音、$threeSlash 个三十二分震音）"
                 else if (threeSlash > 0) "（三十二分震音）"
                 else ""
+        }
+        // 滑音提示：告知用户检测到的滑音标记，说明已标记端点音符。
+        if (glissandos.isNotEmpty()) {
+            warnings += "检测到 ${glissandos.size} 个滑音(glissando)标记" +
+                "（覆盖 ${glissandoNoteheads.size} 个端点音符），" +
+                "已标注滑音起点和终点，score-follower 将进入宽松匹配模式"
         }
 
         return Result(

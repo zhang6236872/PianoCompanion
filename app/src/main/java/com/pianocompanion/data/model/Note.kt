@@ -28,6 +28,11 @@ import com.pianocompanion.util.MusicUtils
  *   来自 OMR 震音检测——符干上的 2~3 条短斜线指示将音符快速反复弹奏。
  *   震音音符在演奏时会产生大量快速重复 onset，score-follower 需据此进入宽松匹配。
  *   此字段不影响音高或基础时值，仅用于演奏提示和 score-follower 特殊处理。
+ * @param isGlissando 是否为滑音(glissando)的端点音符。
+ *   来自 OMR 滑音检测——两音符间的斜向线指示从一个音快速滑动到另一个音。
+ *   滑音在演奏时会产生大量连续快速 onset（手指滑过每个琴键），而乐谱只标记
+ *   起点和终点。score-follower 需据此进入宽松匹配。此字段不影响音高或基础时值，
+ *   仅用于演奏提示和 score-follower 特殊处理。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -44,7 +49,8 @@ data class ScoreNote(
     val accidental: Accidental = Accidental.NONE,
     val fingering: Int = 0,
     val isArpeggiated: Boolean = false,
-    val tremoloSlashCount: Int = 0
+    val tremoloSlashCount: Int = 0,
+    val isGlissando: Boolean = false
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)
