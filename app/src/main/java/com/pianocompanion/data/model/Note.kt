@@ -24,6 +24,10 @@ import com.pianocompanion.util.MusicUtils
  *   来自 OMR 琶音检测——和弦左方的垂直波浪线指示滚奏。琶音和弦中的音符
  *   从下到上依次快速弹奏，而非同时。startTime 已包含序列延迟（每个音符
  *   比前一个晚 ARPEGGIO_DELAY_MS 毫秒），此字段用于 UI 标注和 score-follower 特殊处理。
+ * @param tremoloSlashCount 震音(tremolo)斜线数量（0=无震音, 2=八分震音, 3=三十二分震音）。
+ *   来自 OMR 震音检测——符干上的 2~3 条短斜线指示将音符快速反复弹奏。
+ *   震音音符在演奏时会产生大量快速重复 onset，score-follower 需据此进入宽松匹配。
+ *   此字段不影响音高或基础时值，仅用于演奏提示和 score-follower 特殊处理。
  */
 data class ScoreNote(
     val midiNumber: Int,
@@ -39,7 +43,8 @@ data class ScoreNote(
     val octaveShift: Int = 0,
     val accidental: Accidental = Accidental.NONE,
     val fingering: Int = 0,
-    val isArpeggiated: Boolean = false
+    val isArpeggiated: Boolean = false,
+    val tremoloSlashCount: Int = 0
 ) {
     val endTime: Long get() = startTime + duration
     val frequency: Double get() = MusicUtils.midiToFrequency(midiNumber)

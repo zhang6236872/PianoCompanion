@@ -36,6 +36,7 @@ import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.omr.image.SlurDetector
 import com.pianocompanion.omr.image.TempoMarkingDetector
+import com.pianocompanion.omr.image.TremoloDetector
 import com.pianocompanion.omr.image.TieDetector
 import com.pianocompanion.omr.image.TrillDetector
 import com.pianocompanion.omr.image.TupletDetector
@@ -392,6 +393,21 @@ object OmrPipeline {
             }
         }
 
+        // --- 6.21. 震音(tremolo)检测 ------------------------------------------
+        // 震音是符干上的 2~3 条短斜线，指示将音符快速反复弹奏。
+        // 对 score-following 至关重要：震音音符在演奏时会产生大量快速重复 onset，
+        // 而非单一 onset。检测到震音后，score-follower 可进入宽松匹配模式。
+        // 2 斜线 = 八分震音（快速反复弹奏，每次约八分音符时值）
+        // 3 斜线 = 三十二分震音（更密集的反复）
+        val tremolos = TremoloDetector.detect(
+            cleaned, located.map { it.nh }, rhythms, lineSpacing
+        )
+        // 构建 notehead 索引 → 斜线数 的映射。
+        val tremoloByNotehead = HashMap<Int, Int>()
+        for (trem in tremolos) {
+            tremoloByNotehead[trem.noteheadIdx] = trem.slashCount
+        }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -586,7 +602,8 @@ object OmrPipeline {
                         accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
                         octaveShift = octaveShift,
                         fingering = fingeringByNotehead[curNoteIdx] ?: 0,
-                        isArpeggiated = curNoteIdx in arpeggioDelayByNotehead
+                        isArpeggiated = curNoteIdx in arpeggioDelayByNotehead,
+                        tremoloSlashCount = tremoloByNotehead[curNoteIdx] ?: 0
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
@@ -809,6 +826,14 @@ object OmrPipeline {
             val totalNotes = arpeggios.sumOf { it.noteheadIndices.size }
             warnings += "检测到 ${arpeggios.size} 个琶音(arpeggio/rolled chord)标记" +
                 "（覆盖 $totalNotes 个音符），已对和弦成员应用序列延迟（从下到上依次弹奏）"
+        }
+        if (tremolos.isNotEmpty()) {
+            val twoSlash = tremolos.count { it.slashCount == 2 }
+            val threeSlash = tremolos.count { it.slashCount == 3 }
+            warnings += "检测到 ${tremolos.size} 个震音(tremolo)标记" +
+                if (twoSlash > 0 && threeSlash > 0) "（$twoSlash 个八分震音、$threeSlash 个三十二分震音）"
+                else if (threeSlash > 0) "（三十二分震音）"
+                else ""
         }
 
         return Result(
