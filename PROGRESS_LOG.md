@@ -1155,10 +1155,44 @@
     需人工校对；直线琶音（非波浪线）与小节线的区分依赖填充率阈值，
     极窄（1-2px）的小节线可能被误判
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0) 已完成！** 代码已合并到 main。
+- **后续增强 (v2.42.0): OMR 震音(tremolo)检测 — ✅ 完成**
+  - 震音(tremolo)用音符符干上的 2~3 条短斜线表示，指示将音符快速反复弹奏。
+    2 斜线 = 八分震音，3 斜线 = 三十二分震音。此前 OMR 管线不识别震音，
+    导致 score follower 期待单一 onset，而实际演奏产生大量快速重复 onset，
+    造成匹配混乱。
+  - 新增纯 Kotlin `omr/image/TremoloDetector`（无 Android 依赖，完全可单元测试）：
+    - **自适应水平墨迹投影法**：对每个带干符头，取符干中段（排除两端各 20%
+      及符头墨迹）作为搜索区域。逐行统计符干 X 坐标周围水平窗口（半宽 0.6 间距）
+      内的黑像素总数。以搜索区域最小墨迹数为基线（裸符干行），墨迹 > 基线
+      的行标记为"斜线行"。
+    - **斜线组计数**：连续斜线行（允许 1 行间断容忍薄行）归为一组（一条斜线），
+      每组至少 2 个实际斜线行过滤噪声。组数 ≥2 判定为震音。
+    - **排除规则**：无干音符跳过；带横梁音符跳过（横梁已表示节奏，不使用
+      震音斜线）；符干长度 <1.5 间距跳过（容不下两条斜线）
+    - **与小节线的区分**：小节线在远离符干的 X 位置，不在符干搜索窗口内
+    - **与符尾(flag)的区分**：扫描区域排除符干末端 20%，符尾位于末端不参与
+      震音扫描
+  - `ScoreNote` 新增 `tremoloSlashCount: Int = 0` 字段（0=无震音, 2=八分震音,
+    3=三十二分震音），默认值 0 不影响现有代码
+  - `OmrPipeline` 步骤 6.21 集成：
+    - 调用 `TremoloDetector.detect()` 获取震音列表
+    - 构建 `tremoloByNotehead` 映射（notehead 索引 → 斜线数）
+    - ScoreNote 构建时填入 `tremoloSlashCount`
+    - 警告提示「检测到 N 个震音(tremolo)标记（X 个八分震音、Y 个三十二分震音）」
+  - 新增 16 个单元测试 `TremoloDetectorTest`（合成像素图验证）：
+    - 基础检测：2 斜线、3 斜线、下符干、负斜率斜线
+    - 负例：裸干无斜线返回空、单斜线不触发（需≥2）、无干跳过、横梁跳过、
+      短干跳过
+    - 多符头独立性：多个震音独立检测、震音+非震音共存
+    - 边界：空列表、零间距、小节线不误报、宽间距斜线、厚斜线
+  - 单元测试 727 → **743** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：手写体斜线笔画可能形状不规则，真实照片中抗锯齿/噪点可能导致
+    斜线行检测灵敏度变化，需人工校对
 
-## 单元测试明细 (727 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (743 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1195,6 +1229,7 @@
 - FingeringDetectorTest: 18
 - NoteheadDetectorTest: 17
 - ArpeggioDetectorTest: 16
+- TremoloDetectorTest: 16
 
 ## 阻塞
 （无）
@@ -1250,5 +1285,7 @@
   - 待完善：手写体 "Ped." 斜体与模板差异较大时可能漏检，释放星形在真实乐谱中形态多样(有些用方括号替代星号)，真实照片鲁棒性待验证
 - OMR 琶音(arpeggio / rolled chord)检测 ✅ (v2.41.0 已完成：ArpeggioDetector 检测和弦左方的垂直波浪线/竖线。和弦候选分组(X 邻近性 ≤0.8 间距 + 竖直跨度 ≥1.5 间距)，琶音竖线特征约束(宽 ≤0.6 间距/高 1.2~8.0 间距/填充率 ≤0.65 排除实心小节线/宽 <3px 直线豁免填充率)。ScoreNote 新增 isArpeggiated 字段，OmrPipeline 对和弦成员按 Y 降序(底→顶)应用 30ms/音序列延迟。16 个单元测试 + 5 个端到端管线测试)
   - 待完善：真实照片中琶音竖线可能因抗锯齿/噪点导致特征变化，需人工校对
+- OMR 震音(tremolo)检测 ✅ (v2.42.0 已完成：TremoloDetector 检测音符符干上的 2~3 条短斜线。自适应水平墨迹投影法(逐行统计符干周围窗口黑像素数，以裸符干行为基线，墨迹超基线标记为斜线行)，连续斜线行归组，组数≥2判定为震音。排除无干/带横梁/短干音符。ScoreNote 新增 tremoloSlashCount 字段(0=无/2=八分震音/3=三十二分震音)。16 个单元测试)
+  - 待完善：手写体斜线笔画可能形状不规则，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
