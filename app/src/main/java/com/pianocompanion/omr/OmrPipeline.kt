@@ -7,6 +7,7 @@ import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
 import com.pianocompanion.omr.image.AccidentalDetector
+import com.pianocompanion.omr.image.ArpeggioDetector
 import com.pianocompanion.omr.image.ArticulationDetector
 import com.pianocompanion.omr.image.BarlineDetector
 import com.pianocompanion.omr.image.BarlineType
@@ -371,6 +372,26 @@ object OmrPipeline {
         // 不修改音符数据模型，仅产生提示信息（与力度记号、hairpin 等一致）。
         val pedalMarkings = PedalMarkingDetector.detect(cleaned, blobs, systems, lineSpacing)
 
+        // --- 6.20. 琶音(arpeggio / rolled chord)检测 ----------------------------
+        // 琶音是和弦左方的垂直波浪线，指示演奏者将和弦从下到上依次快速滚奏。
+        // 对 score-following 至关重要：琶音和弦中的音符不是同时演奏的——
+        // 检测到琶音后，管线会对和弦成员应用一个小的序列延迟（30ms/音），
+        // 使 score follower 不会期待所有音符同时出现。
+        val arpeggios = ArpeggioDetector.detect(
+            blobs, located.map { it.nh }, located.map { it.systemIdx }, lineSpacing
+        )
+        // 构建 notehead 索引 → 琶音延迟(ms) 的映射。
+        // 和弦成员按 Y 坐标降序（底→顶）排列，每个音符延迟 ARPEGGIO_DELAY_MS × 序号。
+        val arpeggioDelayByNotehead = HashMap<Int, Long>()
+        val ARPEGGIO_DELAY_MS = 30L
+        for (arp in arpeggios) {
+            // 按 centerY 降序排列（Y 值大 = 位置低 = 先弹）
+            val sorted = arp.noteheadIndices.sortedByDescending { located[it].nh.centerY }
+            for ((delayIdx, nhIdx) in sorted.withIndex()) {
+                arpeggioDelayByNotehead[nhIdx] = delayIdx * ARPEGGIO_DELAY_MS
+            }
+        }
+
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
         // （全/二分/四分/八分/十六分/三十二分）。传入 cleaned 图像以启用
@@ -552,10 +573,11 @@ object OmrPipeline {
                 )
                 val shiftedMidi = (midi + octaveShift).coerceIn(21, 108)
                 if (shiftedMidi in 21..108) {
+                    val arpDelay = arpeggioDelayByNotehead[curNoteIdx] ?: 0L
                     notes += ScoreNote(
                         midiNumber = shiftedMidi,
                         noteName = MusicUtils.midiToNoteName(shiftedMidi),
-                        startTime = startTime,
+                        startTime = startTime + arpDelay,
                         duration = duration,
                         staff = ln.staff,
                         measureIndex = measureIndex,
@@ -563,7 +585,8 @@ object OmrPipeline {
                         tuplet = tupletByNotehead[curNoteIdx]?.first ?: 0,
                         accidental = explicitAcc ?: carryAccidentals[letter] ?: Accidental.NONE,
                         octaveShift = octaveShift,
-                        fingering = fingeringByNotehead[curNoteIdx] ?: 0
+                        fingering = fingeringByNotehead[curNoteIdx] ?: 0,
+                        isArpeggiated = curNoteIdx in arpeggioDelayByNotehead
                     )
                     noteIdxToNotesPos[curNoteIdx] = notes.size - 1
                 }
@@ -780,6 +803,12 @@ object OmrPipeline {
             if (pressCount > 0) parts.add("$pressCount 个踏板踩下(Ped.)")
             if (releaseCount > 0) parts.add("$releaseCount 个踏板释放(∗)")
             warnings += "检测到 ${pedalMarkings.size} 个踏板记号（${parts.joinToString("、")}），已标注延音踏板控制"
+        }
+        // 琶音提示：告知用户检测到的琶音标记，说明已应用序列延迟。
+        if (arpeggios.isNotEmpty()) {
+            val totalNotes = arpeggios.sumOf { it.noteheadIndices.size }
+            warnings += "检测到 ${arpeggios.size} 个琶音(arpeggio/rolled chord)标记" +
+                "（覆盖 $totalNotes 个音符），已对和弦成员应用序列延迟（从下到上依次弹奏）"
         }
 
         return Result(

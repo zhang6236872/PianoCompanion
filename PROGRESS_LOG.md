@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.40.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测)
+- 当前版本: **v2.41.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测)
 - 当前分支: main
-- 最新 tag: v2.32.0 (待打 v2.33.0~v2.40.0)
+- 最新 tag: v2.32.0 (待打 v2.33.0~v2.41.0)
 
-## 健康状态 (2026-06-25 核验)
+## 健康状态 (2026-06-26 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 706 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 727 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
 - Kotlin 文件: 83 个 / 代码行数: 11000+ 行
@@ -1111,10 +1111,54 @@
   - 回归保护：单个带符干符头不过度切分、孤立符头不受影响、空输入安全
 - 单元测试 640 → **655** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0) 已完成！** 代码已合并到 main。
+### 2026-06-26 (自主开发)
+- **后续增强 (v2.41.0): OMR 琶音(arpeggio / rolled chord)检测 — ✅ 完成**
+  - 琶音是乐谱中和弦左方的垂直波浪线（或竖线），指示演奏者将和弦中的音符
+    从下到上依次快速滚奏，而非同时弹奏。在钢琴乐谱（尤其是浪漫派/印象派作品）中
+    极为常见。此前 OMR 管线完全忽略琶音标记，导致琶音和弦中的所有音符被赋予
+    相同的 startTime，score follower 期待它们同时出现，导致匹配失败。
+  - 新增纯 Kotlin `omr/image/ArpeggioDetector`（无 Android 依赖，完全可单元测试）：
+    - **和弦候选分组**：将符头按系统和 X 邻近性分组（中心 X 差 ≤0.8 谱线间距），
+      仅对竖直跨度 ≥1.5 谱线间距的 2+ 音符和弦检测琶音
+    - **琶音竖线检测**：在和弦最左边缘左方 0.15~1.5 谱线间距的搜索区域内，
+      在连通块列表中搜索符合琶音竖线特征的候选：
+      - 宽度 ≤0.6 间距（窄竖线，区分于符头/小节线）
+      - 高度 1.2~8.0 间距（足够高，区分于短竖线/噪点）
+      - 面积 ≥6px
+      - 填充率 ≤0.65（排除实心小节线，填充率 ≈1.0）；宽度 <3px 的直线豁免
+        填充率检查（1-2px 琶音直线填充率天然为 1.0）
+      - 竖直范围与和弦重叠 ≥40%
+    - **与小节线的区分**：小节线填充率 ≈1.0（远高于 0.65 阈值），且贯穿全谱高
+    - **与符干的区分**：符干通常与符头融合为同一连通块，即使分离也仅从单个符头
+      向一侧延伸，不会跨越和弦的全部竖直范围
+    - **多系统安全**：按系统分组独立检测，不跨系统匹配
+  - `ScoreNote` 新增 `isArpeggiated: Boolean = false` 字段
+  - `OmrPipeline` 步骤 6.20 集成：
+    - 调用 `ArpeggioDetector.detect()` 获取琶音列表
+    - 构建 `arpeggioDelayByNotehead` 映射：和弦成员按 Y 坐标降序（底→顶）排列，
+      每个音符延迟 30ms × 序号（底部第一个 = 0ms，第二个 = 30ms，第三个 = 60ms）
+    - 时间轴循环中（常规音符处）将 `arpDelay` 加到 `startTime`，设置 `isArpeggiated`
+    - 警告提示「检测到 N 个琶音(arpeggio/rolled chord)标记（覆盖 M 个音符），
+      已对和弦成员应用序列延迟（从下到上依次弹奏）」
+  - 新增 16 个单元测试 `ArpeggioDetectorTest`（合成像素图验证）：
+    - 基础检测：波浪琶音线、直线琶音线、无琶音线返回空
+    - 尺寸/几何约束：单符头不触发、竖直间距不足不触发、太远/太近不触发
+    - 小节线排除：实心竖线不误判为琶音
+    - 多和弦/多系统：两个琶音和弦独立检测、琶音+非琶音和弦共存、不同系统独立检测
+    - 边界：空列表、零间距、不同 X 不视为和弦、宽跨度（5 音符）琶音、
+      竖线无竖直重叠不误判
+  - 新增 5 个端到端管线集成测试 `OmrPipelineTest`：
+    琶音 warning 检测、无琶音线无误报、isArpeggiated 标记、
+    序列延迟验证（顶部音符比底部音符晚开始）、三音和弦琶音覆盖 3 个音符
+  - 单元测试 706 → **727** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：琶音竖线在真实照片中可能因抗锯齿/噪点导致特征变化，
+    需人工校对；直线琶音（非波浪线）与小节线的区分依赖填充率阈值，
+    极窄（1-2px）的小节线可能被误判
 
-## 单元测试明细 (655 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering number)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (727 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1123,7 +1167,7 @@
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
 - PitchMapperTest: 25
-- OmrPipelineTest: 69
+- OmrPipelineTest: 74
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
@@ -1150,6 +1194,7 @@
 - AccidentalDetectorTest: 13
 - FingeringDetectorTest: 18
 - NoteheadDetectorTest: 17
+- ArpeggioDetectorTest: 16
 
 ## 阻塞
 （无）
@@ -1203,5 +1248,7 @@
   - 待完善：等号前方的音符符号(♩/♪)暂不识别(仅靠等号+数字组合已足够可靠)，手写体等号可能形状不规则，真实照片鲁棒性待验证
 - OMR 踏板记号(pedal marking)检测 ✅ (v2.40.0 已完成：PedalMarkingDetector 在每个谱表系统底线之下 0.5~4.0 谱线间距搜索区域检测延音踏板标记。踩下标记(Ped.)通过 P/e/d 三字母 5×7 模板匹配 + 水平分组 + 末尾句点检测识别，释放标记(∗)通过星形 RELEASE_TEMPLATE 模板匹配 + 几何约束(方形/中等填充率)识别。PedalMarking 包含 type(PRESS/RELEASE)/centerX/systemIdx，仅产生 warning 提示不修改音符数据模型。24 个单元测试覆盖检测/拒绝/多系统/模板验证/边界情况。修复了测试辅助函数中使用类级 height 常量而非图像实际尺寸导致截断的 bug)
   - 待完善：手写体 "Ped." 斜体与模板差异较大时可能漏检，释放星形在真实乐谱中形态多样(有些用方括号替代星号)，真实照片鲁棒性待验证
+- OMR 琶音(arpeggio / rolled chord)检测 ✅ (v2.41.0 已完成：ArpeggioDetector 检测和弦左方的垂直波浪线/竖线。和弦候选分组(X 邻近性 ≤0.8 间距 + 竖直跨度 ≥1.5 间距)，琶音竖线特征约束(宽 ≤0.6 间距/高 1.2~8.0 间距/填充率 ≤0.65 排除实心小节线/宽 <3px 直线豁免填充率)。ScoreNote 新增 isArpeggiated 字段，OmrPipeline 对和弦成员按 Y 降序(底→顶)应用 30ms/音序列延迟。16 个单元测试 + 5 个端到端管线测试)
+  - 待完善：真实照片中琶音竖线可能因抗锯齿/噪点导致特征变化，需人工校对
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
