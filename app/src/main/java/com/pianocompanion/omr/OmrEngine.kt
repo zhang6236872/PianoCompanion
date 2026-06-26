@@ -5,6 +5,7 @@ import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.model.ScoreNote
 import com.pianocompanion.data.model.ScoreSource
 import com.pianocompanion.data.model.Staff
+import com.pianocompanion.omr.image.RecognitionQuality
 
 /**
  * Optical Music Recognition interface.
@@ -30,8 +31,8 @@ interface OmrEngine {
  * Result of OMR recognition.
  */
 sealed class OmrResult {
-    data class Success(val score: Score) : OmrResult()
-    data class PartialSuccess(val score: Score, val warnings: List<String>) : OmrResult()
+    data class Success(val score: Score, val quality: RecognitionQuality? = null) : OmrResult()
+    data class PartialSuccess(val score: Score, val warnings: List<String>, val quality: RecognitionQuality? = null) : OmrResult()
     data class Error(val message: String) : OmrResult()
     data object Processing : OmrResult()
 }
