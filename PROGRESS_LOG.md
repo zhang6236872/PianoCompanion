@@ -1254,10 +1254,40 @@
   deskew 校正反映在照片质量因子、摘要含百分比、因子权重求和为 1
 - 单元测试 768 → **811** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0) 已完成！** 代码已合并到 main。
+### v2.45.0 — OMR 导航符号(Segno/Coda)检测 (2026-06-27)
+- **目标**：在 OMR 管线中添加 Segno (𝄋) 和 Coda (𝄐) 导航符号检测能力。
+  这两种标记是 D.C.(Da Capo)/D.S.(Dal Segno)/al Coda 反复跳转指令的视觉锚点——
+  演奏者从 Segno/开头处反复，再跳到 Coda 处演奏结尾段。此前 OMR 管线完全忽略这些
+  导航符号，score-follower 无法识别非线性播放顺序。这是结构性记号检测家族的最后
+  一个主要元素（与反复记号、跳房子、反复次数标注并列）。
+- **技术方案**：基于连通块形状分类的符号识别
+  - 新增纯 Kotlin `NavigationSymbolDetector`（无 Android 依赖，完全可单元测试）：
+    - **搜索区域**：每个谱表系统顶线上方 0.5~5.0 谱线间距；多系统页面限制上界
+      不超过前一个系统的底线+1 间距，避免跨系统误检
+    - **候选筛选**：尺寸约束（宽高各 0.8~3.5 间距）+ 宽高比（0.5~2.0，排除过宽/过高）+
+      面积约束（排除噪点和大型混合块）
+    - **Coda (𝄐) 判定**：封闭空洞计数 ≥ 3（圆环+十字形成的被墨迹四面围住的白色像素，
+      即在每个白色像素的四方向各检查是否有黑像素）+ 中心十字模式（水平笔画≥35%宽度
+      且竖直笔画≥35%高度，通过中心行/列最长连续墨迹游程检测）
+    - **Segno (𝄋) 判定**：双侧墨迹（左右半各有显著墨迹，比值在 0.15~6.0 范围内）+
+      多行段竖直分布（上/中/下三区间各有 ≥2 墨迹像素）+ 非穹顶形状（中心列顶不比
+      两侧顶高出 25% blob 高度，排除 fermata 误判）
+    - **分类优先级**：Coda 先判定（空洞+十字特征最独特），再判 Segno
+  - **OmrPipeline 步骤 6.23 集成**：在滑音检测后调用 NavigationSymbolDetector，
+    检测到时在 warnings 中提示 Segno/Coda 数量及 D.C./D.S./al Coda 反复跳转含义
+- 新增 13 个单元测试 `NavigationSymbolDetectorTest`：
+  - Segno 检测与分类（不被误判为 Coda）
+  - Coda 检测与分类（不被误判为 Segno）
+  - 多符号同时检测（Segno + Coda）
+  - 误判拒绝：空白图像、fermata 穹顶、小型噪点、水平细条
+  - 多系统检测（不同系统分别检测到不同符号）
+  - 边界条件：零谱线间距、空系统列表、搜索区域外符号
+- 单元测试 811 → **824** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (811 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (824 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1296,6 +1326,7 @@
 - ArpeggioDetectorTest: 16
 - TremoloDetectorTest: 16
 - GlissandoDetectorTest: 20
+- NavigationSymbolDetectorTest: 13
 - RecognitionQualityAssessorTest: 38
 
 ## 阻塞
@@ -1356,5 +1387,7 @@
   - 待完善：手写体斜线笔画可能形状不规则，真实照片鲁棒性待验证
 - OMR 滑音(glissando)检测 ✅ (v2.43.0 已完成：GlissandoDetector 检测连接两个音符的对角斜线（滑音/刮奏标记）。按系统分组符头并按 X 排序，对相邻符头检查音高差≥1.5间距+水平间距1~10间距约束，沿对角路径采样像素（步长2px、窗口±0.4间距），覆盖率≥50%判定滑音。ScoreNote 新增 isGlissando 字段（score-follower 宽松匹配用）。20 个单元测试 + 5 个管线集成测试)
   - 待完善：波浪线形滑音在真实照片中可能因抗锯齿导致覆盖不连续，需人工校对
+- OMR 导航符号(Segno/Coda)检测 ✅ (v2.45.0 已完成：NavigationSymbolDetector 检测乐谱中的 Segno (𝄋) 和 Coda (𝄐) 导航符号——这两种标记是 D.C.(Da Capo)/D.S.(Dal Segno)/al Coda 反复跳转指令的视觉锚点，影响 score-follower 的非线性播放顺序。在每个谱表系统顶线上方 0.5~5.0 谱线间距搜索区域内筛选尺寸合适(0.8~3.5 间距、宽高比 0.5~2.0)的候选连通块。Coda 判定：封闭空洞计数≥3(ring+cross 形成的被墨迹四面围住的白色像素) + 中心十字模式(水平/竖直笔画各≥35%维度)。Segno 判定：双侧墨迹(左右半各有显著墨迹) + 多行段竖直分布(上/中/下三区间各有墨迹) + 非穹顶形状(排除 fermata)。OmrPipeline 步骤 6.23 集成，检测到时产生 warning 提示。13 个单元测试覆盖 Segno/Coda 检测/分类/多符号/误判拒绝(fermata/噪点/水平条)/多系统/边界条件)
+  - 待完善：真实照片中 Segno/Coda 形状可能因字体/抗锯齿/噪点导致特征变化，需人工校对
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
