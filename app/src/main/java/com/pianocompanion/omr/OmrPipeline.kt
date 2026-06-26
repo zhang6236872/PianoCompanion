@@ -23,6 +23,7 @@ import com.pianocompanion.omr.image.GraceNoteDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
 import com.pianocompanion.omr.image.NavigationSymbolDetector
+import com.pianocompanion.omr.image.NavigationInstructionDetector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
@@ -446,6 +447,15 @@ object OmrPipeline {
         // 跳回前面已弹过的位置，再从那里跳到结尾段。检测到后 score-follower 可
         // 据此实现非线性跳转逻辑。
         val navigationSymbols = NavigationSymbolDetector.detect(
+            cleaned, blobs, systems, lineSpacing
+        )
+
+        // --- 6.24. 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 ---------
+        // 在谱表上方搜索文本指令：D.C. (Da Capo)、D.S. (Dal Segno)、al Coda、
+        // al Fine、Fine。这些文本指令与 6.23 的 Segno/Coda 视觉符号配合使用，
+        // 完整定义了非线性播放顺序——视觉符号标记跳转锚点，文本指令标记跳转动作。
+        // 检测到后 score-follower 可据此实现跳回开头/Segno、跳至 Coda、终止于 Fine。
+        val navigationInstructions = NavigationInstructionDetector.detect(
             cleaned, blobs, systems, lineSpacing
         )
 
@@ -889,6 +899,22 @@ object OmrPipeline {
             val codaCount = navigationSymbols.count { it.type == NavigationSymbolDetector.NavigationSymbolType.CODA }
             warnings += "检测到 ${segnoCount} 个 Segno (𝄋) 和 ${codaCount} 个 Coda (𝄐) 导航符号" +
                 "——可能存在 D.C./D.S./al Coda 反复跳转，score-follower 将处理非线性播放顺序"
+        }
+        // 导航指令文本提示：D.C./D.S./al Coda/al Fine/Fine 直接指示跳转动作。
+        if (navigationInstructions.isNotEmpty()) {
+            val dcCount = navigationInstructions.count { it.type == NavigationInstructionDetector.NavigationInstructionType.DA_CAPO }
+            val dsCount = navigationInstructions.count { it.type == NavigationInstructionDetector.NavigationInstructionType.DAL_SEGNO }
+            val alCodaCount = navigationInstructions.count { it.type == NavigationInstructionDetector.NavigationInstructionType.AL_CODA }
+            val alFineCount = navigationInstructions.count { it.type == NavigationInstructionDetector.NavigationInstructionType.AL_FINE }
+            val fineCount = navigationInstructions.count { it.type == NavigationInstructionDetector.NavigationInstructionType.FINE }
+            val parts = ArrayList<String>()
+            if (dcCount > 0) parts.add("$dcCount 个 D.C.")
+            if (dsCount > 0) parts.add("$dsCount 个 D.S.")
+            if (alCodaCount > 0) parts.add("$alCodaCount 个 al Coda")
+            if (alFineCount > 0) parts.add("$alFineCount 个 al Fine")
+            if (fineCount > 0) parts.add("$fineCount 个 Fine")
+            warnings += "检测到 ${navigationInstructions.size} 条导航指令文本（${parts.joinToString("、")}），" +
+                "score-follower 将据此执行非线性播放跳转"
         }
 
         // --- 9. 识别质量评估 -----------------------------------------------
