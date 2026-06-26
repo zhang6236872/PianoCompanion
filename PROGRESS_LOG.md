@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.44.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 识别置信度评估(confidence scoring))
+- 当前版本: **v2.46.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring))
 - 当前分支: main
-- 最新 tag: v2.44.0
+- 最新 tag: v2.46.0
 
 ## 健康状态 (2026-06-26 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -1389,5 +1389,7 @@
   - 待完善：波浪线形滑音在真实照片中可能因抗锯齿导致覆盖不连续，需人工校对
 - OMR 导航符号(Segno/Coda)检测 ✅ (v2.45.0 已完成：NavigationSymbolDetector 检测乐谱中的 Segno (𝄋) 和 Coda (𝄐) 导航符号——这两种标记是 D.C.(Da Capo)/D.S.(Dal Segno)/al Coda 反复跳转指令的视觉锚点，影响 score-follower 的非线性播放顺序。在每个谱表系统顶线上方 0.5~5.0 谱线间距搜索区域内筛选尺寸合适(0.8~3.5 间距、宽高比 0.5~2.0)的候选连通块。Coda 判定：封闭空洞计数≥3(ring+cross 形成的被墨迹四面围住的白色像素) + 中心十字模式(水平/竖直笔画各≥35%维度)。Segno 判定：双侧墨迹(左右半各有显著墨迹) + 多行段竖直分布(上/中/下三区间各有墨迹) + 非穹顶形状(排除 fermata)。OmrPipeline 步骤 6.23 集成，检测到时产生 warning 提示。13 个单元测试覆盖 Segno/Coda 检测/分类/多符号/误判拒绝(fermata/噪点/水平条)/多系统/边界条件)
   - 待完善：真实照片中 Segno/Coda 形状可能因字体/抗锯齿/噪点导致特征变化，需人工校对
+- OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 ✅ (v2.46.0 已完成：NavigationInstructionDetector 基于文本的导航/反复指令检测器，在谱表上方搜索区域识别 D.C.(Da Capo)/D.S.(Dal Segno)/al Coda/al Fine/Fine 文本指令。10 个 5×7 网格字母模板(D/C/S/F/a/l/n/e/o/d) + 汉明距离匹配(≤12/35 + 第二近差距≥2)。水平分组(GROUP_GAP_FRAC=3.0)→词分割(WORD_GAP_FRAC=1.0)→上下文模式解析：大写字母(D/C/S/F)作为锚点，小写字母提供长度/特征确认。al 连接词检测组合 al Coda→AL_CODA / al Fine→AL_FINE。OmrPipeline 步骤 6.24 集成，检测到时产生分类统计 warning。15 个单元测试覆盖 D.C./D.S./Fine/al Coda/al Fine 检测 + 组合指令(D.C. al Coda / D.S. al Fine) + 多系统 + 误判拒绝(噪声/单字母/谱表下方文本) + 边界条件(空输入/零间距/无系统))
+  - 待完善：手写体斜体字母与模板差异较大时可能漏检，'i' 字母因点分离导致窄竖线匹配问题(用'l'近似)，真实照片鲁棒性待验证
 - 云端同步真实后端 (SyncEngine 合并语义已就绪, 仅需接入 Firebase/Drive 传输层)
 - Play Store 实际上架
