@@ -28,6 +28,9 @@ import com.pianocompanion.omr.image.NoteheadDetector
 import com.pianocompanion.omr.image.OctavaDetector
 import com.pianocompanion.omr.image.PedalMarkingDetector
 import com.pianocompanion.omr.image.PitchMapper
+import com.pianocompanion.omr.image.RecognitionMetrics
+import com.pianocompanion.omr.image.RecognitionQuality
+import com.pianocompanion.omr.image.RecognitionQualityAssessor
 import com.pianocompanion.omr.image.RepeatCountDetector
 import com.pianocompanion.omr.image.Rest
 import com.pianocompanion.omr.image.RestDetector
@@ -70,7 +73,8 @@ object OmrPipeline {
     data class Result(
         val score: Score,
         val warnings: List<String>,
-        val diagnostics: Diagnostics
+        val diagnostics: Diagnostics,
+        val quality: RecognitionQuality? = null
     ) {
         val isEmpty: Boolean get() = score.notes.isEmpty()
     }
@@ -112,10 +116,21 @@ object OmrPipeline {
         // --- 1. Staff detection -------------------------------------------------
         val systems = StaffLineDetector.detect(warped)
         if (systems.isEmpty()) {
+            val failMetrics = RecognitionMetrics.EMPTY.copy(
+                deskewApplied = deskewApplied,
+                keystoneApplied = keystoneApplied,
+                noiseRatio = if (denoised.width > 0 && denoised.height > 0) {
+                    (denoiseStats.pepperRemoved + denoiseStats.saltFilled).toDouble() /
+                        (denoised.width * denoised.height)
+                } else 0.0,
+                totalImagePixels = denoised.width.toLong() * denoised.height
+            )
+            val failQuality = RecognitionQualityAssessor.assess(failMetrics)
             return Result(
                 score = emptyScore(title, tempo),
                 warnings = listOf("未检测到五线谱，请拍摄清晰、端正的乐谱"),
-                diagnostics = Diagnostics(0, 0, 0)
+                diagnostics = Diagnostics(0, 0, 0),
+                quality = failQuality
             )
         }
 
@@ -859,6 +874,38 @@ object OmrPipeline {
                 "已标注滑音起点和终点，score-follower 将进入宽松匹配模式"
         }
 
+        // --- 9. 识别质量评估 -----------------------------------------------
+        // 从管线各阶段收集诊断信号，综合评估识别置信度（高/中/低），供 UI 向用户展示。
+        val spacings = systems.map { it.lineSpacing }
+        val spacingMean = spacings.average()
+        val spacingStd = if (spacings.size > 1) {
+            kotlin.math.sqrt(spacings.sumOf { (it - spacingMean) * (it - spacingMean) } / spacings.size)
+        } else 0.0
+        val lineSpacingCV = if (spacingMean > 0) spacingStd / spacingMean else 0.0
+        val knownClefCount = signatures.perSystem.count { it.clef != SignatureDetector.ClefType.UNKNOWN }
+        val unknownClefCount = signatures.perSystem.count { it.clef == SignatureDetector.ClefType.UNKNOWN }
+        val noiseRatio = if (denoised.width > 0 && denoised.height > 0) {
+            (denoiseStats.pepperRemoved + denoiseStats.saltFilled).toDouble() /
+                (denoised.width * denoised.height)
+        } else 0.0
+        val metrics = RecognitionMetrics(
+            systemCount = systems.size,
+            avgLineSpacing = lineSpacing,
+            lineSpacingCV = lineSpacingCV,
+            noteheadCount = located.size,
+            restCount = allRests.size,
+            barlineCount = totalBarlines,
+            systemsWithKnownClef = knownClefCount,
+            systemsWithUnknownClef = unknownClefCount,
+            timeSignatureDetected = detectedTimeSig != null,
+            tempoDetected = detectedTempo != null,
+            deskewApplied = deskewApplied,
+            keystoneApplied = keystoneApplied,
+            noiseRatio = noiseRatio,
+            totalImagePixels = denoised.width.toLong() * denoised.height
+        )
+        val quality = RecognitionQualityAssessor.assess(metrics)
+
         return Result(
             score = Score(
                 id = "omr_${System.currentTimeMillis()}",
@@ -870,7 +917,8 @@ object OmrPipeline {
                 source = ScoreSource.OMR
             ),
             warnings = warnings,
-            diagnostics = Diagnostics(systems.size, lineSpacing, notes.size)
+            diagnostics = Diagnostics(systems.size, lineSpacing, notes.size),
+            quality = quality
         )
     }
 

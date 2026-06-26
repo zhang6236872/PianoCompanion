@@ -1,6 +1,7 @@
 package com.pianocompanion.omr
 
 import com.pianocompanion.omr.image.BinaryImage
+import com.pianocompanion.omr.image.ConfidenceLevel
 import com.pianocompanion.omr.image.ConnectedComponents
 import com.pianocompanion.omr.image.Deskewer
 import com.pianocompanion.omr.image.DynamicMarkingDetector
@@ -2276,5 +2277,86 @@ class OmrPipelineTest {
             "提示中应提及覆盖 3 个音符，实际=${result.warnings}",
             result.warnings.any { it.contains("3 个音符") }
         )
+    }
+
+    // ---- 识别质量评估(quality)集成测试 ----------------------------------------
+
+    @Test
+    fun `pipeline populates quality on successful recognition`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 100, 60)
+        drawEllipse(img, 150, 55)
+        drawEllipse(img, 200, 50)
+        val result = OmrPipeline.recognize(img)
+
+        assertNotNull("成功识别后 quality 不应为 null", result.quality)
+        val q = result.quality!!
+        assertTrue("总体置信度应在 [0,1]，实际=${q.overallScore}", q.overallScore in 0.0..1.0)
+        assertEquals(ConfidenceLevel.MEDIUM, q.level) // 合成图无谱号/拍号 → 中等
+        assertTrue("摘要不应为空", q.summary.isNotEmpty())
+        assertTrue("应至少有 6 个因子", q.factors.size >= 6)
+    }
+
+    @Test
+    fun `pipeline quality is LOW when no staff detected`() {
+        val img = blankScore() // 纯白 — 无谱线
+        val result = OmrPipeline.recognize(img)
+
+        assertNotNull("失败路径也应填充 quality", result.quality)
+        assertEquals(ConfidenceLevel.LOW, result.quality!!.level)
+        assertEquals(0.0, result.quality!!.overallScore, 0.001)
+    }
+
+    @Test
+    fun `pipeline quality reports deskew applied in photo factor`() {
+        // 5° 倾斜 → 触发 deskew 校正 → 照片质量因子应降低
+        val img = blankScore()
+        // 用 drawThickStaffAtY 等价倾斜：直接画轻微倾斜的谱线
+        val angle = Math.toRadians(5.0)
+        for (lineY in lineYs) {
+            for (x in 0 until width) {
+                val y = lineY + (x * Math.tan(angle)).toInt()
+                if (y in 0 until height) img.set(x, y, true)
+            }
+        }
+        drawEllipse(img, 100, 65)
+        drawEllipse(img, 160, 55)
+        drawEllipse(img, 220, 45)
+        val result = OmrPipeline.recognize(img)
+
+        // 倾斜校正应反映在 warnings 和 quality 的照片质量因子中
+        assertTrue("应报告 deskew 校正", result.warnings.any { it.contains("倾斜") })
+        val q = result.quality ?: error("quality 不应为 null")
+        val photoFactor = q.factors.firstOrNull { it.name == "照片质量" }
+        assertNotNull("应有照片质量因子", photoFactor)
+        assertTrue("照片质量因子应反映校正，detail=${photoFactor!!.detail}",
+            photoFactor.detail.contains("倾斜校正") || photoFactor.detail.contains("透视校正"))
+    }
+
+    @Test
+    fun `pipeline quality summary contains confidence percentage`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 100, 60)
+        val result = OmrPipeline.recognize(img)
+
+        val q = result.quality!!
+        assertTrue("摘要应包含百分号: ${q.summary}", q.summary.contains("%"))
+        assertTrue("percentString 应以 % 结尾: ${q.percentString}", q.percentString.endsWith("%"))
+    }
+
+    @Test
+    fun `pipeline quality factor weights sum to one on successful recognition`() {
+        val img = blankScore()
+        drawStaff(img)
+        drawEllipse(img, 100, 60)
+        drawEllipse(img, 200, 50)
+        drawEllipse(img, 300, 60)
+        val result = OmrPipeline.recognize(img)
+
+        val q = result.quality!!
+        val totalWeight = q.factors.sumOf { it.weight }
+        assertEquals(1.0, totalWeight, 0.001)
     }
 }

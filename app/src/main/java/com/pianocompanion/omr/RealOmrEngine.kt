@@ -54,8 +54,8 @@ class RealOmrEngine : OmrEngine {
             val result = OmrPipeline.recognize(binary)
             when {
                 result.isEmpty -> OmrResult.Error(result.warnings.firstOrNull() ?: "未能识别出音符")
-                result.warnings.isEmpty() -> OmrResult.Success(result.score)
-                else -> OmrResult.PartialSuccess(result.score, result.warnings)
+                result.warnings.isEmpty() -> OmrResult.Success(result.score, result.quality)
+                else -> OmrResult.PartialSuccess(result.score, result.warnings, result.quality)
             }
         } catch (e: Exception) {
             OmrResult.Error("识谱失败: ${e.message ?: "未知错误"}")

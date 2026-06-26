@@ -34,6 +34,8 @@ import com.pianocompanion.omr.ImagePreprocessor
 import com.pianocompanion.omr.OmrEngine
 import com.pianocompanion.omr.OmrResult
 import com.pianocompanion.omr.RealOmrEngine
+import com.pianocompanion.omr.image.ConfidenceLevel
+import com.pianocompanion.omr.image.RecognitionQuality
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -199,6 +201,7 @@ fun OmrScreen(
                             color = Color(0xFF4CAF50),
                             score = result.score,
                             warnings = emptyList(),
+                            quality = result.quality,
                             onPractice = { onScoreRecognized(result.score) }
                         )
                     }
@@ -208,6 +211,7 @@ fun OmrScreen(
                             color = Color(0xFFFFA726),
                             score = result.score,
                             warnings = result.warnings,
+                            quality = result.quality,
                             onPractice = { onScoreRecognized(result.score) }
                         )
                     }
@@ -279,6 +283,7 @@ private fun ResultCard(
     color: Color,
     score: Score,
     warnings: List<String>,
+    quality: RecognitionQuality? = null,
     onPractice: () -> Unit
 ) {
     Card(
@@ -288,6 +293,41 @@ private fun ResultCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(title, fontWeight = FontWeight.Bold, color = color, fontSize = 14.sp)
+
+            // 识别置信度卡片
+            quality?.let { q ->
+                Spacer(Modifier.height(8.dp))
+                val qualityColor = when (q.level) {
+                    ConfidenceLevel.HIGH -> Color(0xFF4CAF50)
+                    ConfidenceLevel.MEDIUM -> Color(0xFFFFA726)
+                    ConfidenceLevel.LOW -> Color(0xFFEF5350)
+                }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = qualityColor.copy(alpha = 0.10f)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            "🎯 识别置信度：${q.percentString}（${q.level.displayName}）",
+                            fontWeight = FontWeight.Bold,
+                            color = qualityColor,
+                            fontSize = 13.sp
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(q.summary, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        // 展示关键评估因子明细
+                        q.factors.take(3).forEach { factor ->
+                            Text(
+                                "• ${factor.name}：${factor.detail}",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(4.dp))
             Text("识别到 ${score.notes.size} 个音符", fontSize = 12.sp)
             warnings.forEach { warning ->
