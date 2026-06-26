@@ -22,6 +22,7 @@ import com.pianocompanion.omr.image.GlissandoDetector
 import com.pianocompanion.omr.image.GraceNoteDetector
 import com.pianocompanion.omr.image.HairpinDetector
 import com.pianocompanion.omr.image.KeystoneCorrector
+import com.pianocompanion.omr.image.NavigationSymbolDetector
 import com.pianocompanion.omr.image.NoteDuration
 import com.pianocompanion.omr.image.Notehead
 import com.pianocompanion.omr.image.NoteheadDetector
@@ -438,6 +439,15 @@ object OmrPipeline {
             glissandoNoteheads.add(gliss.fromNoteheadIdx)
             glissandoNoteheads.add(gliss.toNoteheadIdx)
         }
+
+        // --- 6.23. 导航符号(Segno/Coda)检测 ----------------------------------
+        // Segno (𝄋) 和 Coda (𝄐) 是 D.C./D.S./al Coda 反复跳转指令的锚点。
+        // 对 score-following 至关重要：这些指令使播放顺序非线性——演奏者从某处
+        // 跳回前面已弹过的位置，再从那里跳到结尾段。检测到后 score-follower 可
+        // 据此实现非线性跳转逻辑。
+        val navigationSymbols = NavigationSymbolDetector.detect(
+            cleaned, blobs, systems, lineSpacing
+        )
 
         // --- 7. 休止符检测 ---------------------------------------------------
         // 在尚未被判定为符头的连通块中，依据几何形状识别休止符
@@ -872,6 +882,13 @@ object OmrPipeline {
             warnings += "检测到 ${glissandos.size} 个滑音(glissando)标记" +
                 "（覆盖 ${glissandoNoteheads.size} 个端点音符），" +
                 "已标注滑音起点和终点，score-follower 将进入宽松匹配模式"
+        }
+        // 导航符号提示：Segno/Coda 影响 D.C./D.S./al Coda 反复跳转。
+        if (navigationSymbols.isNotEmpty()) {
+            val segnoCount = navigationSymbols.count { it.type == NavigationSymbolDetector.NavigationSymbolType.SEGNO }
+            val codaCount = navigationSymbols.count { it.type == NavigationSymbolDetector.NavigationSymbolType.CODA }
+            warnings += "检测到 ${segnoCount} 个 Segno (𝄋) 和 ${codaCount} 个 Coda (𝄐) 导航符号" +
+                "——可能存在 D.C./D.S./al Coda 反复跳转，score-follower 将处理非线性播放顺序"
         }
 
         // --- 9. 识别质量评估 -----------------------------------------------
