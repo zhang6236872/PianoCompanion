@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.parser.MidiParser
+import com.pianocompanion.data.parser.MusicXmlExporter
 import com.pianocompanion.data.parser.MusicXmlParser
 import java.io.File
 
@@ -122,6 +123,26 @@ class ScoreRepository(private val context: Context) {
     /** Delete a score file. */
     fun deleteScore(fileName: String): Boolean {
         return File(scoresDir, fileName).delete()
+    }
+
+    /**
+     * 将 [score] 序列化为 MusicXML 并写入用户通过 SAF 选择的目标 [uri]。
+     *
+     * 用于将 OMR 识别结果或任何乐谱导出为标准 MusicXML，
+     * 以便在 MuseScore / Finale / Dorico 等外部软件中打开与编辑。
+     *
+     * @return 成功返回 [Result.success]，失败返回 [Result.failure]。
+     */
+    fun exportScoreToMusicXml(score: Score, uri: Uri): Result<Unit> {
+        return try {
+            val xml = MusicXmlExporter().export(score)
+            context.contentResolver.openOutputStream(uri)?.use { out ->
+                out.write(xml.toByteArray(Charsets.UTF_8))
+            } ?: return Result.failure(Exception("无法打开目标文件"))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun sanitizeFileName(name: String): String {
