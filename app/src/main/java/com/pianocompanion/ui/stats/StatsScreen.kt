@@ -27,6 +27,8 @@ import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import com.pianocompanion.data.model.SessionRecord
+import com.pianocompanion.analytics.WeakSpotTrend
+import com.pianocompanion.data.model.MatchStatus
 import com.pianocompanion.ui.components.EmptyState
 import com.pianocompanion.ui.components.GradientStatCard
 import com.pianocompanion.ui.components.SectionHeader
@@ -140,6 +142,16 @@ fun StatsScreen(
                     sessions = uiState.sessions.takeLast(10),
                     modifier = Modifier.fillMaxWidth().height(140.dp)
                 )
+            }
+
+            // === Weak spot analysis ===
+            if (uiState.weakSpotSections.isNotEmpty()) {
+                item {
+                    SectionHeader(title = "薄弱环节", icon = Icons.Filled.Flag)
+                }
+                items(uiState.weakSpotSections) { section ->
+                    WeakSpotCard(section)
+                }
             }
 
             // === Session history ===
@@ -283,5 +295,94 @@ private fun formatRelativeTime(timestamp: Long): String {
         mins < 60 -> "${mins}分钟前"
         mins < 1440 -> "${mins / 60}小时前"
         else -> "${mins / 1440}天前"
+    }
+}
+
+/** 将内部 0 基小节序号转为 1 基显示。 */
+private fun displayMeasure(measureIndex: Int): Int = measureIndex + 1
+
+private fun errorTypeLabel(type: MatchStatus): String = when (type) {
+    MatchStatus.WRONG_PITCH -> "音高错误"
+    MatchStatus.MISSING_NOTE -> "漏弹"
+    MatchStatus.EXTRA_NOTE -> "多弹"
+    MatchStatus.RHYTHM_ERROR -> "节奏错误"
+    MatchStatus.CORRECT -> "正确"
+}
+
+private fun trendEmoji(trend: WeakSpotTrend): String = when (trend) {
+    WeakSpotTrend.IMPROVING -> "📈"
+    WeakSpotTrend.STABLE -> "➖"
+    WeakSpotTrend.WORSENING -> "📉"
+    WeakSpotTrend.INSUFFICIENT_DATA -> "❓"
+}
+
+/**
+ * 薄弱环节分析卡片：展示单首乐谱的弱项摘要、推荐练习段落与重点小节。
+ */
+@Composable
+private fun WeakSpotCard(section: StatsViewModel.WeakSpotSection) {
+    val report = section.report
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                section.scoreTitle,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
+            )
+            Text(
+                report.summary,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+
+            // 推荐练习段落
+            report.recommendedPassages.take(2).forEach { passage ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🎯", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "重点练习 第 ${displayMeasure(passage.startMeasure)}–" +
+                                "${displayMeasure(passage.endMeasure)} 小节",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "(${passage.totalErrors} 次错误)",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                }
+            }
+
+            // 重点弱项小节（最多 3 个）
+            report.weakSpots.take(3).forEach { spot ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "第 ${displayMeasure(spot.measureIndex)} 小节 · " +
+                                errorTypeLabel(spot.dominantErrorType),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "${spot.errorCount}次",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(trendEmoji(spot.trend), fontSize = 13.sp)
+                    }
+                }
+            }
+        }
     }
 }
