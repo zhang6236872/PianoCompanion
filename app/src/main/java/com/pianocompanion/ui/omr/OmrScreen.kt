@@ -48,13 +48,15 @@ class OmrViewModel(application: Application) : AndroidViewModel(application) {
         val capturedBitmap: Bitmap? = null,
         val processedBitmap: Bitmap? = null,
         val result: OmrResult? = null,
-        val error: String? = null
+        val error: String? = null,
+        val exportStatus: String? = null
     )
 
     private val _uiState = MutableStateFlow(OmrUiState())
     val uiState: StateFlow<OmrUiState> = _uiState.asStateFlow()
 
     private val engine: OmrEngine = RealOmrEngine()
+    private val exporter = com.pianocompanion.data.parser.MusicXmlExporter()
 
     fun processImage(uri: Uri) {
         val context = getApplication<Application>()
@@ -97,6 +99,33 @@ class OmrViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * 将当前识别到的乐谱导出为 MusicXML，写入 SAF 返回的 [uri]。
+     * 在 IO 线程执行序列化与文件写入，更新 [OmrUiState.exportStatus]。
+     */
+    fun exportRecognizedScore(uri: Uri) {
+        val score = getRecognizedScore()
+        if (score == null) {
+            _uiState.update { it.copy(exportStatus = "没有可导出的乐谱") }
+            return
+        }
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                try {
+                    val xml = exporter.export(score)
+                    getApplication<Application>().contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(xml.toByteArray(Charsets.UTF_8))
+                    } != null
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            _uiState.update {
+                it.copy(exportStatus = if (ok) "✅ 已导出 MusicXML" else "❌ 导出失败")
+            }
+        }
+    }
+
     fun reset() {
         _uiState.value = OmrUiState()
     }
@@ -125,6 +154,13 @@ fun OmrScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) viewModel.processImage(uri)
+    }
+
+    // SAF 创建文档：用于导出 MusicXML
+    val createXmlLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/xml")
+    ) { uri ->
+        if (uri != null) viewModel.exportRecognizedScore(uri)
     }
 
     Scaffold(
@@ -194,6 +230,16 @@ fun OmrScreen(
 
             // Results
             uiState.result?.let { result ->
+                val exportAction: (() -> Unit)? = when (result) {
+                    is OmrResult.Success, is OmrResult.PartialSuccess -> {
+                        {
+                            val score = viewModel.getRecognizedScore()
+                            val name = (score?.title?.takeIf { it.isNotBlank() } ?: "score") + ".xml"
+                            createXmlLauncher.launch(name)
+                        }
+                    }
+                    else -> null
+                }
                 when (result) {
                     is OmrResult.Success -> {
                         ResultCard(
@@ -202,7 +248,8 @@ fun OmrScreen(
                             score = result.score,
                             warnings = emptyList(),
                             quality = result.quality,
-                            onPractice = { onScoreRecognized(result.score) }
+                            onPractice = { onScoreRecognized(result.score) },
+                            onExport = exportAction
                         )
                     }
                     is OmrResult.PartialSuccess -> {
@@ -212,7 +259,8 @@ fun OmrScreen(
                             score = result.score,
                             warnings = result.warnings,
                             quality = result.quality,
-                            onPractice = { onScoreRecognized(result.score) }
+                            onPractice = { onScoreRecognized(result.score) },
+                            onExport = exportAction
                         )
                     }
                     is OmrResult.Error -> {
@@ -228,6 +276,11 @@ fun OmrScreen(
                         }
                     }
                     OmrResult.Processing -> {}
+                }
+
+                // 导出状态提示
+                uiState.exportStatus?.let { status ->
+                    Text(status, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                 }
 
                 TextButton(onClick = { viewModel.reset() }) {
@@ -284,7 +337,8 @@ private fun ResultCard(
     score: Score,
     warnings: List<String>,
     quality: RecognitionQuality? = null,
-    onPractice: () -> Unit
+    onPractice: () -> Unit,
+    onExport: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -342,6 +396,19 @@ private fun ResultCard(
                 Icon(Icons.Filled.PlayArrow, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
                 Text("开始练习")
+            }
+            // 导出 MusicXML
+            if (onExport != null) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onExport,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Filled.FileDownload, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("导出 MusicXML")
+                }
             }
         }
     }
