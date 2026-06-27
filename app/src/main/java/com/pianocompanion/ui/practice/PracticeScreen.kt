@@ -234,6 +234,13 @@ fun PracticeScreen(
                 )
             }
 
+            // === Tempo progress history summary (渐速进度历史) ===
+            uiState.tempoProgressSummary?.let { summary ->
+                if (uiState.loopEnabled) {
+                    TempoProgressSummaryCard(summary = summary)
+                }
+            }
+
             // === Metronome control ===
             MetronomeControlBar(
                 enabled = uiState.metronomeEnabled,
@@ -831,6 +838,40 @@ private fun TempoRampProgressCard(
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
+        }
+    }
+}
+
+/**
+ * 渐速进度历史卡片 — 展示当前段落的速度进步趋势和历史记录。
+ */
+@Composable
+private fun TempoProgressSummaryCard(summary: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Text(
+                "📈",
+                fontSize = 20.sp,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text(
+                summary,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         }
     }
 }
