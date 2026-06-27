@@ -11,6 +11,7 @@ import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.*
 import com.pianocompanion.data.repository.StatsRepository
 import com.pianocompanion.following.ScoreFollower
+import com.pianocompanion.following.TempoRampUp
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -52,7 +53,18 @@ class PracticeViewModel(
         val loopStartMeasure: Int = 0,
         val loopEndMeasure: Int = 0,
         val maxMeasure: Int = 0,
-        val loopCount: Int = 0
+        val loopCount: Int = 0,
+        // === Tempo ramp-up practice (渐速练习) ===
+        val tempoRampEnabled: Boolean = false,
+        val tempoRampStartBpm: Int = TempoRampUp.DEFAULT_START_BPM,
+        val tempoRampTargetBpm: Int = TempoRampUp.DEFAULT_TARGET_BPM,
+        val tempoRampIncrement: Int = TempoRampUp.DEFAULT_BPM_INCREMENT,
+        val tempoRampLoopsPerStep: Int = TempoRampUp.DEFAULT_LOOPS_PER_STEP,
+        val tempoRampCurrentBpm: Int = TempoRampUp.DEFAULT_START_BPM,
+        val tempoRampCurrentStep: Int = 0,
+        val tempoRampTotalSteps: Int = 0,
+        val tempoRampCompleted: Boolean = false,
+        val tempoRampLoopsAtCurrentStep: Int = 0
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -72,6 +84,9 @@ class PracticeViewModel(
 
     // === Metronome ===
     private val metronome = Metronome()
+
+    // === Tempo ramp-up practice (渐速练习) ===
+    private var tempoRampUp: TempoRampUp = TempoRampUp()
 
     init {
         metronome.onBeat = { beat ->
@@ -122,12 +137,44 @@ class PracticeViewModel(
             follower.onNoteMatch = { result ->
                 handleMatchResult(result)
             }
-            // 段落循环回调：更新循环计数
+            // 段落循环回调：更新循环计数 + 渐速练习提速
             follower.onSectionLoop = { count ->
                 _uiState.update { it.copy(loopCount = count) }
+                // 渐速练习：每次循环完成时尝试提速
+                if (_uiState.value.tempoRampEnabled && !tempoRampUp.isComplete()) {
+                    // 计算本轮准确率
+                    val accuracy = calcAccuracy(
+                        _uiState.value.correctCount,
+                        _uiState.value.correctCount + _uiState.value.wrongCount
+                    )
+                    val changed = tempoRampUp.advance(accuracy)
+                    if (changed) {
+                        // 应用新 BPM 到节拍器
+                        val newBpm = tempoRampUp.currentBpm
+                        if (_uiState.value.metronomeEnabled) {
+                            metronome.setBpm(newBpm)
+                        }
+                        _uiState.update {
+                            it.copy(
+                                metronomeBpm = if (_uiState.value.metronomeEnabled) newBpm else it.metronomeBpm,
+                                tempoRampCurrentBpm = newBpm,
+                                tempoRampCurrentStep = tempoRampUp.currentStep,
+                                tempoRampCompleted = tempoRampUp.isComplete(),
+                                tempoRampLoopsAtCurrentStep = tempoRampUp.loopsAtCurrentStep
+                            )
+                        }
+                    } else {
+                        // 仅更新当前步的循环计数
+                        _uiState.update {
+                            it.copy(tempoRampLoopsAtCurrentStep = tempoRampUp.loopsAtCurrentStep)
+                        }
+                    }
+                }
             }
         }
         val maxM = com.pianocompanion.following.SectionLooper.maxMeasure(score)
+        // 重置渐速练习引擎到默认配置
+        tempoRampUp = TempoRampUp()
         _uiState.update {
             it.copy(
                 score = score,
@@ -136,7 +183,13 @@ class PracticeViewModel(
                 loopStartMeasure = 0,
                 loopEndMeasure = maxM,
                 loopEnabled = false,
-                loopCount = 0
+                loopCount = 0,
+                tempoRampEnabled = false,
+                tempoRampCurrentBpm = tempoRampUp.currentBpm,
+                tempoRampCurrentStep = 0,
+                tempoRampTotalSteps = tempoRampUp.totalSteps(),
+                tempoRampCompleted = tempoRampUp.isComplete(),
+                tempoRampLoopsAtCurrentStep = 0
             )
         }
     }
@@ -334,6 +387,70 @@ class PracticeViewModel(
             looper.resetLoopCount()
         }
         _uiState.update { it.copy(loopStartMeasure = lo, loopEndMeasure = hi, loopCount = 0) }
+    }
+
+    // === Tempo ramp-up practice (渐速练习) ===
+
+    /**
+     * 启用/禁用渐速练习。启用时自动开启段落循环（若尚未开启），
+     * 并将节拍器速度设为起始 BPM。
+     */
+    fun setTempoRampEnabled(enabled: Boolean) {
+        if (enabled) {
+            // 渐速练习需要段落循环配合
+            val looper = scoreFollower?.sectionLooper
+            if (looper != null && !looper.enabled) {
+                setLoopEnabled(true)
+            }
+            // 应用起始 BPM
+            tempoRampUp.reset()
+            val startBpm = tempoRampUp.currentBpm
+            if (_uiState.value.metronomeEnabled) {
+                metronome.setBpm(startBpm)
+            }
+            _uiState.update {
+                it.copy(
+                    tempoRampEnabled = true,
+                    tempoRampCurrentBpm = startBpm,
+                    tempoRampCurrentStep = 0,
+                    tempoRampTotalSteps = tempoRampUp.totalSteps(),
+                    tempoRampCompleted = tempoRampUp.isComplete(),
+                    tempoRampLoopsAtCurrentStep = 0,
+                    metronomeBpm = if (it.metronomeEnabled) startBpm else it.metronomeBpm
+                )
+            }
+        } else {
+            _uiState.update { it.copy(tempoRampEnabled = false) }
+        }
+    }
+
+    /**
+     * 配置渐速练习参数。必须在 [setTempoRampEnabled] 之前或之后调用均可。
+     */
+    fun setTempoRampConfig(
+        startBpm: Int,
+        targetBpm: Int,
+        increment: Int,
+        loopsPerStep: Int
+    ) {
+        tempoRampUp.startBpm = startBpm
+        tempoRampUp.targetBpm = targetBpm
+        tempoRampUp.bpmIncrement = increment
+        tempoRampUp.loopsPerStep = loopsPerStep
+        tempoRampUp.reset()
+        _uiState.update {
+            it.copy(
+                tempoRampStartBpm = tempoRampUp.startBpm,
+                tempoRampTargetBpm = tempoRampUp.targetBpm,
+                tempoRampIncrement = tempoRampUp.bpmIncrement,
+                tempoRampLoopsPerStep = tempoRampUp.loopsPerStep,
+                tempoRampCurrentBpm = tempoRampUp.currentBpm,
+                tempoRampCurrentStep = 0,
+                tempoRampTotalSteps = tempoRampUp.totalSteps(),
+                tempoRampCompleted = tempoRampUp.isComplete(),
+                tempoRampLoopsAtCurrentStep = 0
+            )
+        }
     }
 
     private fun calcAccuracy(correct: Int, wrong: Int): Float {

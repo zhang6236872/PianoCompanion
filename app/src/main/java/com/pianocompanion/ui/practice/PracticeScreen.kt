@@ -204,6 +204,36 @@ fun PracticeScreen(
                 }
             }
 
+            // === Tempo ramp-up control (渐速练习) ===
+            uiState.score?.let {
+                if (!uiState.isPracticing && uiState.loopEnabled) {
+                    TempoRampUpControl(
+                        enabled = uiState.tempoRampEnabled,
+                        startBpm = uiState.tempoRampStartBpm,
+                        targetBpm = uiState.tempoRampTargetBpm,
+                        increment = uiState.tempoRampIncrement,
+                        loopsPerStep = uiState.tempoRampLoopsPerStep,
+                        onToggle = { viewModel.setTempoRampEnabled(it) },
+                        onConfigChange = { s, t, i, l ->
+                            viewModel.setTempoRampConfig(s, t, i, l)
+                        }
+                    )
+                }
+            }
+
+            // === Tempo ramp-up live progress (练习中显示) ===
+            if (uiState.isPracticing && uiState.tempoRampEnabled) {
+                TempoRampProgressCard(
+                    currentBpm = uiState.tempoRampCurrentBpm,
+                    targetBpm = uiState.tempoRampTargetBpm,
+                    currentStep = uiState.tempoRampCurrentStep,
+                    totalSteps = uiState.tempoRampTotalSteps,
+                    loopsAtCurrentStep = uiState.tempoRampLoopsAtCurrentStep,
+                    loopsPerStep = uiState.tempoRampLoopsPerStep,
+                    completed = uiState.tempoRampCompleted
+                )
+            }
+
             // === Metronome control ===
             MetronomeControlBar(
                 enabled = uiState.metronomeEnabled,
@@ -636,6 +666,171 @@ private fun MeasureStepper(
         )
         IconButton(onClick = onIncrement, modifier = Modifier.size(32.dp)) {
             Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * 渐速练习配置面板：设置起始速度、目标速度、提速量、每步循环次数。
+ * 与段落循环配合——每完成 loopsPerStep 次循环后自动提速。
+ */
+@Composable
+private fun TempoRampUpControl(
+    enabled: Boolean,
+    startBpm: Int,
+    targetBpm: Int,
+    increment: Int,
+    loopsPerStep: Int,
+    onToggle: (Boolean) -> Unit,
+    onConfigChange: (startBpm: Int, targetBpm: Int, increment: Int, loopsPerStep: Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("⚡", fontSize = 18.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "渐速练习",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        "每完成 $loopsPerStep 遍循环后提速 $increment BPM",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+
+            AnimatedVisibility(visible = enabled) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "从慢速开始，逐步加速到目标速度（钢琴练习核心技巧）",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                    MeasureStepper(
+                        label = "起始 BPM",
+                        value = startBpm,
+                        minValue = 40,
+                        maxValue = targetBpm,
+                        onDecrement = { if (startBpm > 40) onConfigChange(startBpm - 5, targetBpm, increment, loopsPerStep) },
+                        onIncrement = { if (startBpm < targetBpm) onConfigChange(startBpm + 5, targetBpm, increment, loopsPerStep) }
+                    )
+                    MeasureStepper(
+                        label = "目标 BPM",
+                        value = targetBpm,
+                        minValue = startBpm,
+                        maxValue = 240,
+                        onDecrement = { if (targetBpm > startBpm) onConfigChange(startBpm, targetBpm - 5, increment, loopsPerStep) },
+                        onIncrement = { if (targetBpm < 240) onConfigChange(startBpm, targetBpm + 5, increment, loopsPerStep) }
+                    )
+                    MeasureStepper(
+                        label = "每次提速",
+                        value = increment,
+                        minValue = 1,
+                        maxValue = 20,
+                        onDecrement = { if (increment > 1) onConfigChange(startBpm, targetBpm, increment - 1, loopsPerStep) },
+                        onIncrement = { if (increment < 20) onConfigChange(startBpm, targetBpm, increment + 1, loopsPerStep) }
+                    )
+                    MeasureStepper(
+                        label = "每步循环遍数",
+                        value = loopsPerStep,
+                        minValue = 1,
+                        maxValue = 10,
+                        onDecrement = { if (loopsPerStep > 1) onConfigChange(startBpm, targetBpm, increment, loopsPerStep - 1) },
+                        onIncrement = { if (loopsPerStep < 10) onConfigChange(startBpm, targetBpm, increment, loopsPerStep + 1) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 练习中渐速进度卡片：显示当前 BPM、目标 BPM、进度条、当前步循环计数。
+ */
+@Composable
+private fun TempoRampProgressCard(
+    currentBpm: Int,
+    targetBpm: Int,
+    currentStep: Int,
+    totalSteps: Int,
+    loopsAtCurrentStep: Int,
+    loopsPerStep: Int,
+    completed: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = if (completed) {
+            CardDefaults.cardColors(containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f))
+        } else {
+            CardDefaults.cardColors()
+        }
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("⚡", fontSize = 20.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                if (completed) {
+                    Text(
+                        "🎉 已达到目标速度 $targetBpm BPM！",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E7D32),
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                "$currentBpm",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                " → $targetBpm BPM",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
+                            )
+                        }
+                        Text(
+                            "第 ${currentStep + 1}/$totalSteps 步 · 本遍 $loopsAtCurrentStep/$loopsPerStep",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+            if (!completed && totalSteps > 0) {
+                Spacer(modifier = Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { currentStep.toFloat() / totalSteps },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }
         }
     }
 }
