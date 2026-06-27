@@ -51,7 +51,13 @@ class MidiParser {
                 continue
             }
 
-            val trackEnd = reader.position + reader.readInt()
+            // 先读取轨道长度（readInt 会推进 position 到轨道体起始），
+            // 再用推进后的 position 计算 trackEnd。此前写法 `reader.position + reader.readInt()`
+            // 会用 readInt 推进前的 position（即长度字段偏移），导致 trackEnd 偏小 4 字节——
+            // 单轨(Format 0)文件仅丢失末尾 EOT 故不影响音符，但多轨(Format 1)文件会使
+            // 后续轨道错位、音符无法解析。此处修复以正确支持多轨 MIDI 导入与导出往返。
+            val trackLength = reader.readInt()
+            val trackEnd = reader.position + trackLength
             var absoluteTicks = 0L
             var runningStatus = 0
             val activeNotes = mutableMapOf<Int, MutableList<Pair<Long, Int>>>() // midi -> [(startTime, velocity)]
@@ -250,9 +256,12 @@ private class MidiDataReader(private val data: ByteArray) {
     }
 
     fun readAscii(length: Int): String {
-        val sb = StringBuilder()
-        repeat(length) { sb.append(readByte().toInt().toChar()) }
-        return sb.toString()
+        // 按 UTF-8 解码（与 ASCII 完全兼容）。此前按字节逐个 toChar() 实为 Latin-1 解码，
+        // 会导致非 ASCII 曲名（如 "Für Elise"、"测试乐谱"）在导入时乱码。
+        // chunk 标识 "MThd"/"MTrk" 为纯 ASCII，UTF-8 解码结果不变。
+        val bytes = ByteArray(length)
+        for (k in 0 until length) bytes[k] = readByte()
+        return String(bytes, Charsets.UTF_8)
     }
 
     fun readVarLen(): Long {
