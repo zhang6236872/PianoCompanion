@@ -190,6 +190,20 @@ fun PracticeScreen(
                 )
             }
 
+            // === Section loop control ===
+            uiState.score?.let { score ->
+                if (!uiState.isPracticing && uiState.maxMeasure > 0) {
+                    SectionLoopControl(
+                        enabled = uiState.loopEnabled,
+                        startMeasure = uiState.loopStartMeasure,
+                        endMeasure = uiState.loopEndMeasure,
+                        maxMeasure = uiState.maxMeasure,
+                        onToggle = { viewModel.setLoopEnabled(it) },
+                        onRangeChange = { s, e -> viewModel.setLoopRange(s, e) }
+                    )
+                }
+            }
+
             // === Metronome control ===
             MetronomeControlBar(
                 enabled = uiState.metronomeEnabled,
@@ -297,6 +311,11 @@ fun PracticeScreen(
                     InfoChip("❌", "${uiState.wrongCount}",
                         containerColor = Color(0xFFEF5350).copy(alpha = 0.15f),
                         contentColor = Color(0xFFC62828))
+                    if (uiState.loopEnabled && uiState.loopCount > 0) {
+                        InfoChip("🔁", "第${uiState.loopCount + 1}遍",
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            contentColor = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
 
@@ -517,6 +536,106 @@ private fun HandStatCard(
                 color = color
             )
             Text("$correct 正确", fontSize = 10.sp, color = color.copy(alpha = 0.7f))
+        }
+    }
+}
+
+/**
+ * 段落循环练习控制器：选择小节范围反复练习指定段落（攻克薄弱环节）。
+ */
+@Composable
+private fun SectionLoopControl(
+    enabled: Boolean,
+    startMeasure: Int,
+    endMeasure: Int,
+    maxMeasure: Int,
+    onToggle: (Boolean) -> Unit,
+    onRangeChange: (Int, Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("🔁", fontSize = 18.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "段落循环",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(checked = enabled, onCheckedChange = onToggle)
+            }
+
+            AnimatedVisibility(visible = enabled) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "选择反复练习的小节范围（第 ${startMeasure + 1} ~ ${endMeasure + 1} 小节）",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                    MeasureStepper(
+                        label = "起始小节",
+                        value = startMeasure + 1,
+                        minValue = 1,
+                        maxValue = maxMeasure + 1,
+                        onDecrement = {
+                            if (startMeasure > 0) onRangeChange(startMeasure - 1, endMeasure)
+                        },
+                        onIncrement = {
+                            if (startMeasure < endMeasure) onRangeChange(startMeasure + 1, endMeasure)
+                        }
+                    )
+                    MeasureStepper(
+                        label = "结束小节",
+                        value = endMeasure + 1,
+                        minValue = 1,
+                        maxValue = maxMeasure + 1,
+                        onDecrement = {
+                            if (endMeasure > startMeasure) onRangeChange(startMeasure, endMeasure - 1)
+                        },
+                        onIncrement = {
+                            if (endMeasure < maxMeasure) onRangeChange(startMeasure, endMeasure + 1)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MeasureStepper(
+    label: String,
+    value: Int,
+    minValue: Int,
+    maxValue: Int,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        IconButton(onClick = onDecrement, modifier = Modifier.size(32.dp)) {
+            Text("−", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
+        Text(
+            "$value",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+        IconButton(onClick = onIncrement, modifier = Modifier.size(32.dp)) {
+            Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

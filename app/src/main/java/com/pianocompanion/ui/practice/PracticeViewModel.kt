@@ -46,7 +46,13 @@ class PracticeViewModel(
         val rightHandAccuracy: Float = 0f,
         val leftHandAccuracy: Float = 0f,
         val rightHandCorrect: Int = 0,
-        val leftHandCorrect: Int = 0
+        val leftHandCorrect: Int = 0,
+        // === Section loop practice ===
+        val loopEnabled: Boolean = false,
+        val loopStartMeasure: Int = 0,
+        val loopEndMeasure: Int = 0,
+        val maxMeasure: Int = 0,
+        val loopCount: Int = 0
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -116,8 +122,23 @@ class PracticeViewModel(
             follower.onNoteMatch = { result ->
                 handleMatchResult(result)
             }
+            // 段落循环回调：更新循环计数
+            follower.onSectionLoop = { count ->
+                _uiState.update { it.copy(loopCount = count) }
+            }
         }
-        _uiState.update { it.copy(score = score, sessionSaved = false) }
+        val maxM = com.pianocompanion.following.SectionLooper.maxMeasure(score)
+        _uiState.update {
+            it.copy(
+                score = score,
+                sessionSaved = false,
+                maxMeasure = maxM,
+                loopStartMeasure = 0,
+                loopEndMeasure = maxM,
+                loopEnabled = false,
+                loopCount = 0
+            )
+        }
     }
 
     fun startPractice() {
@@ -282,6 +303,37 @@ class PracticeViewModel(
 
     fun setPracticeMode(mode: PracticeMode) {
         _uiState.update { it.copy(practiceMode = mode) }
+    }
+
+    // === Section loop practice ===
+
+    /** 启用/禁用段落循环练习。 */
+    fun setLoopEnabled(enabled: Boolean) {
+        scoreFollower?.sectionLooper?.let { looper ->
+            looper.enabled = enabled
+            if (enabled) {
+                looper.startMeasure = _uiState.value.loopStartMeasure
+                looper.endMeasure = _uiState.value.loopEndMeasure
+                looper.resetLoopCount()
+            }
+        }
+        _uiState.update { it.copy(loopEnabled = enabled, loopCount = 0) }
+    }
+
+    /**
+     * 设置循环段落范围 [start, end]（会自动保证 start <= end 并 clamp 到合法范围）。
+     */
+    fun setLoopRange(start: Int, end: Int) {
+        val maxM = _uiState.value.maxMeasure
+        val s = start.coerceIn(0, maxM)
+        val e = end.coerceIn(0, maxM)
+        val (lo, hi) = if (s <= e) s to e else e to s
+        scoreFollower?.sectionLooper?.let { looper ->
+            looper.startMeasure = lo
+            looper.endMeasure = hi
+            looper.resetLoopCount()
+        }
+        _uiState.update { it.copy(loopStartMeasure = lo, loopEndMeasure = hi, loopCount = 0) }
     }
 
     private fun calcAccuracy(correct: Int, wrong: Int): Float {

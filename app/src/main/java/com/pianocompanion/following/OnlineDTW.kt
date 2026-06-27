@@ -103,6 +103,23 @@ class OnlineDTW(
         cumulativeCosts[0] = 0f
     }
 
+    /**
+     * 将 follower 跳转到指定位置（用于段落循环练习 [com.pianocompanion.following.SectionLooper]）。
+     *
+     * 重置代价前沿，使目标位置 [position] 成为新的 DTW 起点：仅将
+     * `cumulativeCosts[position]` 置 0、其余置 MAX_VALUE。下一次 [processNote] 时，
+     * 匹配到 `scoreNotes[position]` 的音符会以代价 0 落在 `position + 1`，从而
+     * 自然续接到段落开头，不受跳转前历史路径的污染。
+     *
+     * @param position 目标音符索引（0..[getScoreLength]），会被 clamp 到合法范围
+     */
+    fun seekTo(position: Int) {
+        val target = position.coerceIn(0, scoreNotes.size)
+        currentPos = target
+        cumulativeCosts.fill(Float.MAX_VALUE)
+        cumulativeCosts[target] = 0f
+    }
+
     /** Get the current position in the score. */
     fun getCurrentPosition(): Int = currentPos
 

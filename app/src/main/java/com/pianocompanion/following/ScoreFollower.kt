@@ -35,6 +35,9 @@ class ScoreFollower(
     // === Hand separation ===
     val handTracker = HandTracker(score.notes)
 
+    // === Section loop practice ===
+    val sectionLooper: SectionLooper = SectionLooper(score)
+
     init {
         dtw = OnlineDTW(score.notes, dtwConfig)
         setupCallbacks()
@@ -44,6 +47,8 @@ class ScoreFollower(
     var onPageTurn: ((Int) -> Unit)? = null
     var onNoteMatch: ((MatchResult) -> Unit)? = null
     var onErrorDetected: ((ErrorPosition) -> Unit)? = null
+    /** 段落循环触发时回调，参数为已完成的循环次数（≥1）。 */
+    var onSectionLoop: ((Int) -> Unit)? = null
 
     private fun setupCallbacks() {
         noteDetector.onNoteOnset = { midi, freq, timeMs ->
@@ -102,6 +107,23 @@ class ScoreFollower(
                     }
 
                     onPositionUpdate?.invoke(scoreIdx, currentMeasure, currentPage)
+
+                    // === Section loop: 到达段落末尾则跳回段落开头 ===
+                    if (sectionLooper.shouldLoop(scoreIdx)) {
+                        sectionLooper.recordLoop()
+                        val startIdx = sectionLooper.startIndex()
+                        dtw.seekTo(startIdx)
+                        // 同步小节/页面到段落起点
+                        score.notes.getOrNull(startIdx)?.let { startNote ->
+                            currentMeasure = startNote.measureIndex
+                        }
+                        val sectionStartPage = startIdx / notesPerPage
+                        if (sectionStartPage != currentPage) {
+                            currentPage = sectionStartPage
+                            onPageTurn?.invoke(currentPage)
+                        }
+                        onSectionLoop?.invoke(sectionLooper.loopCount)
+                    }
                 }
             }
         }
@@ -147,7 +169,18 @@ class ScoreFollower(
     fun start() {
         running = true
         noteDetector.reset()
-        dtw.reset()
+        // 段落循环启用且配置有效时，从段落起点开始练习
+        if (sectionLooper.enabled && sectionLooper.isValid()) {
+            dtw.seekTo(sectionLooper.startIndex())
+            sectionLooper.resetLoopCount()
+            score.notes.getOrNull(sectionLooper.startIndex())?.let { startNote ->
+                currentMeasure = startNote.measureIndex
+            }
+            val sectionStartPage = sectionLooper.startIndex() / notesPerPage
+            currentPage = sectionStartPage
+        } else {
+            dtw.reset()
+        }
         correctCount = 0
         wrongCount = 0
         missedCount = 0
