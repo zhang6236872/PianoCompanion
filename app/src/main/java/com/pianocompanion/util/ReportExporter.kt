@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.pianocompanion.analytics.WeakSpotAnalyzer
 import com.pianocompanion.data.model.SessionRecord
 import java.io.File
 import java.text.SimpleDateFormat
@@ -77,10 +78,42 @@ object ReportExporter {
             sb.appendLine("💪 待提升: ${worst.scoreTitle} (${(worst.accuracy * 100).toInt()}%)")
         }
 
+        // Weak spot analysis (per score)
+        appendWeakSpotAnalysis(sb, sessions)
+
         sb.appendLine()
         sb.appendLine("— Piano Companion 🎹")
 
         return sb.toString()
+    }
+
+    /**
+     * 按乐谱分组做薄弱环节分析，将存在弱项的乐谱摘要写入报告。
+     * 弱项是乐谱相关的，故按 scoreTitle 分组各自分析。
+     */
+    private fun appendWeakSpotAnalysis(sb: StringBuilder, sessions: List<SessionRecord>) {
+        val sections = sessions
+            .groupBy { it.scoreTitle }
+            .mapNotNull { (title, scoreSessions) ->
+                val report = WeakSpotAnalyzer.analyze(scoreSessions)
+                if (report.hasWeakSpots) title to report else null
+            }
+            .sortedByDescending { it.second.totalErrors }
+
+        if (sections.isEmpty()) return
+
+        sb.appendLine()
+        sb.appendLine("🎯 薄弱环节分析")
+        sb.appendLine("─".repeat(40))
+        sections.take(3).forEach { (title, report) ->
+            sb.appendLine("🎵 $title")
+            sb.appendLine("   ${report.summary}")
+            report.recommendedPassages.take(2).forEach { passage ->
+                val start = passage.startMeasure + 1
+                val end = passage.endMeasure + 1
+                sb.appendLine("   · 重点练习第 $start–$end 小节（${passage.totalErrors} 次错误）")
+            }
+        }
     }
 
     /**
