@@ -92,6 +92,44 @@ class PitchMapperTest {
         }
     }
 
+    // ---- C 谱号变体 (女高音 / 女中音) ---------------------------------------
+
+    @Test
+    fun `soprano bottom line maps to middle C`() {
+        // 女高音谱表底线 = C4 = MIDI 60（C 谱号框住底线）
+        assertEquals(60, PitchMapper.staffPositionToMidi(0, Staff.SOPRANO))
+    }
+
+    @Test
+    fun `soprano staff positions ascend chromatically correct`() {
+        // C4 D4 E4 F4 G4 A4 B4 C5 D5
+        val expected = listOf(60, 62, 64, 65, 67, 69, 71, 72, 74)
+        expected.forEachIndexed { step, midi ->
+            assertEquals("step $step", midi, PitchMapper.staffPositionToMidi(step, Staff.SOPRANO))
+        }
+    }
+
+    @Test
+    fun `mezzo-soprano bottom line maps to A3`() {
+        // 女中音谱表底线 = A3 = MIDI 57
+        assertEquals(57, PitchMapper.staffPositionToMidi(0, Staff.MEZZO_SOPRANO))
+    }
+
+    @Test
+    fun `mezzo-soprano second line from bottom maps to middle C`() {
+        // step 2 = 自下而上第 2 线 = C4 = 60
+        assertEquals(60, PitchMapper.staffPositionToMidi(2, Staff.MEZZO_SOPRANO))
+    }
+
+    @Test
+    fun `mezzo-soprano staff positions ascend chromatically correct`() {
+        // A3 B3 C4 D4 E4 F4 G4 A4 B4
+        val expected = listOf(57, 59, 60, 62, 64, 65, 67, 69, 71)
+        expected.forEachIndexed { step, midi ->
+            assertEquals("step $step", midi, PitchMapper.staffPositionToMidi(step, Staff.MEZZO_SOPRANO))
+        }
+    }
+
     // ========================================================================
     //  letterForPosition — 临时记号小节内延续所需的音名字母索引
     // ========================================================================

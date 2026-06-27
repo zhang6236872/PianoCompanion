@@ -266,6 +266,12 @@ class SignatureDetectorTest {
     /** 次中音谱号：C 谱号框住自上而下第 2 条线。 */
     private fun drawTenorClef(img: BinaryImage, x: Int) = drawCClef(img, x, lineYs[1])
 
+    /** 女中音谱号：C 谱号框住自上而下第 4 条线（自下而上第 2 线）。 */
+    private fun drawMezzoSopranoClef(img: BinaryImage, x: Int) = drawCClef(img, x, lineYs[3])
+
+    /** 女高音谱号：C 谱号框住底线（自上而下第 5 条线）。 */
+    private fun drawSopranoClef(img: BinaryImage, x: Int) = drawCClef(img, x, lineYs[4])
+
     @Test
     fun `alto clef is recognized via center-line bracket`() {
         val img = blank(); drawStaff(img); drawAltoClef(img, 15); ellipse(img, noteX, 70)
@@ -303,5 +309,45 @@ class SignatureDetectorTest {
         val tenorImg = blank(); drawStaff(tenorImg); drawTenorClef(tenorImg, 15); ellipse(tenorImg, noteX, 70)
         assertEquals(ClefType.ALTO, recognizeSignatures(altoImg)[0].clef)
         assertEquals(ClefType.TENOR, recognizeSignatures(tenorImg)[0].clef)
+    }
+
+    // ---- C 谱号变体 (女高音 / 女中音) 识别测试 -------------------------------
+
+    @Test
+    fun `mezzo-soprano clef is recognized via fourth-line bracket`() {
+        // 女中音谱号：C 谱号框住自上而下第 4 条线（自下而上第 2 线，C4）。
+        val img = blank(); drawStaff(img); drawMezzoSopranoClef(img, 15); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.MEZZO_SOPRANO, result[0].clef)
+    }
+
+    @Test
+    fun `soprano clef is recognized via bottom-line bracket`() {
+        // 女高音谱号：C 谱号框住底线（C4 落在最底线上）。
+        val img = blank(); drawStaff(img); drawSopranoClef(img, 15); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.SOPRANO, result[0].clef)
+    }
+
+    @Test
+    fun `four c-clef variants produce distinct results`() {
+        // 回归保护：四个 C 谱号位置必须各自归类正确，互不混淆。
+        val sopranoImg = blank(); drawStaff(sopranoImg); drawSopranoClef(sopranoImg, 15); ellipse(sopranoImg, noteX, 70)
+        val mezzoImg = blank(); drawStaff(mezzoImg); drawMezzoSopranoClef(mezzoImg, 15); ellipse(mezzoImg, noteX, 70)
+        val altoImg = blank(); drawStaff(altoImg); drawAltoClef(altoImg, 15); ellipse(altoImg, noteX, 70)
+        val tenorImg = blank(); drawStaff(tenorImg); drawTenorClef(tenorImg, 15); ellipse(tenorImg, noteX, 70)
+        assertEquals(ClefType.SOPRANO, recognizeSignatures(sopranoImg)[0].clef)
+        assertEquals(ClefType.MEZZO_SOPRANO, recognizeSignatures(mezzoImg)[0].clef)
+        assertEquals(ClefType.ALTO, recognizeSignatures(altoImg)[0].clef)
+        assertEquals(ClefType.TENOR, recognizeSignatures(tenorImg)[0].clef)
+    }
+
+    @Test
+    fun `mezzo-soprano clef with key signature still detects clef and key`() {
+        val img = blank(); drawStaff(img); drawMezzoSopranoClef(img, 15)
+        drawSharp(img, 55); drawSharp(img, 70); ellipse(img, noteX, 70)
+        val result = recognizeSignatures(img)
+        assertEquals(ClefType.MEZZO_SOPRANO, result[0].clef)
+        assertEquals(KeySignature.D_MAJOR, result[0].keySignature)
     }
 }

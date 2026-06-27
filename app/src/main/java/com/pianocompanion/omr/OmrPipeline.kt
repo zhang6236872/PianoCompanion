@@ -692,6 +692,8 @@ object OmrPipeline {
         if (detectedClefs.any {
                 it == SignatureDetector.ClefType.TREBLE ||
                     it == SignatureDetector.ClefType.BASS ||
+                    it == SignatureDetector.ClefType.SOPRANO ||
+                    it == SignatureDetector.ClefType.MEZZO_SOPRANO ||
                     it == SignatureDetector.ClefType.ALTO ||
                     it == SignatureDetector.ClefType.TENOR
             }
@@ -700,6 +702,8 @@ object OmrPipeline {
                 when (it) {
                     SignatureDetector.ClefType.TREBLE -> "高音谱号"
                     SignatureDetector.ClefType.BASS -> "低音谱号"
+                    SignatureDetector.ClefType.SOPRANO -> "女高音谱号"
+                    SignatureDetector.ClefType.MEZZO_SOPRANO -> "女中音谱号"
                     SignatureDetector.ClefType.ALTO -> "中音谱号"
                     SignatureDetector.ClefType.TENOR -> "次中音谱号"
                     else -> "未知"
@@ -977,6 +981,8 @@ object OmrPipeline {
     ): Staff = when (clef) {
         SignatureDetector.ClefType.TREBLE -> Staff.TREBLE
         SignatureDetector.ClefType.BASS -> Staff.BASS
+        SignatureDetector.ClefType.SOPRANO -> Staff.SOPRANO
+        SignatureDetector.ClefType.MEZZO_SOPRANO -> Staff.MEZZO_SOPRANO
         SignatureDetector.ClefType.ALTO -> Staff.ALTO
         SignatureDetector.ClefType.TENOR -> Staff.TENOR
         SignatureDetector.ClefType.UNKNOWN ->

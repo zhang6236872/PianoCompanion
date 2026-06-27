@@ -19,12 +19,16 @@ object PitchMapper {
     private val C_ORDER_SEMITONES = intArrayOf(0, 2, 4, 5, 7, 9, 11) // C D E F G A B
 
     // Global Diatonic Count (GDC) of each clef's bottom line, anchored at C4 = MIDI 60.
-    // Treble bottom line = E4 → (4-4)*7 + 2 = 2.
-    // Bass   bottom line = G2 → (2-4)*7 + 4 = -10.
-    // Alto   bottom line = F3 → (3-4)*7 + 3 = -4.  (middle line = C4)
-    // Tenor  bottom line = D3 → (3-4)*7 + 1 = -6.  (2nd line from top = C4)
+    // Treble        bottom line = E4 → (4-4)*7 + 2 = 2.
+    // Bass          bottom line = G2 → (2-4)*7 + 4 = -10.
+    // Alto          bottom line = F3 → (3-4)*7 + 3 = -4.   (middle line = C4)
+    // Tenor         bottom line = D3 → (3-4)*7 + 1 = -6.   (2nd line from top = C4)
+    // Mezzo-soprano bottom line = A3 → (3-4)*7 + 5 = -2.   (2nd line from bottom = C4)
+    // Soprano       bottom line = C4 → GDC 0.              (bottom line itself = C4)
     private fun bottomLineGdc(staff: Staff): Int = when (staff) {
         Staff.BASS -> -10
+        Staff.SOPRANO -> 0
+        Staff.MEZZO_SOPRANO -> -2
         Staff.ALTO -> -4
         Staff.TENOR -> -6
         else -> 2 // TREBLE / BOTH
