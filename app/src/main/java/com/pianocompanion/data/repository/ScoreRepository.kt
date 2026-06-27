@@ -3,6 +3,7 @@ package com.pianocompanion.data.repository
 import android.content.Context
 import android.net.Uri
 import com.pianocompanion.data.model.Score
+import com.pianocompanion.data.parser.MidiExporter
 import com.pianocompanion.data.parser.MidiParser
 import com.pianocompanion.data.parser.MusicXmlExporter
 import com.pianocompanion.data.parser.MusicXmlParser
@@ -138,6 +139,26 @@ class ScoreRepository(private val context: Context) {
             val xml = MusicXmlExporter().export(score)
             context.contentResolver.openOutputStream(uri)?.use { out ->
                 out.write(xml.toByteArray(Charsets.UTF_8))
+            } ?: return Result.failure(Exception("无法打开目标文件"))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 将 [score] 序列化为标准 MIDI 文件 (.mid) 并写入用户通过 SAF 选择的目标 [uri]。
+     *
+     * 用于将 OMR 识别结果或任何乐谱导出为标准 MIDI，
+     * 以便在 DAW / 媒体播放器 / 数码钢琴中播放，或作为练习伴奏轨。
+     *
+     * @return 成功返回 [Result.success]，失败返回 [Result.failure]。
+     */
+    fun exportScoreToMidi(score: Score, uri: Uri): Result<Unit> {
+        return try {
+            val bytes = MidiExporter().export(score)
+            context.contentResolver.openOutputStream(uri)?.use { out ->
+                out.write(bytes)
             } ?: return Result.failure(Exception("无法打开目标文件"))
             Result.success(Unit)
         } catch (e: Exception) {

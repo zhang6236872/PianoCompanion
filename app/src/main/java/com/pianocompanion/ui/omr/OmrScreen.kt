@@ -57,6 +57,7 @@ class OmrViewModel(application: Application) : AndroidViewModel(application) {
 
     private val engine: OmrEngine = RealOmrEngine()
     private val exporter = com.pianocompanion.data.parser.MusicXmlExporter()
+    private val midiExporter = com.pianocompanion.data.parser.MidiExporter()
 
     fun processImage(uri: Uri) {
         val context = getApplication<Application>()
@@ -126,6 +127,34 @@ class OmrViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * 将当前识别到的乐谱导出为标准 MIDI 文件 (.mid)，写入 SAF 返回的 [uri]。
+     * 在 IO 线程执行序列化与文件写入，更新 [OmrUiState.exportStatus]。
+     * 导出的 MIDI 可在任意 DAW / 媒体播放器 / 数码钢琴中播放，或作为练习伴奏。
+     */
+    fun exportRecognizedScoreToMidi(uri: Uri) {
+        val score = getRecognizedScore()
+        if (score == null) {
+            _uiState.update { it.copy(exportStatus = "没有可导出的乐谱") }
+            return
+        }
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                try {
+                    val bytes = midiExporter.export(score)
+                    getApplication<Application>().contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(bytes)
+                    } != null
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            _uiState.update {
+                it.copy(exportStatus = if (ok) "✅ 已导出 MIDI" else "❌ 导出失败")
+            }
+        }
+    }
+
     fun reset() {
         _uiState.value = OmrUiState()
     }
@@ -161,6 +190,13 @@ fun OmrScreen(
         contract = ActivityResultContracts.CreateDocument("application/xml")
     ) { uri ->
         if (uri != null) viewModel.exportRecognizedScore(uri)
+    }
+
+    // SAF 创建文档：用于导出 MIDI
+    val createMidiLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("audio/midi")
+    ) { uri ->
+        if (uri != null) viewModel.exportRecognizedScoreToMidi(uri)
     }
 
     Scaffold(
@@ -240,6 +276,16 @@ fun OmrScreen(
                     }
                     else -> null
                 }
+                val exportMidiAction: (() -> Unit)? = when (result) {
+                    is OmrResult.Success, is OmrResult.PartialSuccess -> {
+                        {
+                            val score = viewModel.getRecognizedScore()
+                            val name = (score?.title?.takeIf { it.isNotBlank() } ?: "score") + ".mid"
+                            createMidiLauncher.launch(name)
+                        }
+                    }
+                    else -> null
+                }
                 when (result) {
                     is OmrResult.Success -> {
                         ResultCard(
@@ -249,7 +295,8 @@ fun OmrScreen(
                             warnings = emptyList(),
                             quality = result.quality,
                             onPractice = { onScoreRecognized(result.score) },
-                            onExport = exportAction
+                            onExport = exportAction,
+                            onExportMidi = exportMidiAction
                         )
                     }
                     is OmrResult.PartialSuccess -> {
@@ -260,7 +307,8 @@ fun OmrScreen(
                             warnings = result.warnings,
                             quality = result.quality,
                             onPractice = { onScoreRecognized(result.score) },
-                            onExport = exportAction
+                            onExport = exportAction,
+                            onExportMidi = exportMidiAction
                         )
                     }
                     is OmrResult.Error -> {
@@ -338,7 +386,8 @@ private fun ResultCard(
     warnings: List<String>,
     quality: RecognitionQuality? = null,
     onPractice: () -> Unit,
-    onExport: (() -> Unit)? = null
+    onExport: (() -> Unit)? = null,
+    onExportMidi: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -408,6 +457,18 @@ private fun ResultCard(
                     Icon(Icons.Filled.FileDownload, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("导出 MusicXML")
+                }
+            }
+            // 导出 MIDI
+            if (onExportMidi != null) {
+                OutlinedButton(
+                    onClick = onExportMidi,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(Icons.Filled.FileDownload, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("导出 MIDI")
                 }
             }
         }
