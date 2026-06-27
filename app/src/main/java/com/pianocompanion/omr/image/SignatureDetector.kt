@@ -33,10 +33,12 @@ import kotlin.math.abs
 object SignatureDetector {
 
     /**
-     * 谱号类型。C 谱号(中音/次中音)用同一个 𝄡 字形，区别在于它"框住"的谱线位置：
-     * 中音谱号框中央线(C4)，次中音谱号框自上而下第 2 条线(C4)。
+     * 谱号类型。C 谱号(中音/次中音/女中音/女高音)用同一个 𝄡 字形，区别在于它"框住"
+     * 的谱线位置（即 C4 所在的线）：
+     * 女高音谱号框底线(C4)、女中音谱号框自下而上第 2 线(C4)、
+     * 中音谱号框中央线(C4)、次中音谱号框自上而下第 2 线(C4)。
      */
-    enum class ClefType { TREBLE, BASS, ALTO, TENOR, UNKNOWN }
+    enum class ClefType { TREBLE, BASS, SOPRANO, MEZZO_SOPRANO, ALTO, TENOR, UNKNOWN }
 
     /** 单个谱表系统的签名识别结果。 */
     data class SystemSignatures(
@@ -201,14 +203,21 @@ object SignatureDetector {
     }
 
     /**
-     * C 谱号(中音/次中音)判定。C 谱号框住 C4 所在的谱线：中音谱号 = 中央线，
-     * 次中音谱号 = 自上而下第 2 条线。判定依据：
-     *   1) 谱号连通块的黑像素竖直质心落在该谱线容差内；
-     *   2) 该谱线上、下两侧均存在墨迹(说明谱号确实横跨/框住该线)。
-     * 满足上述条件即返回对应类型，否则 [ClefType.UNKNOWN]（调用方回退低音谱号）。
+     * C 谱号判定。C 谱号框住 C4 所在的谱线（其"双臂"指向该线）。同一 𝄡 字形因放置高度
+     * 不同而成为不同的谱号：
+     *   - 女高音(soprano)：C4 在底线(lines[4]，自上而下第 5 线)
+     *   - 女中音(mezzo-soprano)：C4 在自下而上第 2 线(lines[3]，自上而下第 4 线)
+     *   - 中音(alto)：C4 在中央线(lines[2])
+     *   - 次中音(tenor)：C4 在自上而下第 2 线(lines[1])
      *
-     * 已知限制：真实低音谱号若两点未被检测到，其竖直质心可能恰好落在中央线附近，
-     * 此时会被误判为中音谱号；低音谱号的两点是最可靠的特征，正常情况下在此步之前
+     * 判定依据：
+     *   1) 谱号连通块的黑像素竖直质心落在候选谱线容差内；
+     *   2) 该谱线上、下两侧均存在墨迹(说明谱号确实横跨/框住该线)。
+     * 在所有候选谱线中取质心最近者，满足上述条件即返回对应类型，否则 [ClefType.UNKNOWN]
+     * （调用方回退低音谱号）。
+     *
+     * 已知限制：真实低音谱号若两点未被检测到，其竖直质心可能恰好落在某条 C 谱号线附近，
+     * 此时会被误判为 C 谱号；低音谱号的两点是最可靠的特征，正常情况下在此步之前
      * 已被 [hasBassDots] 命中。
      */
     internal fun classifyCClef(
@@ -219,19 +228,28 @@ object SignatureDetector {
     ): ClefType {
         if (system.lines.size < 3) return ClefType.UNKNOWN
         val centerY = verticalCenterOfMass(image, clef)
-        // C 谱号框住的 C4 线：中音=中央线(lines[2])，次中音=自上而下第 2 线(lines[1])。
-        val middleLineY = system.lines[2].center
-        val secondLineY = system.lines[1].center
-        val distMiddle = abs(centerY - middleLineY)
-        val distSecond = abs(centerY - secondLineY)
         val tol = (s * 0.6).toInt().coerceAtLeast(2)
-        return when {
-            distMiddle <= distSecond && distMiddle <= tol &&
-                straddlesLine(image, clef, middleLineY, s) -> ClefType.ALTO
-            distSecond < distMiddle && distSecond <= tol &&
-                straddlesLine(image, clef, secondLineY, s) -> ClefType.TENOR
-            else -> ClefType.UNKNOWN
+        // 候选 (谱线 Y, 谱号类型)，按系统可用的谱线构建。lines 自上而下索引：[0]=顶 ... [4]=底。
+        val candidates = ArrayList<Pair<Int, ClefType>>()
+        if (system.lines.size > 1) candidates += system.lines[1].center to ClefType.TENOR // 自上而下第 2 线
+        candidates += system.lines[2].center to ClefType.ALTO                            // 中央线
+        if (system.lines.size > 3) candidates += system.lines[3].center to ClefType.MEZZO_SOPRANO // 自下而上第 2 线
+        if (system.lines.size > 4) candidates += system.lines[4].center to ClefType.SOPRANO      // 底线
+        var bestType = ClefType.UNKNOWN
+        var bestLineY = 0
+        var bestDist = Int.MAX_VALUE
+        for ((lineY, type) in candidates) {
+            val d = abs(centerY - lineY)
+            if (d < bestDist) {
+                bestDist = d
+                bestType = type
+                bestLineY = lineY
+            }
         }
+        return if (bestType != ClefType.UNKNOWN &&
+            bestDist <= tol &&
+            straddlesLine(image, clef, bestLineY, s)
+        ) bestType else ClefType.UNKNOWN
     }
 
     /** 谱号连通块内黑像素的竖直质心(y 坐标)。 */

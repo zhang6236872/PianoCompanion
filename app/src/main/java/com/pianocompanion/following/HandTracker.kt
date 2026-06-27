@@ -27,10 +27,11 @@ class HandTracker(allNotes: List<ScoreNote>) {
         val leftAccuracy: Float get() = if (leftTotal > 0) leftCorrect.toFloat() / leftTotal else 0f
     }
 
-    // Split notes by hand. C 谱号(中音/次中音)是单声部旋律乐器(中提琴/大提琴)，
-    // 无左右手之分，统一归入右手(主旋律)轨道。
+    // Split notes by hand. C 谱号(女高音/女中音/中音/次中音)是单声部旋律乐器
+    // (声乐/古乐/中提琴/大提琴)，无左右手之分，统一归入右手(主旋律)轨道。
     val rightHandNotes: List<ScoreNote> = allNotes.filter {
         it.staff == Staff.TREBLE || it.staff == Staff.BOTH ||
+            it.staff == Staff.SOPRANO || it.staff == Staff.MEZZO_SOPRANO ||
             it.staff == Staff.ALTO || it.staff == Staff.TENOR
     }
     val leftHandNotes: List<ScoreNote> = allNotes.filter {
@@ -40,7 +41,8 @@ class HandTracker(allNotes: List<ScoreNote>) {
     // Separate indices into the full note list for position tracking
     private val rightHandIndices: List<Int> = allNotes.indices.filter {
         val st = allNotes[it].staff
-        st == Staff.TREBLE || st == Staff.BOTH || st == Staff.ALTO || st == Staff.TENOR
+        st == Staff.TREBLE || st == Staff.BOTH || st == Staff.SOPRANO ||
+            st == Staff.MEZZO_SOPRANO || st == Staff.ALTO || st == Staff.TENOR
     }
     private val leftHandIndices: List<Int> = allNotes.indices.filter {
         allNotes[it].staff == Staff.BASS || allNotes[it].staff == Staff.BOTH
@@ -71,7 +73,7 @@ class HandTracker(allNotes: List<ScoreNote>) {
         val hand = expectedNote?.let {
             when (it.staff) {
                 Staff.BOTH -> classifyHand(detectedMidi)
-                Staff.ALTO, Staff.TENOR -> Staff.TREBLE // 单声部旋律乐器归右手
+                Staff.SOPRANO, Staff.MEZZO_SOPRANO, Staff.ALTO, Staff.TENOR -> Staff.TREBLE // 单声部旋律乐器归右手
                 else -> it.staff
             }
         } ?: classifyHand(detectedMidi)
@@ -98,7 +100,7 @@ class HandTracker(allNotes: List<ScoreNote>) {
      */
     fun advancePosition(hand: Staff) {
         _stats = when (hand) {
-            Staff.TREBLE, Staff.ALTO, Staff.TENOR -> _stats.copy(
+            Staff.TREBLE, Staff.SOPRANO, Staff.MEZZO_SOPRANO, Staff.ALTO, Staff.TENOR -> _stats.copy(
                 rightPosition = minOf(_stats.rightPosition + 1, rightHandNotes.size)
             )
             Staff.BASS -> _stats.copy(

@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.46.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音谱号(C clef)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring))
+- 当前版本: **v2.47.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring))
 - 当前分支: main
-- 最新 tag: v2.46.0
+- 最新 tag: v2.47.0
 
-## 健康状态 (2026-06-26 核验)
+## 健康状态 (2026-06-27 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 811 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 848 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0
 - Kotlin 文件: 83 个 / 代码行数: 11000+ 行
@@ -1284,10 +1284,38 @@
   - 边界条件：零谱线间距、空系统列表、搜索区域外符号
 - 单元测试 811 → **824** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0) 已完成！** 代码已合并到 main。
+### v2.47.0 — OMR 女高音/女中音谱号(C clef 变体)识别 (2026-06-27)
+- **目标**：补全 C 谱号家族的最后两个变体——女高音谱号(soprano C clef, C4 在底线)和
+  女中音谱号(mezzo-soprano C clef, C4 在自下而上第 2 线)，使 OMR 管线能识别全部 4 种
+  C 谱号位置（中音/次中音已在 v2.7.0 完成）。此前这两类谱号会被回退为默认谱表，导致
+  音高映射完全错误。
+- **技术方案**：遵循已有的中音/次中音实现模式，端到端扩展完整链路
+  - **数据模型** `Note.kt`：`Staff` 枚举新增 `SOPRANO`、`MEZZO_SOPRANO` 两个值
+    （枚举顺序：TREBLE, BASS, MEZZO_SOPRANO, SOPRANO, ALTO, TENOR, BOTH）
+  - **音高映射** `PitchMapper.bottomLineGdc()`：新增 `SOPRANO -> 0`（底线=C4=MIDI 60）
+    和 `MEZZO_SOPRANO -> -2`（底线=A3=MIDI 57，C4 在自下而上第 2 线）。GDC（全局全音计数）
+    驱动谱线到 MIDI 的映射，故现有 `staffPositionToMidi`/`midiToStaffSteps` 自动正确
+  - **谱号检测** `SignatureDetector.kt`：`ClefType` 枚举新增 `SOPRANO`、`MEZZO_SOPRANO`；
+    将 `classifyCClef` 从双候选 if-else 重写为通用候选列表算法——遍历全部 4 条可能的
+    C 谱号线(lines[1..4])，取竖直质心最近者，可读性与扩展性更好
+  - **管线集成** `OmrPipeline.kt`：`resolveStaff` 新增 ClefType→Staff 映射；谱号检测
+    警告列表与中文名称映射（"女高音谱号"/"女中音谱号"）同步更新
+  - **手部跟踪** `HandTracker.kt`：新谱号归入右手声部（与中音/次中音一致——
+    声乐/古乐旋律乐器为单声部），3 处 `when`/filter 分支同步更新
+  - **乐谱渲染** `ScoreRenderer.kt` + `AutoScrollScoreRenderer.kt`：高音谱表过滤器与
+    per-note skip 检查同步更新（新谱号音符使用正确 MIDI 编号，`midiToStaffSteps` 自动映射）
+  - **安全性**：所有 `when` 语句均使用 `else` 分支，新增枚举值不破坏穷尽性
+- 新增 9 个单元测试：
+  - `SignatureDetectorTest` +4：女中音谱号(第4线框)、女高音谱号(底线框)、
+    四种 C 谱号变体互斥回归、女中音谱号+调号联合检测
+  - `PitchMapperTest` +5：女高音底线→C4、女高音音阶序列、女中音底线→A3、
+    女中音第2线→C4、女中音音阶序列
+- 单元测试 839 → **848** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (824 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (848 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1295,12 +1323,12 @@
 - OnlineDTWTest: 5
 - MusicUtilsTest: 9
 - SyncEngineTest: 23
-- PitchMapperTest: 25
+- PitchMapperTest: 30
 - OmrPipelineTest: 86
 - RhythmAnalyzerTest: 32
 - KeySignatureTest: 11
 - TimeSignatureTest: 5
-- SignatureDetectorTest: 18
+- SignatureDetectorTest: 22
 - OmrSignatureIntegrationTest: 7
 - RestDetectorTest: 33
 - DeskewerTest: 14
@@ -1327,6 +1355,7 @@
 - TremoloDetectorTest: 16
 - GlissandoDetectorTest: 20
 - NavigationSymbolDetectorTest: 13
+- NavigationInstructionDetectorTest: 15
 - RecognitionQualityAssessorTest: 38
 
 ## 阻塞
@@ -1356,7 +1385,8 @@
   - ✅ 密集拥挤连梁组（符头中心相距 ≤~1.5 谱线间距）(v2.38.0 已完成：连续宽行区间横梁检测+30%阈值+山谷检测切分+路由修复+最小高度护栏)
 - OMR 谱号/调号/拍号识别 ✅ (v2.6.0 已完成：几何特征判谱号 + 竖直笔画判升降 + 5×7 网格匹配拍号)
   - ✅ 中音谱号(C clef)支持 (v2.7.0 已完成：竖直质心 + 谱线横跨判定，含次中音谱号)
-  - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）、女高音/女低音谱号(短谱表)支持
+  - ✅ 女高音/女中音谱号(C clef 变体)支持 (v2.47.0 已完成：classifyCClef 通用化为候选列表算法，遍历全部 4 条 C 谱号线取质心最近者，PitchMapper.bottomLineGdc 新增 SOPRANO=0/MEZZO_SOPRANO=-2 映射，C 谱号家族全部完成)
+  - 待完善：真实手写体照片鲁棒性（需真实样本调优模板）
 - OMR 休止符识别 ✅ (v2.10.0 已完成：RestDetector 几何分类全/二分/四分/八分休止符，TimelineItem 时间轴合并推进游标)
   - ✅ 十六分/三十二分休止符 (v2.11.0 已完成：旗形休止符按旗钩层数计数区分八/十六/三十二分)
   - ✅ 高大旗形休止符与四分休止符区分 (v2.20.0 已完成：tallFlaggedRest 在四分休止符前拦截高度≥1.5间距的旗形休止符，用强对比旗钩计数(中位数基线+高对比阈值)区分旗形结构与锯齿笔画)

@@ -42,6 +42,7 @@ fun ScoreRenderer(
         StaffView(
             notes = notes.filter {
                 it.staff == Staff.TREBLE || it.staff == Staff.BOTH ||
+                    it.staff == Staff.SOPRANO || it.staff == Staff.MEZZO_SOPRANO ||
                     it.staff == Staff.ALTO || it.staff == Staff.TENOR
             },
             currentPosition = currentPosition,
@@ -118,6 +119,7 @@ private fun StaffView(
         for (i in startPos until endPos) {
             val note = notes[i]
             if (note.staff != Staff.BOTH &&
+                note.staff != Staff.SOPRANO && note.staff != Staff.MEZZO_SOPRANO &&
                 note.staff != Staff.ALTO &&
                 note.staff != Staff.TENOR &&
                 note.staff != (if (isTreble) Staff.TREBLE else Staff.BASS)
