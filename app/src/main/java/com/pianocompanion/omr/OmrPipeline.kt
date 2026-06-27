@@ -42,6 +42,7 @@ import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
 import com.pianocompanion.omr.image.SlurDetector
+import com.pianocompanion.omr.image.TempoChangeDetector
 import com.pianocompanion.omr.image.TempoMarkingDetector
 import com.pianocompanion.omr.image.TremoloDetector
 import com.pianocompanion.omr.image.TieDetector
@@ -467,6 +468,15 @@ object OmrPipeline {
         val ornaments = OrnamentDetector.detect(
             cleaned, blobs, located.map { it.nh },
             located.map { it.systemIdx }, systems, lineSpacing
+        )
+
+        // --- 6.26. 渐变速度(rit./accel./rall./riten./a tempo)文本检测 --------
+        // 在谱表上方搜索速度变化文字指令：rit. (渐慢)、rall. (渐慢)、riten. (突慢)、
+        // accel. (渐快)、a tempo (回原速)。这些表现性指令与 6.21 的绝对速度标记
+        // (♩=120) 互补：后者是固定节拍值，本步骤识别的是速度变化趋势。仅产生提示信息，
+        // 不修改音符数据模型。score-follower / 练习模式可据此提示用户渐慢/渐快段落。
+        val tempoChanges = TempoChangeDetector.detect(
+            cleaned, blobs, systems, lineSpacing
         )
 
         // --- 7. 休止符检测 ---------------------------------------------------
@@ -940,6 +950,22 @@ object OmrPipeline {
             if (lowerMordent > 0) parts.add("$lowerMordent 个逆波音(lower mordent)")
             if (turns > 0) parts.add("$turns 个回音(turn)")
             warnings += "检测到 ${ornaments.size} 个装饰音(ornament)标记（${parts.joinToString("、")}），已标注装饰音位置"
+        }
+        // 渐变速度文字提示：rit./accel./rall./riten./a tempo 指示速度变化趋势。
+        if (tempoChanges.isNotEmpty()) {
+            val rit = tempoChanges.count { it.type == TempoChangeDetector.TempoChangeType.RITARDANDO }
+            val rall = tempoChanges.count { it.type == TempoChangeDetector.TempoChangeType.RALLENTANDO }
+            val riten = tempoChanges.count { it.type == TempoChangeDetector.TempoChangeType.RITENUTO }
+            val accel = tempoChanges.count { it.type == TempoChangeDetector.TempoChangeType.ACCELERANDO }
+            val aTempo = tempoChanges.count { it.type == TempoChangeDetector.TempoChangeType.A_TEMPO }
+            val parts = ArrayList<String>()
+            if (rit > 0) parts.add("$rit 个 rit.(渐慢)")
+            if (rall > 0) parts.add("$rall 个 rall.(渐慢)")
+            if (riten > 0) parts.add("$riten 个 riten.(突慢)")
+            if (accel > 0) parts.add("$accel 个 accel.(渐快)")
+            if (aTempo > 0) parts.add("$aTempo 个 a tempo(回原速)")
+            warnings += "检测到 ${tempoChanges.size} 条速度变化文字（${parts.joinToString("、")}），" +
+                "这些为表现性渐慢/渐快指令，score-follower 将在对应段落放宽节拍匹配容差"
         }
 
         // --- 9. 识别质量评估 -----------------------------------------------
