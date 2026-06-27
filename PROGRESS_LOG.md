@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.48.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测)
+- 当前版本: **v2.49.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程))
 - 当前分支: main
-- 最新 tag: v2.47.0
+- 最新 tag: v2.49.0
 
 ## 健康状态 (2026-06-27 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 862 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 913 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0
 - Kotlin 文件: 85 个 / 代码行数: 12000+ 行
 
 ## 开发历史
@@ -1339,10 +1339,52 @@
   - 多谱表系统场景
 - 单元测试 848 → **862** 全部通过；编译 + assembleDebug 通过
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0) 已完成！** 代码已合并到 main。
+### v2.49.0 — MusicXML 导出器 (Score→MusicXML 序列化) (2026-06-27)
+- **目标**：闭环 OMR 流程。此前 OMR 识别出的乐谱只能在 app 内练习，无法导出为标准格式。
+  本次新增 [MusicXmlParser] 的对称反向操作 [MusicXmlExporter]，将 [Score] 序列化为
+  MusicXML 3.0 partwise 文档——拍照识谱 → Score → 导出 MusicXML → 在 MuseScore / Finale /
+  Dorico 等外部乐谱软件中打开、编辑、校对。这是 OMR 功能链的「最后一公里」。
+- 新增纯 Kotlin `data/parser/MusicXmlExporter`（无 Android 依赖，完全可单元测试）：
+  - **音高编码** `midiToPitchComponents`：MIDI → (step, alter, octave)，黑键统一用升号(alter=1)。
+    C4=MIDI 60 → ("C", 0, 4)；F#5=MIDI 78 → ("F", 1, 5)
+  - **节奏编码**：divisions=4（每四分音符 4 个 division），`msToDivisions` 将 ms 时值转为 division 数，
+    `divisionsToType` 映射到 `<type>`（whole/half/quarter/eighth/16th）+ `<dot/>`（附点）
+  - **小节推导**：根据拍号 + 速度从 startTime 推导每个音符所属小节，
+    **不依赖 measureIndex**（该字段在不同来源可靠性不一），保证来源无关的正确性
+  - **声部划分**：非 BASS 谱表 → 高音声部（G 谱号 part），BASS 谱表 → 低音声部（F 谱号 part）。
+    每个声部组是独立 part（各自小节时间轴），MuseScore/Finale/open-sheet-music-display 均正确解析
+  - **和弦**：同一声部同一小节内 startTime 完全相同的音符输出 `<chord/>`（关键：与上一个音符的
+    offset 比较，而非与已推进的 cursor 比较，避免和弦判定 bug）
+  - **间隙填充**：音符间时间间隙输出 `<forward>` 推进游标
+  - **元数据**：work-title、creator(composer)、encoding/software、direction(metronome + sound tempo)、
+    time/beats+beat-type；标题/作曲家做 XML 实体转义（&, <, >, ", '）
+  - **临时记号**：FLAT/NATURAL/DOUBLE_SHARP/DOUBLE_FLAT 输出对应 `<accidental>`
+  - **装饰音**：grace note 输出 `<grace/>`
+- **应用层集成**：
+  - `ScoreRepository.exportScoreToMusicXml(score, uri)`：可复用导出方法，写入 SAF 返回的 uri
+  - `OmrViewModel.exportRecognizedScore(uri)`：IO 线程执行序列化 + 文件写入，更新 exportStatus
+  - `OmrScreen` 识别结果卡片新增「导出 MusicXML」按钮（OutlinedButton + FileDownload 图标），
+    通过 `ActivityResultContracts.CreateDocument("application/xml")` 让用户选择保存位置
+- **修复**：和弦判定 bug——原先 `offsetDiv == cursor` 在首个和弦音推进 cursor 后失效，
+  改为 `offsetDiv == lastNoteOffset`（与上一个音符比较）
+- **文档已知限制**：MusicXmlParser 内小节内 startTime 以 divisions 编码、跨小节以 ms 编码
+  （历史设计），故 startTime 不可纯 ms 往返；但 pitch 与 duration 可靠往返（round-trip 测试验证）
+- 新增 51 个单元测试 `MusicXmlExporterTest`：
+  - 文档结构（XML 声明/DOCTYPE/根元素/part-list）、标题与作曲家、特殊字符转义
+  - 音高编码（白键/黑键升号/A0 与 C8 边界）
+  - 节奏编码（全/二/四/八/十六分 + 附点四分/附点二分/附点全 + 非标准时值区间归类）
+  - 小节推导（4/4 同小节、跨小节、3/4 边界）、拍号写入、tempo 写入
+  - 和弦（chord 元素）、间隙（forward 填充）、无间隙不输出 forward
+  - 双声部（TREBLE+BASS 两个 part、仅 BASS、C 谱号归入高音声部）
+  - 临时记号（FLAT/NATURAL/NONE/DOUBLE_FLAT/DOUBLE_SHARP）、装饰音（grace）
+  - **往返(round-trip)**：export→MusicXmlParser.parse 验证音高/时值/标题/作曲家/tempo/拍号/黑键/单音符一致
+  - 工具函数（msToDivisions）、边界（空乐谱、零时长、高/低音区）
+- 单元测试 862 → **913** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (862 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (913 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
