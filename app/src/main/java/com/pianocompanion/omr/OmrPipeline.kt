@@ -37,6 +37,7 @@ import com.pianocompanion.omr.image.RepeatCountDetector
 import com.pianocompanion.omr.image.Rest
 import com.pianocompanion.omr.image.RestDetector
 import com.pianocompanion.omr.image.RhythmAnalyzer
+import com.pianocompanion.omr.image.OrnamentDetector
 import com.pianocompanion.omr.image.SignatureDetector
 import com.pianocompanion.omr.image.StaffLineDetector
 import com.pianocompanion.omr.image.StaffLineRemover
@@ -457,6 +458,15 @@ object OmrPipeline {
         // 检测到后 score-follower 可据此实现跳回开头/Segno、跳至 Coda、终止于 Fine。
         val navigationInstructions = NavigationInstructionDetector.detect(
             cleaned, blobs, systems, lineSpacing
+        )
+
+        // --- 6.25. 装饰音(mordent / turn)检测 --------------------------------
+        // 波音(mordent)和回音(turn)是古典音乐中常见的即兴加花标记，放在符头上方。
+        // 波音是一个短 zigzag（指示主音与二度音快速交替），回音是横躺 S 曲线（指示
+        // 四个装饰音符的顺序）。仅产生提示信息，不修改音符数据模型。
+        val ornaments = OrnamentDetector.detect(
+            cleaned, blobs, located.map { it.nh },
+            located.map { it.systemIdx }, systems, lineSpacing
         )
 
         // --- 7. 休止符检测 ---------------------------------------------------
@@ -919,6 +929,17 @@ object OmrPipeline {
             if (fineCount > 0) parts.add("$fineCount 个 Fine")
             warnings += "检测到 ${navigationInstructions.size} 条导航指令文本（${parts.joinToString("、")}），" +
                 "score-follower 将据此执行非线性播放跳转"
+        }
+        // 装饰音(ornament)提示：告知用户检测到的波音/回音标记。
+        if (ornaments.isNotEmpty()) {
+            val upperMordent = ornaments.count { it.type == OrnamentDetector.OrnamentType.MORDENT_UPPER }
+            val lowerMordent = ornaments.count { it.type == OrnamentDetector.OrnamentType.MORDENT_LOWER }
+            val turns = ornaments.count { it.type == OrnamentDetector.OrnamentType.TURN }
+            val parts = ArrayList<String>()
+            if (upperMordent > 0) parts.add("$upperMordent 个顺波音(upper mordent)")
+            if (lowerMordent > 0) parts.add("$lowerMordent 个逆波音(lower mordent)")
+            if (turns > 0) parts.add("$turns 个回音(turn)")
+            warnings += "检测到 ${ornaments.size} 个装饰音(ornament)标记（${parts.joinToString("、")}），已标注装饰音位置"
         }
 
         // --- 9. 识别质量评估 -----------------------------------------------
