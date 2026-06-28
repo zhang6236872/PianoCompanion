@@ -30,6 +30,10 @@ import com.pianocompanion.data.model.SessionRecord
 import com.pianocompanion.analytics.AchievementCategory
 import com.pianocompanion.analytics.AchievementProgress
 import com.pianocompanion.analytics.AchievementSummary
+import com.pianocompanion.analytics.GoalPeriod
+import com.pianocompanion.analytics.GoalProgress
+import com.pianocompanion.analytics.GoalReport
+import com.pianocompanion.analytics.GoalStatus
 import com.pianocompanion.analytics.WeakSpotTrend
 import com.pianocompanion.data.model.MatchStatus
 import com.pianocompanion.ui.components.EmptyState
@@ -132,6 +136,20 @@ fun StatsScreen(
                         gradientColors = listOf(Color(0xFFFF6B35), Color(0xFFFFA726)),
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            // === Practice goals ===
+            val goalReport = uiState.goalReport
+            if (goalReport != null) {
+                item {
+                    SectionHeader(title = "练习目标", icon = Icons.Filled.Flag)
+                }
+                item {
+                    GoalOverviewCard(goalReport)
+                }
+                items(goalReport.progresses) { progress ->
+                    GoalCard(progress)
                 }
             }
 
@@ -548,6 +566,126 @@ private fun WeakSpotCard(section: StatsViewModel.WeakSpotSection) {
                         Text(trendEmoji(spot.trend), fontSize = 13.sp)
                     }
                 }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  练习目标 (Practice Goals) UI
+// ═══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun GoalOverviewCard(report: GoalReport) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            val completionPct = (report.completionRatio * 100).toInt()
+            Text(
+                if (report.allCompleted) "🎉 全部目标已达成！" else "已完成 ${report.completedCount}/${report.totalCount} 个目标 ($completionPct%)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (report.allCompleted) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { report.completionRatio },
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                color = if (report.allCompleted) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            // 每日/每周目标分组统计
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("📅 每日目标", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Text(
+                        "${report.dailyCompletedCount}/${report.dailyGoals.size} 达成",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                if (report.weeklyGoals.isNotEmpty()) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("📆 每周目标", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                        Text(
+                            "${report.weeklyCompletedCount}/${report.weeklyGoals.size} 达成",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+            // 继续努力提示
+            report.nextGoal?.let { next ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "💪 最接近: ${next.definition.metric.icon} ${next.definition.metric.label} ${next.formatCurrent()}/${next.formatTarget()}",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GoalCard(progress: GoalProgress) {
+    val status = progress.status()
+    val statusColor = when (status) {
+        GoalStatus.COMPLETED -> Color(0xFF4CAF50)
+        GoalStatus.ON_TRACK -> MaterialTheme.colorScheme.primary
+        GoalStatus.BEHIND -> Color(0xFFFF9800)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        progress.definition.metric.icon,
+                        fontSize = 20.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            "${progress.definition.period.label}${progress.definition.metric.label}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "${progress.formatCurrent()} / ${progress.formatTarget()}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                Text(
+                    "${status.emoji} ${status.label}",
+                    fontSize = 12.sp,
+                    color = statusColor
+                )
+            }
+            if (!progress.isCompleted) {
+                Spacer(modifier = Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { progress.progressRatio },
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                    color = statusColor,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             }
         }
     }
