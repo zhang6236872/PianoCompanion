@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.pianocompanion.analytics.DifficultyLevel
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.repository.ScoreRepository
 import kotlinx.coroutines.flow.*
@@ -18,6 +19,9 @@ data class LibraryUiState(
 /**
  * A single row in the library. [fileName] is the on-disk filename for imported
  * scores (empty for built-in demo scores, which have no backing file).
+ *
+ * [difficultyScore] / [difficultyLevel] 由 [DifficultyEstimator] 在仓库解析时
+ * 计算，使导入乐谱卡片与内置乐谱卡片展示一致的难度信息。
  */
 data class ScoreItem(
     val title: String,
@@ -26,7 +30,9 @@ data class ScoreItem(
     val fileName: String = "",
     val isImported: Boolean = fileName.isNotEmpty(),
     val parseFailed: Boolean = false,
-    val source: String = "MusicXML"
+    val source: String = "MusicXML",
+    val difficultyScore: Int = 0,
+    val difficultyLevel: DifficultyLevel = DifficultyLevel.BEGINNER
 )
 
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
@@ -48,7 +54,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 fileName = info.fileName,
                 isImported = true,
                 parseFailed = info.parseFailed,
-                source = info.source
+                source = info.source,
+                difficultyScore = info.difficultyScore,
+                difficultyLevel = info.difficultyLevel
             )
         }
         _uiState.update { it.copy(importedScores = items) }

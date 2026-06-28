@@ -316,6 +316,10 @@ private fun ImportedScoreCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    // 解析成功的导入乐谱使用与内置乐谱一致的难度视觉（星级 emoji + 等级徽章 + 总分）；
+    // 解析失败的乐谱回退到普通文件图标，保持原有错误提示。
+    val difficultyVisual = if (!item.parseFailed) difficultyLevelVisual(item.difficultyLevel) else null
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -332,7 +336,7 @@ private fun ImportedScoreCard(
                 modifier = Modifier.size(52.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("📄", fontSize = 24.sp)
+                Text(difficultyVisual?.first ?: "📄", fontSize = 24.sp)
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -350,8 +354,22 @@ private fun ImportedScoreCard(
                     Text("⚠️ 解析失败，请检查文件格式", fontSize = 11.sp,
                          color = MaterialTheme.colorScheme.error)
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically) {
+                        if (difficultyVisual != null) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = difficultyVisual.third.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    difficultyVisual.second,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = difficultyVisual.third,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                         Surface(
                             shape = RoundedCornerShape(4.dp),
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -364,7 +382,12 @@ private fun ImportedScoreCard(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
-                        Text("${item.noteCount} 个音符 · 长按可删除", fontSize = 11.sp,
+                        val metaText = if (difficultyVisual != null) {
+                            "难度 ${item.difficultyScore} · ${item.noteCount} 个音符"
+                        } else {
+                            "${item.noteCount} 个音符 · 长按可删除"
+                        }
+                        Text(metaText, fontSize = 11.sp,
                              color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
                 }
