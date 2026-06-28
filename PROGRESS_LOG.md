@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.57.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化))
+- 当前版本: **v2.58.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器))
 - 当前分支: main
-- 最新 tag: v2.57.0
+- 最新 tag: v2.58.0
 
 ## 健康状态 (2026-06-28 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1229 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1281 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0
-- Kotlin 文件: 102 个 / 代码行数: 15500+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0
+- Kotlin 文件: 104 个 / 代码行数: 16700+ 行
 
 ## 开发历史
 
@@ -1687,10 +1687,66 @@
     写入），后续可添加目标设置对话框；目标 streak 与成就 streak 是独立系统
     （成就 streak 统计"连续练习天数"，目标 streak 统计"连续达成特定目标"）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0、渐速进度追踪器(TempoProgressTracker) v2.55.0、成就徽章系统(AchievementEngine) v2.56.0、练习目标追踪系统(GoalTracker) v2.57.0) 已完成！** 代码已合并到 main。
+### 2026-06-28 (自主开发)
+- **后续增强 (v2.58.0): 目标编辑器 GoalEditor (可视化目标编辑对话框) — ✅ 完成**
+  - 补全 v2.57.0 GoalTracker 的已知限制「目标编辑 UI 暂未实现」。用户此前只能使用
+    默认适中预设或手动写 SharedPreferences 来设置目标，现在可在统计页直接
+    可视化地添加/删除/修改每日和每周的练习目标。
+  - 新增纯 Kotlin `analytics/GoalEditor`（无 Android 依赖，完全可单元测试）：
+    - **校验** `GoalValidation`（sealed interface）+ `validateTarget`：根据指标类型
+      校验目标值范围——准确率必须在 0.0~1.0（含边界），其他指标必须严格 >0；
+      NaN/Infinity 一律拒绝；返回 Valid 或 Invalid（含中文原因）
+    - **序列化/反序列化** `serializeGoals` / `deserializeGoals`：在
+      `List<GoalDefinition>` 与 SharedPreferences 字符串格式
+      `"PERIOD_METRIC:target,..."` 之间转换。将原先内联在 StatsViewModel.loadGoals
+      中的脆弱字符串解析逻辑提取为可单元测试的独立函数；逐条解析，单条错误静默跳过
+      不影响其他条目；往返（round-trip）一致性保证
+    - **增删改**（不可变操作，返回新列表）：`addOrUpdateGoal`（按 key 去重，存在
+      则替换 target，不存在则追加）、`removeGoal`（按 key 过滤移除）、
+      `toggleGoal`（enable 则添加，disable 则移除）、`isGoalEnabled`
+    - **预设** `applyPreset`：委托 GoalTracker.presets()，未知预设名回退默认目标
+    - **建议值** `suggestedTargets`：每个指标类型提供精心选取的递增合理目标值列表
+      （如练习时长 10/15/20/30/45/60/90 分钟，准确率 70/75/80/85/90/95/100%），
+      供编辑 UI 步进器使用；`allAvailableGoals` 返回全部 2周期×5指标=10 个组合
+    - **格式化/解析** `formatTargetForInput` / `parseInputToTarget`：准确率百分比
+      双向转换（0.85 ↔ "85"），非准确率指标直接整数值
+  - **StatsViewModel 重构**：
+    - `uiState` 改用 `refreshTrigger.map { computeState() }` 驱动（替代原一次性
+      `flow{}`），支持目标编辑后刷新 UI（编辑→保存→refreshTrigger 递增→重新评估）
+    - 新增编辑 API：`addOrUpdateGoal` / `removeGoal` / `toggleGoal` /
+      `applyPreset` / `setGoals` / `getCurrentGoals`，均先操作再 `saveGoals` 持久化
+      再 `refresh()`
+    - `loadGoals` / `saveGoals` 委托 `GoalEditor.deserializeGoals` / `serializeGoals`，
+      消除内联字符串解析逻辑
+  - **StatsScreen UI**：
+    - 练习目标 section header 新增「编辑」TextButton（✏️ 图标）
+    - `GoalEditorDialog`：AlertDialog + Card 布局，含：
+      - 预设快捷应用 FilterChips（轻松/适中/挑战，点击立即应用）
+      - 可滚动目标列表（按周期分组），每个目标一行：Switch 开关 + 指标图标 +
+        名称 + 目标值步进器（-/+ 按钮按建议值步进，自动钳制合理范围）
+      - 保存按钮（显示当前目标数，空列表时禁用）+ 取消按钮
+    - `GoalEditRow`：单目标编辑行，Switch 禁用时灰显，启用时显示步进器
+  - 修正 build.gradle.kts 版本号 → v2.58.0 / versionCode 73
+  - 新增 52 个单元测试 `GoalEditorTest`：
+    - 校验（准确率 0~1 / 非准确率 >0 / NaN / Infinity / 消息 / isValidGoal 组合）
+    - 序列化（单条/多条/空列表格式 / 反序列化 null/blank/多条/往返一致性 /
+      跳过损坏条目/无效 target/未知 period/未知 metric/空格容忍）
+    - 增删改（添加新/替换已有/空列表/保留其他/remove匹配/不存在/空列表/
+      toggle enable/disable/enabling更新目标/isGoalEnabled true/false）
+    - 预设（轻松2个/适中4个/挑战5个/未知回退默认/与GoalTracker一致）
+    - 建议值（每指标非空递增/准确率0~1/非准确率正/全覆盖10个组合/全部合法）
+    - 格式化解析（准确率转百分比/非准确率整数/解析准确率分数/非准确率原值/
+      无效输入null/空格容忍/格式化解析往返一致性）
+    - 端到端集成（默认目标→添加→更新→移除→序列化往返 / 预设→自定义→添加 / 空列表往返）
+  - 单元测试 1229 → **1281** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：目标编辑使用步进器按预设建议值递增（无法直接输入任意数字），
+    可满足绝大多数练习场景；AlertDialog 的 content lambda 重载在最新 Material3 中
+    标记为 deprecated（建议 BasicAlertDialog），功能正常，后续可迁移
 
-## 单元测试明细 (1229 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0、渐速进度追踪器(TempoProgressTracker) v2.55.0、成就徽章系统(AchievementEngine) v2.56.0、练习目标追踪系统(GoalTracker) v2.57.0、目标编辑器(GoalEditor) v2.58.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (1281 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1741,6 +1797,7 @@
 - TempoProgressTrackerTest: 43
 - AchievementSystemTest: 55
 - GoalTrackerTest: 57
+- GoalEditorTest: 52
 
 ## 阻塞
 （无）
