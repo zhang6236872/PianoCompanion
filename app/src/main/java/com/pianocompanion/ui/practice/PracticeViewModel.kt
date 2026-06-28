@@ -12,6 +12,8 @@ import com.pianocompanion.data.model.*
 import com.pianocompanion.data.repository.StatsRepository
 import com.pianocompanion.following.ScoreFollower
 import com.pianocompanion.following.TempoRampUp
+import com.pianocompanion.analytics.TempoProgressRecord
+import com.pianocompanion.analytics.TempoProgressTracker
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -64,7 +66,9 @@ class PracticeViewModel(
         val tempoRampCurrentStep: Int = 0,
         val tempoRampTotalSteps: Int = 0,
         val tempoRampCompleted: Boolean = false,
-        val tempoRampLoopsAtCurrentStep: Int = 0
+        val tempoRampLoopsAtCurrentStep: Int = 0,
+        // === Tempo progress tracking (渐速进度追踪) ===
+        val tempoProgressSummary: String? = null
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -88,9 +92,37 @@ class PracticeViewModel(
     // === Tempo ramp-up practice (渐速练习) ===
     private var tempoRampUp: TempoRampUp = TempoRampUp()
 
+    // === Tempo progress tracker (渐速进度追踪) ===
+    private val tempoProgressTracker = TempoProgressTracker()
+    private val tempoPrefs = application.getSharedPreferences("tempo_progress", android.content.Context.MODE_PRIVATE)
+    private val gson = com.google.gson.Gson()
+
     init {
         metronome.onBeat = { beat ->
             _uiState.update { it.copy(metronomeBeat = beat) }
+        }
+        loadTempoProgress()
+    }
+
+    /** 从持久化存储加载渐速进度记录。 */
+    private fun loadTempoProgress() {
+        try {
+            val json = tempoPrefs.getString("records", null) ?: return
+            val type = object : com.google.gson.reflect.TypeToken<List<TempoProgressRecord>>() {}.type
+            val loaded: List<TempoProgressRecord> = gson.fromJson(json, type) ?: emptyList()
+            tempoProgressTracker.loadRecords(loaded)
+        } catch (_: Exception) {
+            // 反序列化失败时忽略，不阻塞 UI
+        }
+    }
+
+    /** 持久化渐速进度记录到 SharedPreferences。 */
+    private fun saveTempoProgress() {
+        try {
+            val json = gson.toJson(tempoProgressTracker.records)
+            tempoPrefs.edit().putString("records", json).apply()
+        } catch (_: Exception) {
+            // 序列化失败时忽略
         }
     }
 
@@ -265,6 +297,34 @@ class PracticeViewModel(
             )
             statsRepository.saveSession(record)
             _uiState.update { it.copy(sessionSaved = true) }
+        }
+
+        // 渐速进度追踪：若使用了渐速练习，记录本次会话结果
+        if (_uiState.value.tempoRampEnabled) {
+            val score = _uiState.value.score
+            if (score != null) {
+                val record = TempoProgressRecord(
+                    scoreTitle = score.title,
+                    startMeasure = _uiState.value.loopStartMeasure,
+                    endMeasure = _uiState.value.loopEndMeasure,
+                    startBpm = tempoRampUp.startBpm,
+                    peakBpm = tempoRampUp.currentBpm,
+                    targetBpm = tempoRampUp.targetBpm,
+                    completed = tempoRampUp.isComplete(),
+                    durationMs = duration,
+                    timestamp = System.currentTimeMillis()
+                )
+                tempoProgressTracker.record(record)
+                saveTempoProgress()
+
+                // 更新 UI 中的进度摘要
+                val summary = tempoProgressTracker.buildReadableSummary(
+                    score.title,
+                    _uiState.value.loopStartMeasure,
+                    _uiState.value.loopEndMeasure
+                )
+                _uiState.update { it.copy(tempoProgressSummary = summary) }
+            }
         }
 
         _uiState.update { it.copy(isPracticing = false) }
@@ -451,6 +511,20 @@ class PracticeViewModel(
                 tempoRampLoopsAtCurrentStep = 0
             )
         }
+    }
+
+    /**
+     * 刷新当前段落（scoreTitle + loop range）的渐速进度摘要。
+     * 用于在 UI 中展示历史进步数据。
+     */
+    fun refreshTempoProgressSummary() {
+        val score = _uiState.value.score ?: return
+        val summary = tempoProgressTracker.buildReadableSummary(
+            score.title,
+            _uiState.value.loopStartMeasure,
+            _uiState.value.loopEndMeasure
+        )
+        _uiState.update { it.copy(tempoProgressSummary = summary) }
     }
 
     private fun calcAccuracy(correct: Int, wrong: Int): Float {

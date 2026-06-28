@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.54.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧))
+- 当前版本: **v2.55.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析))
 - 当前分支: main
-- 最新 tag: v2.54.0
+- 最新 tag: v2.55.0
 
 ## 健康状态 (2026-06-28 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1074 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1117 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0
-- Kotlin 文件: 89 个 / 代码行数: 13000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0
+- Kotlin 文件: 91 个 / 代码行数: 14000+ 行
 
 ## 开发历史
 
@@ -1535,10 +1535,56 @@
 - 已知限制：渐速练习需要节拍器开启才能听到速度变化；准确率门控依赖 score-follower
   在循环周期内的实时准确率统计；loopsPerStep 计数在跨会话时不持久化（每次 start() 重置）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0) 已完成！** 代码已合并到 main。
+### v2.55.0 — 渐速进度追踪器 TempoProgressTracker (跨会话速度进步趋势) (2026-06-28)
+- **目标**：补全渐速练习链路的最后一环——跨会话速度进步追踪。v2.54.0 实现了单次会话内的
+  慢练加速，但用户无法看到自己随着时间推移的进步趋势（例如"上周只能到 90 BPM，本周能到 110 BPM"）。
+  本次新增 TempoProgressTracker，记录每次渐速练习会话结果，分析进步/稳定/停滞趋势，
+  估算达到目标速度还需多少次练习，并生成中文可读摘要。至此完成完整的数据驱动练习闭环：
+  **WeakSpotAnalyzer → SectionLooper → TempoRampUp → TempoProgressTracker**
+  （发现弱项 → 定点循环 → 渐进提速 → 跟踪进步）。
+- 新增纯 Kotlin `analytics/TempoProgressTracker`（无 Android 依赖，完全可单元测试）：
+  - **数据模型** `TempoProgressRecord`：scoreTitle/startMeasure/endMeasure/startBpm/peakBpm/
+    targetBpm/completed/durationMs/timestamp；自动计算 bpmGain、completionRatio（0~1）、
+    sectionKey（段落标识符，乐谱标题+小节范围）
+  - **趋势分析** `TempoProgressTrend`：IMPROVING（正在进步）/STABLE（保持稳定）/
+    STAGNANT（停滞不前）/INSUFFICIENT_DATA（数据不足）
+  - **趋势算法** `computeTrend`：将历史记录分为早期/近期两半（近期比例可配置，默认 40%），
+    比较平均峰值速度差值，差值 ≥ threshold（默认 5 BPM）判定进步，≤ −threshold 判定停滞
+  - **段落汇总** `TempoProgressSummary`：recordCount/firstRecord/latestRecord/bestPeakBpm/
+    trend/avgPeakBpm/bpmImprovement/hasReachedTarget/displayMeasures
+  - **目标估算** `estimateSessionsToTarget`：基于近期记录的平均每次峰值增量估算还需多少次
+    练习才能达到目标速度（已完成返回 0，无进步数据返回 null）
+  - **多段落查询** `getAllSectionSummaries`：获取所有练习过的段落汇总，按最近练习时间降序
+  - **中文摘要** `buildReadableSummary`：根据趋势生成可读文字（进步幅度/稳定速度/停滞建议/
+    达成庆祝/剩余差距/预计次数），直接用于 UI 展示
+  - **持久化支持** `loadRecords`/`record`/`clear`，调用方负责序列化
+- **PracticeViewModel 集成**：
+  - `stopPractice()` 中检测渐速练习是否启用，自动生成 TempoProgressRecord 并持久化
+  - SharedPreferences ("tempo_progress") + Gson 序列化记录列表
+  - `init` 时从 SharedPreferences 恢复历史记录
+  - `refreshTempoProgressSummary()` 方法供 UI 刷新当前段落的进度摘要
+  - UiState 新增 `tempoProgressSummary: String?` 字段
+- **PracticeScreen UI**：
+  - 新增 `TempoProgressSummaryCard`：进度历史卡片（📈 图标 + 中文摘要文字），
+    使用 secondaryContainer 半透明背景区分于练习控制区，仅段落循环开启时显示
+- 新增 43 个单元测试 `TempoProgressTrackerTest`：
+  - 数据模型（sectionKey/bpmGain/completionRatio 正常/完成/边界/负值/clamp）
+  - record/getSectionRecords（返回总数/段落筛选/跨乐谱隔离/时间排序）
+  - getBestPeakBpm（最高峰值/空 null）
+  - getTrend（数据不足/进步/稳定/停滞/自定义阈值）
+  - getSectionSummary（全字段填充/bpmImprovement/hasReachedTarget/avgPeakBpm）
+  - getAllSectionSummaries（按时间降序/空列表）
+  - estimateSessionsToTarget（已完成/单条/null/无进步/稳定进步/差距0）
+  - buildReadableSummary（无记录/进步信息/庆祝标记/剩余差距/稳定字样）
+  - loadRecords（替换+排序）、clear、边界（10条序列/奇数分区/多段落混合）
+- 单元测试 1074 → **1117** 全部通过；编译 + assembleDebug 通过
+- 已知限制：记录持久化使用 SharedPreferences（轻量级），大量练习记录时可能需要迁移到 Room；
+  趋势分析最少需要 3 次记录才能判定；目标速度估算依赖有正增量的历史数据
 
-## 单元测试明细 (1074 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0、渐速进度追踪器(TempoProgressTracker) v2.55.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (1117 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1586,6 +1632,7 @@
 - WeakSpotAnalyzerTest: 32
 - SectionLooperTest: 27
 - TempoRampUpTest: 28
+- TempoProgressTrackerTest: 43
 
 ## 阻塞
 （无）
