@@ -5,8 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -30,10 +33,15 @@ import com.pianocompanion.data.model.SessionRecord
 import com.pianocompanion.analytics.AchievementCategory
 import com.pianocompanion.analytics.AchievementProgress
 import com.pianocompanion.analytics.AchievementSummary
+import com.pianocompanion.analytics.GoalDefinition
+import com.pianocompanion.analytics.GoalEditor
+import com.pianocompanion.analytics.GoalMetric
 import com.pianocompanion.analytics.GoalPeriod
 import com.pianocompanion.analytics.GoalProgress
 import com.pianocompanion.analytics.GoalReport
 import com.pianocompanion.analytics.GoalStatus
+import com.pianocompanion.analytics.GoalTracker
+import com.pianocompanion.analytics.GoalValidation
 import com.pianocompanion.analytics.WeakSpotTrend
 import com.pianocompanion.data.model.MatchStatus
 import com.pianocompanion.ui.components.EmptyState
@@ -55,6 +63,7 @@ fun StatsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    var showGoalEditor by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -143,7 +152,21 @@ fun StatsScreen(
             val goalReport = uiState.goalReport
             if (goalReport != null) {
                 item {
-                    SectionHeader(title = "练习目标", icon = Icons.Filled.Flag)
+                    SectionHeader(
+                        title = "练习目标",
+                        icon = Icons.Filled.Flag,
+                        action = {
+                            TextButton(onClick = { showGoalEditor = true }) {
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = "编辑目标",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("编辑", fontSize = 12.sp)
+                            }
+                        }
+                    )
                 }
                 item {
                     GoalOverviewCard(goalReport)
@@ -198,6 +221,17 @@ fun StatsScreen(
                 SessionHistoryItem(session)
             }
         }
+    }
+
+    if (showGoalEditor) {
+        GoalEditorDialog(
+            currentGoals = viewModel.getCurrentGoals(),
+            onDismiss = { showGoalEditor = false },
+            onSave = { goals ->
+                viewModel.setGoals(goals)
+                showGoalEditor = false
+            }
+        )
     }
 }
 
@@ -689,4 +723,288 @@ private fun GoalCard(progress: GoalProgress) {
             }
         }
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  目标编辑对话框 (Goal Editor Dialog)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * 练习目标编辑对话框。
+ *
+ * 功能：
+ * - 预设快捷应用（轻松/适中/挑战）
+ * - 逐个目标启用/禁用开关
+ * - 已启用目标的目标值步进调整（含建议值快捷按钮）
+ * - 保存/取消
+ *
+ * @param currentGoals 当前已启用的目标列表（用于初始化编辑状态）
+ * @param onDismiss 取消回调
+ * @param onSave 保存回调，传入编辑后的完整目标列表
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GoalEditorDialog(
+    currentGoals: List<GoalDefinition>,
+    onDismiss: () -> Unit,
+    onSave: (List<GoalDefinition>) -> Unit
+) {
+    // 编辑状态：key → 目标定义（启用集）
+    val goalMap = remember {
+        mutableStateMapOf<String, GoalDefinition>().apply {
+            currentGoals.forEach { put(it.key, it) }
+        }
+    }
+    // 当前选中的预设（用于高亮）
+    var selectedPreset by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                // 标题
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "🎯 编辑练习目标",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Filled.Close, contentDescription = "关闭", modifier = Modifier.size(20.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 预设快捷应用
+                Text(
+                    "📋 快速预设",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    GoalTracker.presets().keys.forEach { presetName ->
+                        FilterChip(
+                            selected = selectedPreset == presetName,
+                            onClick = {
+                                selectedPreset = presetName
+                                goalMap.clear()
+                                GoalEditor.applyPreset(presetName).forEach { goalMap[it.key] = it }
+                            },
+                            label = { Text(presetName, fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 目标列表（可滚动）
+                Text(
+                    "⚙️ 目标设置",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 340.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    for (period in GoalPeriod.values()) {
+                        Text(
+                            period.label + "目标",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        )
+                        for (metric in GoalMetric.values()) {
+                            val key = "${period.name}_${metric.name}"
+                            val goal = goalMap[key]
+                            val enabled = goal != null
+                            GoalEditRow(
+                                metric = metric,
+                                period = period,
+                                enabled = enabled,
+                                target = goal?.target ?: GoalEditor.suggestedTargets(metric).let { it[it.size / 3] },
+                                onToggle = { isChecked ->
+                                    if (isChecked) {
+                                        val defaultTarget = GoalEditor.suggestedTargets(metric)
+                                            .let { it[it.size / 3] }
+                                        goalMap[key] = GoalDefinition(metric, period, defaultTarget)
+                                        selectedPreset = null
+                                    } else {
+                                        goalMap.remove(key)
+                                        selectedPreset = null
+                                    }
+                                },
+                                onTargetChange = { newTarget ->
+                                    goalMap[key] = GoalDefinition(metric, period, newTarget)
+                                    selectedPreset = null
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 操作按钮
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("取消")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            onSave(goalMap.values.toList().sortedBy { it.period.ordinal * 100 + it.metric.ordinal })
+                        },
+                        enabled = goalMap.isNotEmpty()
+                    ) {
+                        Text("保存 (${goalMap.size})")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 单个目标编辑行：开关 + 名称 + 目标值步进器（启用时显示）。
+ */
+@Composable
+private fun GoalEditRow(
+    metric: GoalMetric,
+    period: GoalPeriod,
+    enabled: Boolean,
+    target: Double,
+    onToggle: (Boolean) -> Unit,
+    onTargetChange: (Double) -> Unit
+) {
+    val suggestions = GoalEditor.suggestedTargets(metric)
+    val currentIdx = suggestions.indexOfFirst { kotlin.math.abs(it - target) < 0.01 }
+    val displayTarget = GoalEditor.formatTargetForInput(metric, target)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 开关
+        Switch(
+            checked = enabled,
+            onCheckedChange = onToggle,
+            modifier = Modifier.scale(0.85f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // 图标 + 名称
+        Text(metric.icon, fontSize = 18.sp)
+        Spacer(modifier = Modifier.width(6.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                metric.label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
+            if (!enabled) {
+                Text(
+                    "未启用",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
+            }
+        }
+
+        // 目标值步进器（仅启用时显示）
+        if (enabled) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = {
+                        // 步进到上一个建议值
+                        val prevIdx = (currentIdx - 1).coerceAtLeast(0)
+                        if (prevIdx != currentIdx || currentIdx < 0) {
+                            val stepTarget = if (currentIdx > 0) suggestions[prevIdx] else target - stepSize(metric)
+                            onTargetChange(clampTarget(metric, stepTarget))
+                        }
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Filled.Remove, contentDescription = "减少", modifier = Modifier.size(18.dp))
+                }
+                Text(
+                    displayTarget + metric.unit,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.widthIn(min = 56.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                IconButton(
+                    onClick = {
+                        // 步进到下一个建议值
+                        val nextIdx = (currentIdx + 1).coerceAtMost(suggestions.lastIndex)
+                        if (nextIdx != currentIdx || currentIdx < 0) {
+                            val stepTarget = if (currentIdx >= 0 && currentIdx < suggestions.lastIndex)
+                                suggestions[nextIdx]
+                            else target + stepSize(metric)
+                            onTargetChange(clampTarget(metric, stepTarget))
+                        }
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "增加", modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+}
+
+/** 各指标类型的步进增量（手动微调用）。 */
+private fun stepSize(metric: GoalMetric): Double = when (metric) {
+    GoalMetric.PRACTICE_TIME -> 5.0
+    GoalMetric.SESSION_COUNT -> 1.0
+    GoalMetric.NOTES_PLAYED -> 100.0
+    GoalMetric.ACCURACY -> 0.05
+    GoalMetric.UNIQUE_PIECES -> 1.0
+}
+
+/** 将目标值钳制到合理范围。 */
+private fun clampTarget(metric: GoalMetric, target: Double): Double = when (metric) {
+    GoalMetric.ACCURACY -> target.coerceIn(0.0, 1.0)
+    GoalMetric.PRACTICE_TIME -> target.coerceIn(1.0, 480.0)
+    GoalMetric.SESSION_COUNT -> target.coerceIn(1.0, 20.0)
+    GoalMetric.NOTES_PLAYED -> target.coerceIn(10.0, 100000.0)
+    GoalMetric.UNIQUE_PIECES -> target.coerceIn(1.0, 50.0)
 }
