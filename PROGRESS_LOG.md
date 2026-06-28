@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.61.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息))
+- 当前版本: **v2.62.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励))
 - 当前分支: main
-- 最新 tag: v2.61.0
+- 最新 tag: v2.62.0
 
-## 健康状态 (2026-06-28 核验)
+## 健康状态 (2026-06-29 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1386 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1440 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0
-- Kotlin 文件: 107 个 / 代码行数: 17800+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0
+- Kotlin 文件: 108 个 / 代码行数: 18000+ 行
 
 ## 开发历史
 
@@ -1889,10 +1889,56 @@
   - 单元测试 1371 → **1386** 全部通过；编译 + assembleDebug 通过
   - 无新增已知限制（v2.60.0 的导入乐谱限制已完全解决）
 
-## 当前状态
-**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0、渐速进度追踪器(TempoProgressTracker) v2.55.0、成就徽章系统(AchievementEngine) v2.56.0、练习目标追踪系统(GoalTracker) v2.57.0、目标编辑器(GoalEditor) v2.58.0、成就解锁持久化与通知(AchievementStore) v2.59.0、乐谱难度评估引擎(DifficultyEstimator) v2.60.0、导入乐谱难度评估接入(ImportedScoreInfo.from 工厂) v2.61.0) 已完成！** 代码已合并到 main。
+### 2026-06-29 (自主开发)
+- **后续增强 (v2.62.0): 练习日历热力图 (PracticeCalendarHeatmap) — ✅ 完成**
+  - 新增 GitHub 风格的贡献热力图，按日聚合练习活动量并以「周(列) × 7 天(行)」网格
+    可视化练习连续性与强度分布。配合现有的连续天数(streak)、成就、目标等游戏化系统，
+    提供一目了然的练习习惯激励——用户打开统计页即可看到自己过去 18 周(约 4 个月)
+    的练习「绿色方格墙」，直观感受到坚持练习的成就感。
+  - 新增纯 Kotlin `analytics/PracticeCalendarHeatmap`（无 Android 依赖，完全可单元测试）：
+    - **ISO 星期计算** `isoDayOfWeek(epochDay)`：基于 epoch day 数学推导（epoch day 0
+      = 1970-01-01 = Thursday，故 `isoDay = (epochDay + 3) mod 7`，0=Monday … 6=Sunday），
+      **无时区/Calendar 依赖**，测试只需传入固定值即可复现
+    - **强度分级** `computeLevel(durationMs)`：单日时长 → 5 级（0=无练习 / 1=1–5 分 /
+      2=5–15 分 / 3=15–30 分 / 4=≥30 分），阈值基于钢琴练习合理档位，任何 >0 的练习
+      至少 Level 1
+    - **按天聚合** `bucketByDay(sessions)`：epochDay → DayActivity（总时长 + 次数），
+      自动忽略零时长脏数据
+    - **最长连续天数** `longestStreak(activeDays)`：扫描有序 epochDay 集合求最长连续段，
+      处理乱序输入
+    - **网格构建** `build(sessions, nowEpochMs, weeks, weekStartIsoDay)`：
+      - 周起始日对齐（默认周一）、网格首日 = 当前周首 − (weeks−1)×7、最后一天 = 今天
+      - 范围过滤：范围外的会话和未来日期不参与计算
+      - 生成 `List<HeatmapColumn>`（每周一列），每列 7 个 `HeatmapCell`
+      - 汇总统计：activeDays / totalDurationMs / longestStreak / bestDay / maxDayDurationMs
+    - **派生属性**：`PracticeHeatmap.activeRate`（活跃率）、`summary()`（一句话摘要：
+      「过去 N 周练习了 X 天，累计 Y，最长连续 Z 天」）、`formatDuration()`（时长格式化）
+  - **StatsViewModel 集成**：`computeState()` 调用 `PracticeCalendarHeatmap.build()`
+    计算热力图，`StatsUiState` 新增 `heatmap: PracticeHeatmap?` 字段
+  - **StatsScreen UI**：
+    - `PracticeHeatmapCard`：卡片内含汇总行 + 横向滚动网格（18 周约 126 格，超屏宽可滑动）
+      + 底部强度图例（少→多 5 级色块）
+    - `HeatmapCellBox`：11dp 圆角方块，颜色由 `heatmapLevelColor(level)` 映射
+      （GitHub 风格绿色阶梯：#EbedF0 / #9BE9A8 / #40C463 / #30A14E / #216E39）
+    - 插入位置：总览卡片之后、练习目标之前（统计页第二个区块，高曝光位）
+  - 修正 build.gradle.kts 版本号 → v2.62.0 / versionCode 77
+  - 新增 54 个单元测试 `PracticeCalendarHeatmapTest`：
+    - isoDayOfWeek（epoch day 0=Thursday / 4=Monday / 整周循环 / 负数）
+    - computeLevel（零负 / 边界精确值 5/15/30 分 / 单调性）
+    - bucketByDay（空 / 同天聚合 / 不同天分离 / 零时长过滤）
+    - longestStreak（空 / 单天 / 连续段 / 多段取最长 / 乱序 / 间隔断开）
+    - build 网格结构（空网格全零 / 列数=weeks / 每列 7 格 / totalCells / 非法参数异常）
+    - build 范围对齐（最后一天=今天 / 首日偏移 / 范围外排除 / 未来排除 / 末列含未来零格）
+    - build 活动量（等级赋值 / 同天聚合 / 活跃天数 / 总时长累加）
+    - build streak 与 bestDay（连续天数 / 最长天 / maxDayDurationMs / 空时 null）
+    - 派生属性（activeRate / formatDuration 分钟/小时/零/向下取整 / summary 内容）
+    - 确定性（同输入一致）+ 周起始日偏移（周日起始左移）+ 单元定位 + 列排序
+  - 单元测试 1386 → **1440** 全部通过；编译 + assembleDebug 通过
 
-## 单元测试明细 (1386 个, 全部通过)
+## 当前状态
+**🎉 全部路线图 (Phase 1-4) 已完成 + 后续增强 (离线同步引擎 v2.2.0、真实 OMR 识谱引擎 v2.3.0、OMR 节奏分析 v2.4.0、OMR 连梁组切分 v2.5.0、OMR 谱号/调号/拍号识别 v2.6.0、OMR 中音/次中音谱号识别 v2.7.0、OMR 附点音符识别 v2.8.0、OMR 符尾精细层数识别 v2.9.0、OMR 休止符识别 v2.10.0、OMR 十六分/三十二分休止符识别 v2.11.0、OMR 倾斜校正 v2.12.0、OMR 自适应二值化 v2.13.0、OMR 二值图像降噪 v2.14.0、OMR 透视变形校正 v2.15.0、OMR 多系统页面时间轴排序修复 v2.16.0、OMR 小节线检测 v2.17.0、OMR 反复记号/虚线小节线检测 v2.18.0、OMR 反复跳房子(volta)检测 v2.19.0、OMR 高大旗形休止符与四分休止符区分 v2.20.0、OMR 断奏点(staccato)检测 v2.21.0、OMR 保持音(tenuto)/重音(accent)检测 v2.22.0、OMR 短断奏(staccatissimo)检测 v2.23.0、OMR 强音(marcato)检测 v2.24.0、OMR 延音线(tie)检测 v2.25.0、OMR 连音(slur)检测 v2.26.0、OMR 力度记号(dynamic marking)检测 v2.27.0、OMR 反复次数标注(×N)检测 v2.28.0、OMR 渐强/渐弱符号(hairpin)检测 v2.29.0、OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 v2.30.0、OMR 延音记号/停留号(fermata)检测 v2.31.0、OMR 装饰音(grace note)检测 v2.32.0、OMR 颤音(trill)检测 v2.33.0、OMR 三连音/连音组(tuplet)检测 v2.34.0、OMR 八度记号(8va/8vb/15ma/15mb)检测 v2.35.0、OMR 临时记号(升号/降号/还原号)检测 v2.36.0、OMR 指法数字(fingering)检测 v2.37.0、OMR 拥挤连梁组切分修复 v2.38.0、OMR 速度记号(tempo marking)检测 v2.39.0、OMR 踏板记号(pedal marking)检测 v2.40.0、OMR 琶音(arpeggio / rolled chord)检测 v2.41.0、OMR 震音(tremolo)检测 v2.42.0、OMR 滑音(glissando)检测 v2.43.0、OMR 识别置信度评估(confidence scoring) v2.44.0、OMR 导航符号(Segno/Coda)检测 v2.45.0、OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 v2.46.0、OMR 女高音/女中音谱号(C clef 变体)识别 v2.47.0、OMR 装饰音符号(波音mordent/回音turn)检测 v2.48.0、MusicXML 导出器(Score→MusicXML 序列化) v2.49.0、MIDI 导出器(Score→标准MIDI文件) v2.50.0、OMR 渐变速度文字检测 v2.51.0、薄弱环节分析引擎(WeakSpotAnalyzer) v2.52.0、段落循环练习(SectionLooper) v2.53.0、渐速练习控制器(TempoRampUp) v2.54.0、渐速进度追踪器(TempoProgressTracker) v2.55.0、成就徽章系统(AchievementEngine) v2.56.0、练习目标追踪系统(GoalTracker) v2.57.0、目标编辑器(GoalEditor) v2.58.0、成就解锁持久化与通知(AchievementStore) v2.59.0、乐谱难度评估引擎(DifficultyEstimator) v2.60.0、导入乐谱难度评估接入(ImportedScoreInfo.from 工厂) v2.61.0、练习日历热力图(PracticeCalendarHeatmap) v2.62.0) 已完成！** 代码已合并到 main。
+
+## 单元测试明细 (1440 个, 全部通过)
 - PitchDetectorTest: 5
 - MidiParserTest: 7
 - MusicXmlParserTest: 4
@@ -1947,6 +1993,7 @@
 - AchievementStoreTest: 49
 - DifficultyEstimatorTest: 41
 - ImportedScoreInfoTest: 15
+- PracticeCalendarHeatmapTest: 54
 
 ## 阻塞
 （无）
