@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.pianocompanion.analytics.DifficultyEstimator
+import com.pianocompanion.analytics.DifficultyLevel
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.ui.components.EmptyState
@@ -245,11 +247,8 @@ private fun EnhancedScoreCard(
     score: Score,
     onClick: () -> Unit
 ) {
-    val difficulty = when {
-        score.notes.size <= 10 -> Triple("⭐", "入门", Color(0xFF4CAF50))
-        score.notes.size <= 15 -> Triple("⭐⭐", "初级", Color(0xFFFFA726))
-        else -> Triple("⭐⭐⭐", "中级", Color(0xFFEF5350))
-    }
+    val difficultyResult = remember(score) { DifficultyEstimator.estimate(score) }
+    val difficulty = difficultyLevelVisual(difficultyResult.level)
 
     Card(
         modifier = Modifier
@@ -289,13 +288,25 @@ private fun EnhancedScoreCard(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    Text("${score.notes.size} 个音符", fontSize = 11.sp,
+                    Text("难度 ${difficultyResult.totalScore} · ${score.notes.size} 个音符", fontSize = 11.sp,
                          color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
             }
             Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
         }
     }
+}
+
+/**
+ * 将 [DifficultyLevel] 映射为视觉三元组 (星级 emoji, 等级名称, 主题色)。
+ * 由 [DifficultyEstimator] 的真实分析驱动，替代原先仅凭音符数量的粗略判定。
+ */
+private fun difficultyLevelVisual(level: DifficultyLevel): Triple<String, String, Color> = when (level) {
+    DifficultyLevel.BEGINNER -> Triple(level.stars, level.label, Color(0xFF4CAF50))
+    DifficultyLevel.EASY -> Triple(level.stars, level.label, Color(0xFF8BC34A))
+    DifficultyLevel.INTERMEDIATE -> Triple(level.stars, level.label, Color(0xFFFFA726))
+    DifficultyLevel.ADVANCED -> Triple(level.stars, level.label, Color(0xFFEF5350))
+    DifficultyLevel.EXPERT -> Triple(level.stars, level.label, Color(0xFFAB47BC))
 }
 
 @OptIn(ExperimentalFoundationApi::class)
