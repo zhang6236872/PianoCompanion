@@ -2,6 +2,7 @@ package com.pianocompanion.ui.stats
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,6 +43,8 @@ import com.pianocompanion.analytics.GoalReport
 import com.pianocompanion.analytics.GoalStatus
 import com.pianocompanion.analytics.GoalTracker
 import com.pianocompanion.analytics.GoalValidation
+import com.pianocompanion.analytics.HeatmapCell
+import com.pianocompanion.analytics.PracticeHeatmap
 import com.pianocompanion.analytics.WeakSpotTrend
 import com.pianocompanion.data.model.MatchStatus
 import com.pianocompanion.ui.components.EmptyState
@@ -145,6 +148,17 @@ fun StatsScreen(
                         gradientColors = listOf(Color(0xFFFF6B35), Color(0xFFFFA726)),
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            // === Practice calendar heatmap ===
+            val heatmap = uiState.heatmap
+            if (heatmap != null) {
+                item {
+                    SectionHeader(title = "练习日历", icon = Icons.Filled.CalendarMonth)
+                }
+                item {
+                    PracticeHeatmapCard(heatmap)
                 }
             }
 
@@ -607,6 +621,102 @@ private fun trendEmoji(trend: WeakSpotTrend): String = when (trend) {
     WeakSpotTrend.STABLE -> "➖"
     WeakSpotTrend.WORSENING -> "📉"
     WeakSpotTrend.INSUFFICIENT_DATA -> "❓"
+}
+
+/**
+ * 练习日历热力图卡片：GitHub 风格的贡献网格。
+ *
+ * 按周(列) × 7 天(行) 展示练习强度，颜色深浅表示当天总练习时长。
+ * 顶部展示汇总（活跃天数 / 累计时长 / 最长连续），底部为强度图例。
+ */
+@Composable
+private fun PracticeHeatmapCard(heatmap: PracticeHeatmap) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // 汇总行
+            Text(
+                heatmap.summary(),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 热力图网格（横向滚动）
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                for (column in heatmap.columns) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        for (cell in column.cells) {
+                            HeatmapCellBox(cell)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 图例
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "少",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                for (level in 0..4) {
+                    Box(
+                        modifier = Modifier
+                            .size(11.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(heatmapLevelColor(level))
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                }
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    "多",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
+    }
+}
+
+/** 热力图单个格子（一天）。 */
+@Composable
+private fun HeatmapCellBox(cell: HeatmapCell) {
+    val color = heatmapLevelColor(cell.level)
+    Box(
+        modifier = Modifier
+            .size(11.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(color)
+    )
+}
+
+/** 强度等级 0–4 → 颜色（GitHub 风格绿色阶梯）。 */
+private fun heatmapLevelColor(level: Int): Color = when (level) {
+    0 -> Color(0xFFEbedF0)
+    1 -> Color(0xFF9BE9A8)
+    2 -> Color(0xFF40C463)
+    3 -> Color(0xFF30A14E)
+    else -> Color(0xFF216E39)
 }
 
 /**

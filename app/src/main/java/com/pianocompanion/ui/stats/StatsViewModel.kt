@@ -20,6 +20,8 @@ import com.pianocompanion.analytics.GoalTracker
 import com.pianocompanion.analytics.GoalReport
 import com.pianocompanion.analytics.GoalPeriod
 import com.pianocompanion.analytics.GoalMetric
+import com.pianocompanion.analytics.PracticeCalendarHeatmap
+import com.pianocompanion.analytics.PracticeHeatmap
 import com.pianocompanion.data.model.SessionRecord
 import com.pianocompanion.data.repository.StatsRepository
 import kotlinx.coroutines.flow.*
@@ -54,7 +56,9 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         /** 本次新解锁的成就列表（供 UI 弹出庆祝通知）。每次 computeState 后计算。 */
         val newlyUnlockedAchievements: List<AchievementProgress> = emptyList(),
         /** 练习目标追踪报告（每日/每周目标完成进度）。 */
-        val goalReport: GoalReport? = null
+        val goalReport: GoalReport? = null,
+        /** 练习日历热力图（GitHub 风格贡献网格）。 */
+        val heatmap: PracticeHeatmap? = null
     )
 
     private val repository = StatsRepository(application)
@@ -112,6 +116,12 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         val goals = loadGoals()
         val goalReport = if (goals.isNotEmpty()) GoalTracker.evaluate(sessions, goals) else null
 
+        // 练习日历热力图
+        val heatmap = PracticeCalendarHeatmap.build(
+            sessions = sessions,
+            nowEpochMs = System.currentTimeMillis()
+        )
+
         return StatsUiState(
             sessions = sessions,
             totalSessions = sessions.size,
@@ -121,7 +131,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             weakSpotSections = weakSections,
             achievementSummary = achievementSummary,
             newlyUnlockedAchievements = newlyUnlocked,
-            goalReport = goalReport
+            goalReport = goalReport,
+            heatmap = heatmap
         )
     }
 
