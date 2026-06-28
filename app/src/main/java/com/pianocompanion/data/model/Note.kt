@@ -123,7 +123,7 @@ data class Score(
     val source: ScoreSource = ScoreSource.MUSIC_XML
 )
 
-enum class ScoreSource { MUSIC_XML, MIDI, OMR }
+enum class ScoreSource { MUSIC_XML, MIDI, OMR, GENERATED }
 
 /**
  * Result of comparing a detected note against the expected score.
