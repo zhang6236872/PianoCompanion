@@ -20,6 +20,8 @@ import com.pianocompanion.analytics.GoalTracker
 import com.pianocompanion.analytics.GoalReport
 import com.pianocompanion.analytics.GoalPeriod
 import com.pianocompanion.analytics.GoalMetric
+import com.pianocompanion.analytics.NoteMasteryAnalyzer
+import com.pianocompanion.analytics.NoteMasteryReport
 import com.pianocompanion.analytics.PracticeCalendarHeatmap
 import com.pianocompanion.analytics.PracticeHeatmap
 import com.pianocompanion.data.model.SessionRecord
@@ -58,7 +60,9 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         /** 练习目标追踪报告（每日/每周目标完成进度）。 */
         val goalReport: GoalReport? = null,
         /** 练习日历热力图（GitHub 风格贡献网格）。 */
-        val heatmap: PracticeHeatmap? = null
+        val heatmap: PracticeHeatmap? = null,
+        /** 音符掌握度分析报告（跨乐谱的音高维度弱项分析）。 */
+        val noteMastery: NoteMasteryReport? = null
     )
 
     private val repository = StatsRepository(application)
@@ -122,6 +126,9 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             nowEpochMs = System.currentTimeMillis()
         )
 
+        // 音符掌握度分析（跨乐谱的音高维度弱项分析）
+        val noteMastery = NoteMasteryAnalyzer.analyze(sessions)
+
         return StatsUiState(
             sessions = sessions,
             totalSessions = sessions.size,
@@ -132,7 +139,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             achievementSummary = achievementSummary,
             newlyUnlockedAchievements = newlyUnlocked,
             goalReport = goalReport,
-            heatmap = heatmap
+            heatmap = heatmap,
+            noteMastery = noteMastery
         )
     }
 

@@ -44,6 +44,9 @@ import com.pianocompanion.analytics.GoalStatus
 import com.pianocompanion.analytics.GoalTracker
 import com.pianocompanion.analytics.GoalValidation
 import com.pianocompanion.analytics.HeatmapCell
+import com.pianocompanion.analytics.NoteMasteryReport
+import com.pianocompanion.analytics.NoteRegister
+import com.pianocompanion.analytics.PitchClassStat
 import com.pianocompanion.analytics.PracticeHeatmap
 import com.pianocompanion.analytics.WeakSpotTrend
 import com.pianocompanion.data.model.MatchStatus
@@ -223,6 +226,17 @@ fun StatsScreen(
                 }
                 items(uiState.weakSpotSections) { section ->
                     WeakSpotCard(section)
+                }
+            }
+
+            // === Note mastery analysis ===
+            val noteMastery = uiState.noteMastery
+            if (noteMastery != null && noteMastery.hasData) {
+                item {
+                    SectionHeader(title = "音符掌握度", icon = Icons.Filled.MusicNote)
+                }
+                item {
+                    NoteMasteryCard(noteMastery)
                 }
             }
 
@@ -787,6 +801,177 @@ private fun WeakSpotCard(section: StatsViewModel.WeakSpotSection) {
                 }
             }
         }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  音符掌握度 (Note Mastery) UI
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * 音符掌握度分析卡片：展示跨乐谱的音高维度弱项分析，
+ * 包括最薄弱音级、黑/白键对比、音域分布、最易出错音符和音高混淆。
+ */
+@Composable
+private fun NoteMasteryCard(report: NoteMasteryReport) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // 摘要
+            Text(
+                report.summary,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                lineHeight = 17.sp
+            )
+
+            // 最薄弱音级排行（带水平条形图）
+            val topPitches = report.pitchClassStats
+                .filter { it.errorCount > 0 }
+                .take(5)
+            if (topPitches.isNotEmpty()) {
+                Text("最易出错音级", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                val maxCount = topPitches.maxOf { it.errorCount }
+                topPitches.forEach { stat ->
+                    PitchClassBar(stat, maxCount)
+                }
+            }
+
+            // 黑键 vs 白键
+            val ratio = report.keyTypeStats.blackToWhiteRatio
+            if (report.keyTypeStats.blackKeyCount > 0 || report.keyTypeStats.whiteKeyCount > 0) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("白键错误", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Text(
+                            "${report.keyTypeStats.whiteKeyCount} 次 " +
+                                    "(${(report.keyTypeStats.whiteKeyRate * 100).toInt()}%)",
+                            fontSize = 13.sp, fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("黑键错误", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        val ratioText = if (ratio.isFinite() && ratio > 0) {
+                            " (${ratio.toInt()}.${((ratio % 1) * 10).toInt()}×)"
+                        } else ""
+                        Text(
+                            "${report.keyTypeStats.blackKeyCount} 次 " +
+                                    "(${(report.keyTypeStats.blackKeyRate * 100).toInt()}%)$ratioText",
+                            fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                            color = if (ratio.isFinite() && ratio > 1.5f)
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                            else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            // 音域分布
+            if (report.registerStats.totalAnalyzedErrors > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    RegisterPill(NoteRegister.LOW, report.registerStats.rateFor(NoteRegister.LOW), report.registerStats.lowCount)
+                    RegisterPill(NoteRegister.MID, report.registerStats.rateFor(NoteRegister.MID), report.registerStats.midCount)
+                    RegisterPill(NoteRegister.HIGH, report.registerStats.rateFor(NoteRegister.HIGH), report.registerStats.highCount)
+                }
+            }
+
+            // 最易混淆的音对
+            val topConfusion = report.topConfusions.firstOrNull()
+            if (topConfusion != null) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🔀", fontSize = 14.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "最易混淆：${topConfusion.expectedNote} → ${topConfusion.detectedNote}" +
+                                "（${topConfusion.count} 次）",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 单个音级的水平条形图行。
+ */
+@Composable
+private fun PitchClassBar(stat: PitchClassStat, maxCount: Int) {
+    val fraction = if (maxCount > 0) stat.errorCount.toFloat() / maxCount else 0f
+    val barColor = if (stat.isAccidental)
+        Color(0xFFE53935) // 升降号 → 红色
+    else
+        Color(0xFF1E88E5) // 白键音级 → 蓝色
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 音级名
+        Text(
+            stat.name,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(28.dp)
+        )
+        // 条形图
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(14.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(barColor)
+            )
+        }
+        // 次数
+        Text(
+            "${stat.errorCount}",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            modifier = Modifier.width(28.dp)
+        )
+    }
+}
+
+/**
+ * 音域错误分布胶囊。
+ */
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.RegisterPill(
+    register: NoteRegister,
+    rate: Float,
+    count: Int
+) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(register.label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        Text("${count}次", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text("${(rate * 100).toInt()}%", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
     }
 }
 
