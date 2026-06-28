@@ -14,13 +14,21 @@ import com.pianocompanion.analytics.TempoProgressRecord
 import com.pianocompanion.analytics.WeakSpotAnalyzer
 import com.pianocompanion.analytics.WeakSpotReport
 import com.pianocompanion.analytics.GoalDefinition
+import com.pianocompanion.analytics.GoalEditor
 import com.pianocompanion.analytics.GoalTracker
 import com.pianocompanion.analytics.GoalReport
+import com.pianocompanion.analytics.GoalPeriod
+import com.pianocompanion.analytics.GoalMetric
 import com.pianocompanion.data.model.SessionRecord
 import com.pianocompanion.data.repository.StatsRepository
 import kotlinx.coroutines.flow.*
 
 class StatsViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        private const val GOALS_PREFS = "practice_goals"
+        private const val GOALS_KEY = "goals"
+    }
 
     /**
      * 单首乐谱的弱项分析结果（供统计页展示）。
@@ -47,7 +55,22 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = StatsRepository(application)
     private val gson = Gson()
 
-    val uiState: StateFlow<StatsUiState> = flow {
+    /** 目标变更刷新触发器。每次目标编辑后递增，驱动 uiState 重新计算。 */
+    private val refreshTrigger = MutableStateFlow(0L)
+
+    val uiState: StateFlow<StatsUiState> = refreshTrigger
+        .map { computeState() }
+        .stateIn(
+            scope = kotlinx.coroutines.MainScope(),
+            started = SharingStarted.Eagerly,
+            initialValue = StatsUiState()
+        )
+
+    /**
+     * 根据 SharedPreferences 中的会话数据和当前目标，计算完整的 UI 状态。
+     * 在 [refreshTrigger] 变化时重新调用。
+     */
+    private suspend fun computeState(): StatsUiState {
         val sessions = repository.getAllSessions()
         val totalDuration = sessions.sumOf { it.durationMs }
         val avgAcc = if (sessions.isNotEmpty())
@@ -72,7 +95,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         val goals = loadGoals()
         val goalReport = if (goals.isNotEmpty()) GoalTracker.evaluate(sessions, goals) else null
 
-        emit(StatsUiState(
+        return StatsUiState(
             sessions = sessions,
             totalSessions = sessions.size,
             totalDurationMs = totalDuration,
@@ -81,12 +104,73 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             weakSpotSections = weakSections,
             achievementSummary = achievementSummary,
             goalReport = goalReport
-        ))
-    }.stateIn(
-        scope = kotlinx.coroutines.MainScope(),
-        started = SharingStarted.Eagerly,
-        initialValue = StatsUiState()
-    )
+        )
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  目标编辑 API（供 UI 调用）
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * 添加或更新一个练习目标。已存在相同 key 的目标会被替换。
+     */
+    fun addOrUpdateGoal(goal: GoalDefinition) {
+        val current = loadGoals().toMutableList()
+        val updated = GoalEditor.addOrUpdateGoal(current, goal)
+        saveGoals(updated)
+        refresh()
+    }
+
+    /**
+     * 按 key 移除一个练习目标。
+     */
+    fun removeGoal(key: String) {
+        val current = loadGoals().toMutableList()
+        val updated = GoalEditor.removeGoal(current, key)
+        saveGoals(updated)
+        refresh()
+    }
+
+    /**
+     * 切换目标的启用/禁用状态。
+     */
+    fun toggleGoal(goal: GoalDefinition, enabled: Boolean) {
+        val current = loadGoals().toMutableList()
+        val updated = GoalEditor.toggleGoal(current, goal, enabled)
+        saveGoals(updated)
+        refresh()
+    }
+
+    /**
+     * 应用预设目标包（完全替换当前目标）。
+     * @param presetName "轻松"/"适中"/"挑战"
+     */
+    fun applyPreset(presetName: String) {
+        saveGoals(GoalEditor.applyPreset(presetName))
+        refresh()
+    }
+
+    /**
+     * 获取当前目标列表（供编辑 UI 初始化）。
+     */
+    fun getCurrentGoals(): List<GoalDefinition> = loadGoals()
+
+    /**
+     * 批量保存目标列表并刷新 UI。
+     */
+    fun setGoals(goals: List<GoalDefinition>) {
+        saveGoals(goals)
+        refresh()
+    }
+
+    /** 触发 uiState 重新计算。 */
+    private fun refresh() {
+        refreshTrigger.value = System.nanoTime()
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  持久化
+    // ════════════════════════════════════════════════════════════════
 
     /**
      * 从 SharedPreferences（"tempo_progress"）加载渐速练习记录。
@@ -106,28 +190,33 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * 从 SharedPreferences（"practice_goals"）加载用户自定义的练习目标。
-     * 存储格式：JSON 数组，每个元素为 "PERIOD_METRIC:target"（如 "DAILY_PRACTICE_TIME:30.0"）。
+     * 使用 [GoalEditor.deserializeGoals] 解析存储格式。
      * 无自定义目标时返回默认目标（适中预设）。
      */
     private fun loadGoals(): List<GoalDefinition> {
         return try {
             val prefs = getApplication<Application>()
-                .getSharedPreferences("practice_goals", android.content.Context.MODE_PRIVATE)
-            val raw = prefs.getString("goals", null) ?: return GoalTracker.defaultGoals()
-            val parts = raw.split(",").filter { it.isNotBlank() }
-            parts.mapNotNull { entry ->
-                val colonIdx = entry.lastIndexOf(':')
-                if (colonIdx < 0) return@mapNotNull null
-                val key = entry.substring(0, colonIdx).trim()
-                val target = entry.substring(colonIdx + 1).trim().toDoubleOrNull() ?: return@mapNotNull null
-                val periodMetric = key.split("_", limit = 2)
-                if (periodMetric.size != 2) return@mapNotNull null
-                val period = runCatching { com.pianocompanion.analytics.GoalPeriod.valueOf(periodMetric[0]) }.getOrNull()
-                val metric = runCatching { com.pianocompanion.analytics.GoalMetric.valueOf(periodMetric[1]) }.getOrNull()
-                if (period != null && metric != null) GoalDefinition(metric, period, target) else null
-            }.ifEmpty { GoalTracker.defaultGoals() }
+                .getSharedPreferences(GOALS_PREFS, android.content.Context.MODE_PRIVATE)
+            val raw = prefs.getString(GOALS_KEY, null)
+            val goals = GoalEditor.deserializeGoals(raw)
+            // 无自定义目标时返回默认目标
+            if (goals.isNotEmpty()) goals else GoalTracker.defaultGoals()
         } catch (_: Exception) {
             GoalTracker.defaultGoals()
+        }
+    }
+
+    /**
+     * 保存目标列表到 SharedPreferences（"practice_goals"）。
+     * 使用 [GoalEditor.serializeGoals] 序列化。
+     */
+    private fun saveGoals(goals: List<GoalDefinition>) {
+        try {
+            val prefs = getApplication<Application>()
+                .getSharedPreferences(GOALS_PREFS, android.content.Context.MODE_PRIVATE)
+            prefs.edit().putString(GOALS_KEY, GoalEditor.serializeGoals(goals)).apply()
+        } catch (_: Exception) {
+            // 持久化失败时静默忽略（内存中的目标仍可用于当前会话）
         }
     }
 
