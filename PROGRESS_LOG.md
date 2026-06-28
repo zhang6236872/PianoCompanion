@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.62.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励))
+- 当前版本: **v2.63.0** (全部路线图 Phase 1-4 完成 + 后续增强: 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励)) + 音符掌握度分析引擎(NoteMasteryAnalyzer: 跨乐谱音高维度弱项分析——12音级错误分布+黑键vs白键归一化对比+音域分布+最易出错具体音符+音高混淆(expected→detected配对)，与WeakSpotAnalyzer小节维度互补))
 - 当前分支: main
-- 最新 tag: v2.62.0
+- 最新 tag: v2.63.0
 
 ## 健康状态 (2026-06-29 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1440 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1493 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0
-- Kotlin 文件: 108 个 / 代码行数: 18000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0
+- Kotlin 文件: 110 个 / 代码行数: 18500+ 行
 
 ## 开发历史
 
@@ -1888,6 +1888,60 @@
     - 确定性（同输入结果一致）
   - 单元测试 1371 → **1386** 全部通过；编译 + assembleDebug 通过
   - 无新增已知限制（v2.60.0 的导入乐谱限制已完全解决）
+
+### 2026-06-29 (自主开发)
+- **后续增强 (v2.63.0): 音符掌握度分析引擎 (NoteMasteryAnalyzer) — ✅ 完成**
+  - 新增跨乐谱的**音高维度**弱项分析，与 v2.52.0 的 WeakSpotAnalyzer（**小节维度**——
+    回答「哪里出错」）形成正交互补——本引擎回答「**什么音**出错」，两者结合给出立体诊断。
+    例如 WeakSpotAnalyzer 发现「第 12 小节总是错」，NoteMasteryAnalyzer 发现
+    「F# 是你最薄弱的音级，黑键错误率是白键的 3 倍」，用户即可针对性练习黑键音阶。
+  - 新增纯 Kotlin `analytics/NoteMasteryAnalyzer`（无 Android 依赖，完全可单元测试）：
+    - **分析对象选择**：对每个错误，根据错误类型选择分析对象——
+      EXTRA_NOTE（多弹）用 detectedNote（多弹的那个音）、其余（WRONG_PITCH/
+      MISSING_NOTE/RHYTHM_ERROR）用 expectedNote（应弹的音）。无法解析的占位符
+      （如 ScoreFollower 的 "—"/"(未弹)"）计入 totalRawErrors 但跳过分析
+    - **12 音级错误分布**：C/C#/D/D#/.../B 各自出错频率，按错误数降序排列。
+      每个音级携带 errorTypeCounts（错误类型细分）+ dominantErrorType + errorRate（占比）
+    - **黑键 vs 白键归一化对比**：`KeyTypeBreakdown.blackToWhiteRatio` 按**音级数量**
+      归一化（平均每个黑键音级错误数 ÷ 平均每个白键音级错误数），消除黑键 5 个音级
+      vs 白键 7 个音级的数量偏差。比值 >1.5 才作为显著洞察——直接回答「我是不是
+      更不擅长黑键/升降号」。白键零错误时返回 POSITIVE_INFINITY
+    - **音域分布**：低音区（<C4）/中音区（C4–C5）/高音区（>C5）错误占比，
+      反映换把位/高低音谱表的熟练度。`NoteRegister.forMidi` 基于 MIDI 60/72 划分
+    - **具体音符排行**：精确到八度（如 "F#4"）的最易出错音符，按错误数降序。
+      同错误数时按 MIDI 升序排列
+    - **音高混淆分析**：从 WRONG_PITCH 错误提取 expected→detected 配对，揭示最易
+      混淆的音对（例如 C↔D、F#↔G）。携带 semitoneDistance（半音距离）。排除
+      detected==expected（不构成混淆）和无法解析的占位符
+    - **摘要生成**：核心洞察优先级——黑键倍率（>1.5 才提及）→ 最薄弱音级 →
+      最易出错单音 → 最常见音高混淆
+  - **StatsViewModel 集成**：`computeState()` 调用 `NoteMasteryAnalyzer.analyze(sessions)`
+    计算报告（跨全部乐谱），`StatsUiState` 新增 `noteMastery: NoteMasteryReport?` 字段
+  - **StatsScreen UI（NoteMasteryCard）**：
+    - 摘要文本（洞察优先级排列）
+    - 最薄弱音级排行：水平条形图，黑键（升降号）音级用红色条、白键音级用蓝色条，
+      条宽与错误数成正比，直观展示「哪些音最容易错」
+    - 黑键 vs 白键对比：双列展示各自错误次数 + 占比 + 倍率（倍率 >1.5 时标红警示）
+    - 音域分布：低/中/高三列胶囊，各显示错误次数 + 占比
+    - 最易混淆音对：🔀 图标 + expected→detected + 次数
+    - 仅在有可解析错误数据时显示（`noteMastery.hasData`）
+  - 修正 build.gradle.kts 版本号 → v2.63.0 / versionCode 78
+  - 新增 53 个单元测试 `NoteMasteryAnalyzerTest`：
+    - 边界（空会话列表/无错误/占位符无法解析）
+    - 音级映射（单个错误正确映射/升号标记 accidental/多错误降序排列/占比计算/
+      dominantErrorType/错误类型细分）
+    - 分析对象选择（EXTRA_NOTE 用 detected/MISSING_NOTE 用 expected/RHYTHM_ERROR 用 expected）
+    - 黑白键（统计分类/占比计算/归一化倍率/>1时比值/白键零错误无穷/全零返回零/
+      isBlackKeyPitchClass 全 12 音级判定）
+    - 音域（forMidi 划分/错误分类/dominantRegister 高低中无错误/rateFor 占比）
+    - 具体音符排行（降序/同错误数按 MIDI 升序/maxWeakestNotes 限制/midi 字段正确）
+    - 音高混淆（配对提取/仅 WRONG_PITCH/排除 detected==expected/排除无法解析/
+      maxConfusions 限制/同次数按 semitoneDistance 升序）
+    - 多会话聚合（跨会话累加/相同音符合并）
+    - 摘要（练习次数+错误总数/黑键显著建议/非黑键提最薄弱音级/最频繁单音/最易混淆音对）
+    - 确定性（相同输入一致/会话顺序无关）+ 真实场景模拟（黑键主要弱点/高音区主要弱点/
+      C4 D4 混淆最常见）+ 混合错误类型全部正确分析 + 结构完整性
+  - 单元测试 1440 → **1493** 全部通过；编译 + assembleDebug 通过
 
 ### 2026-06-29 (自主开发)
 - **后续增强 (v2.62.0): 练习日历热力图 (PracticeCalendarHeatmap) — ✅ 完成**
