@@ -27,6 +27,9 @@ import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import com.pianocompanion.data.model.SessionRecord
+import com.pianocompanion.analytics.AchievementCategory
+import com.pianocompanion.analytics.AchievementProgress
+import com.pianocompanion.analytics.AchievementSummary
 import com.pianocompanion.analytics.WeakSpotTrend
 import com.pianocompanion.data.model.MatchStatus
 import com.pianocompanion.ui.components.EmptyState
@@ -142,6 +145,20 @@ fun StatsScreen(
                     sessions = uiState.sessions.takeLast(10),
                     modifier = Modifier.fillMaxWidth().height(140.dp)
                 )
+            }
+
+            // === Achievements ===
+            val achievements = uiState.achievementSummary
+            if (achievements != null) {
+                item {
+                    SectionHeader(title = "成就徽章", icon = Icons.Filled.EmojiEvents)
+                }
+                item {
+                    AchievementOverviewCard(achievements)
+                }
+                items(achievements.all) { progress ->
+                    AchievementCard(progress)
+                }
             }
 
             // === Weak spot analysis ===
@@ -275,6 +292,155 @@ private fun SessionHistoryItem(session: SessionRecord) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(formatRelativeTime(session.startTime), fontSize = 11.sp,
                      color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+            }
+        }
+    }
+}
+
+/**
+ * 成就总览卡片：展示已解锁/总数、完成进度条、分类统计。
+ */
+@Composable
+private fun AchievementOverviewCard(summary: AchievementSummary) {
+    val unlocked = summary.unlockedCount
+    val total = summary.totalCount
+    val ratio = summary.completionRatio
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "🏆 $unlocked / $total",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "${(ratio * 100).toInt()}%",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            // Progress bar
+            LinearProgressIndicator(
+                progress = { ratio },
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+
+            // Category quick stats
+            val byCategory = summary.byCategory()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                byCategory.forEach { (category, progresses) ->
+                    val catUnlocked = progresses.count { it.isUnlocked }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(category.icon, fontSize = 16.sp)
+                        Text(
+                            "$catUnlocked/${progresses.size}",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 单个成就卡片：展示图标、名称、描述、进度条（锁定时）或已解锁标记。
+ */
+@Composable
+private fun AchievementCard(progress: AchievementProgress) {
+    val def = progress.definition
+    val unlocked = progress.isUnlocked
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (unlocked) 2.dp else 0.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (unlocked)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Achievement icon
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (unlocked) Color(0xFFFFD700).copy(alpha = 0.2f)
+                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (unlocked) def.category.icon else "🔒",
+                    fontSize = 18.sp
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        def.title,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = if (unlocked) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    if (unlocked) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("✓", fontSize = 14.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                    }
+                }
+                Text(
+                    def.description,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                )
+                if (!unlocked && progress.progressRatio > 0f) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { progress.progressRatio },
+                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        "${progress.formatCurrentValue()} / ${def.formatTarget()}",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                }
             }
         }
     }
