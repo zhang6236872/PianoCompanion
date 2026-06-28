@@ -2,6 +2,8 @@ package com.pianocompanion.data.repository
 
 import android.content.Context
 import android.net.Uri
+import com.pianocompanion.analytics.DifficultyEstimator
+import com.pianocompanion.analytics.DifficultyLevel
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.data.parser.MidiExporter
 import com.pianocompanion.data.parser.MidiParser
@@ -12,6 +14,11 @@ import java.io.File
 /**
  * Lightweight metadata describing an imported score, used for listing
  * without forcing the caller to fully load every [Score].
+ *
+ * @param difficultyScore 由 [DifficultyEstimator] 计算的 0-100 加权难度总分；
+ *   解析失败的乐谱为 0。
+ * @param difficultyLevel 由 [difficultyScore] 映射的难度等级；
+ *   解析失败的乐谱为 [DifficultyLevel.BEGINNER]（仅占位，UI 不会展示）。
  */
 data class ImportedScoreInfo(
     val fileName: String,
@@ -19,8 +26,37 @@ data class ImportedScoreInfo(
     val composer: String,
     val noteCount: Int,
     val source: String = "MusicXML",
-    val parseFailed: Boolean = false
-)
+    val parseFailed: Boolean = false,
+    val difficultyScore: Int = 0,
+    val difficultyLevel: DifficultyLevel = DifficultyLevel.BEGINNER
+) {
+    companion object {
+        /**
+         * 从已成功解析的 [score] 构建 [ImportedScoreInfo]，并附带由
+         * [DifficultyEstimator] 计算的难度信息（总分 + 等级）。
+         *
+         * 纯函数（无 Android 依赖），可独立单元测试。[title] 为空时回退到
+         * [fileName] 去扩展名的形式。
+         *
+         * @param score 已解析的乐谱
+         * @param fileName 磁盘上的文件名（如 "欢乐颂.xml"）
+         * @param source 来源标签（"MusicXML" / "MIDI"）
+         */
+        fun from(score: Score, fileName: String, source: String): ImportedScoreInfo {
+            val difficulty = DifficultyEstimator.estimate(score)
+            return ImportedScoreInfo(
+                fileName = fileName,
+                title = score.title.ifBlank { fileName.substringBeforeLast('.') },
+                composer = score.composer,
+                noteCount = score.notes.size,
+                source = source,
+                parseFailed = false,
+                difficultyScore = difficulty.totalScore,
+                difficultyLevel = difficulty.level
+            )
+        }
+    }
+}
 
 /**
  * Manages score file storage and retrieval.
@@ -100,11 +136,9 @@ class ScoreRepository(private val context: Context) {
             ?.map { file ->
                 try {
                     val score = parseFile(file)
-                    ImportedScoreInfo(
+                    ImportedScoreInfo.from(
+                        score = score,
                         fileName = file.name,
-                        title = score.title.ifBlank { file.nameWithoutExtension },
-                        composer = score.composer,
-                        noteCount = score.notes.size,
                         source = if (isMidiFile(file.name)) "MIDI" else "MusicXML"
                     )
                 } catch (e: Exception) {
