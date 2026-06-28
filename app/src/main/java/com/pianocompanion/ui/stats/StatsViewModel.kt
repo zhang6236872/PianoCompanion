@@ -8,6 +8,7 @@ import com.pianocompanion.analytics.AchievementCategory
 import com.pianocompanion.analytics.AchievementProgress
 import com.pianocompanion.analytics.AchievementSummary
 import com.pianocompanion.analytics.AchievementEngine
+import com.pianocompanion.analytics.AchievementStore
 import com.pianocompanion.analytics.PracticeProfile
 import com.pianocompanion.analytics.PracticeProfileBuilder
 import com.pianocompanion.analytics.TempoProgressRecord
@@ -28,6 +29,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val GOALS_PREFS = "practice_goals"
         private const val GOALS_KEY = "goals"
+        private const val ACHIEVEMENT_PREFS = "achievement_store"
+        private const val UNLOCKED_KEY = "unlocked_ids"
     }
 
     /**
@@ -48,6 +51,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         val weakSpotSections: List<WeakSpotSection> = emptyList(),
         /** 成就汇总（全部成就 + 解锁/锁定分组）。 */
         val achievementSummary: AchievementSummary? = null,
+        /** 本次新解锁的成就列表（供 UI 弹出庆祝通知）。每次 computeState 后计算。 */
+        val newlyUnlockedAchievements: List<AchievementProgress> = emptyList(),
         /** 练习目标追踪报告（每日/每周目标完成进度）。 */
         val goalReport: GoalReport? = null
     )
@@ -86,10 +91,22 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             }
             .sortedByDescending { it.report.totalErrors }
 
-        // 成就评估
+        // 成就评估 + 新解锁检测
         val tempoRecords = loadTempoRecords()
         val profile = PracticeProfileBuilder.fromSessions(sessions, tempoRecords)
         val achievementSummary = AchievementEngine.evaluate(profile)
+
+        // 与上次持久化的已解锁集合做差分，检测本次新解锁的成就
+        val previousRaw = loadUnlockedIds()
+        val currentUnlockedIds = achievementSummary.unlocked.map { it.definition.id }.toSet()
+        val diff = AchievementStore.evaluateDiff(currentUnlockedIds, previousRaw)
+        // 持久化更新后的已解锁集合（仅在变化时写入）
+        if (diff.updatedRaw != previousRaw) {
+            saveUnlockedIds(diff.updatedRaw)
+        }
+        val newlyUnlocked = AchievementStore.newlyUnlockedToProgress(
+            diff.newlyUnlockedIds, achievementSummary
+        )
 
         // 练习目标评估
         val goals = loadGoals()
@@ -103,6 +120,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             streak = calculateStreak(sessions),
             weakSpotSections = weakSections,
             achievementSummary = achievementSummary,
+            newlyUnlockedAchievements = newlyUnlocked,
             goalReport = goalReport
         )
     }
@@ -218,6 +236,44 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         } catch (_: Exception) {
             // 持久化失败时静默忽略（内存中的目标仍可用于当前会话）
         }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  成就解锁状态持久化
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * 从 SharedPreferences 加载上次持久化的已解锁成就 id 字符串。
+     */
+    private fun loadUnlockedIds(): String? {
+        return try {
+            val prefs = getApplication<Application>()
+                .getSharedPreferences(ACHIEVEMENT_PREFS, android.content.Context.MODE_PRIVATE)
+            prefs.getString(UNLOCKED_KEY, null)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * 保存已解锁成就 id 字符串到 SharedPreferences。
+     */
+    private fun saveUnlockedIds(raw: String) {
+        try {
+            val prefs = getApplication<Application>()
+                .getSharedPreferences(ACHIEVEMENT_PREFS, android.content.Context.MODE_PRIVATE)
+            prefs.edit().putString(UNLOCKED_KEY, raw).apply()
+        } catch (_: Exception) {
+            // 持久化失败时静默忽略
+        }
+    }
+
+    /**
+     * 清除新解锁通知状态（用户关闭庆祝弹窗后调用）。
+     * 触发刷新后，由于已解锁集合已持久化，重新计算时不会再产生新解锁成就。
+     */
+    fun clearNewlyUnlocked() {
+        refresh()
     }
 
     private fun calculateStreak(sessions: List<SessionRecord>): Int {

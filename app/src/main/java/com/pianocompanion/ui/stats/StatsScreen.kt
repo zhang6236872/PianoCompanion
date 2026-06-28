@@ -233,6 +233,15 @@ fun StatsScreen(
             }
         )
     }
+
+    // 成就解锁庆祝弹窗
+    val newlyUnlocked = uiState.newlyUnlockedAchievements
+    if (newlyUnlocked.isNotEmpty()) {
+        AchievementUnlockDialog(
+            achievements = newlyUnlocked,
+            onDismiss = { viewModel.clearNewlyUnlocked() }
+        )
+    }
 }
 
 @Composable
@@ -496,6 +505,72 @@ private fun AchievementCard(progress: AchievementProgress) {
             }
         }
     }
+}
+
+/**
+ * 成就解锁庆祝弹窗：当用户解锁新成就时弹出，展示解锁的成就列表。
+ */
+@Composable
+private fun AchievementUnlockDialog(
+    achievements: List<AchievementProgress>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🎉", fontSize = 28.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    if (achievements.size == 1) "成就解锁！" else "${achievements.size} 个成就解锁！",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                achievements.forEach { progress ->
+                    val def = progress.definition
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 成就图标（金色圆形背景）
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFFFD700).copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(def.category.icon, fontSize = 20.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                def.title,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                def.description,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        Text("✓", fontSize = 18.sp, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("太棒了！", fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }
 
 // Helpers
