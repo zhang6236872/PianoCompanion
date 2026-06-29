@@ -102,6 +102,10 @@ class PracticeViewModel(
             _uiState.update { it.copy(metronomeBeat = beat) }
         }
         loadTempoProgress()
+        // 消费跨页面传递的待练习乐谱（如视奏生成器 / OMR 识别 / 乐谱库选择）。
+        ScoreSelectionHolder.consume()?.let { pending ->
+            setScore(pending)
+        }
     }
 
     /** 从持久化存储加载渐速进度记录。 */

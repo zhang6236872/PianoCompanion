@@ -30,6 +30,7 @@ import com.pianocompanion.data.model.Score
 import com.pianocompanion.ui.components.EmptyState
 import com.pianocompanion.ui.components.SectionHeader
 import com.pianocompanion.ui.navigation.Screen
+import com.pianocompanion.ui.practice.ScoreSelectionHolder
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +54,7 @@ fun LibraryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
+    var showSightReadingDialog by remember { mutableStateOf(false) }
 
     // SAF document picker — MusicXML (.xml/.musicxml) and MIDI (.mid/.midi).
     val pickFileLauncher = rememberLauncherForActivityResult(
@@ -154,6 +156,11 @@ fun LibraryScreen(
                 )
             }
 
+            // === Sight-reading generator entry ===
+            item {
+                SightReadingEntryCard(onClick = { showSightReadingDialog = true })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -165,6 +172,7 @@ fun LibraryScreen(
                 EnhancedScoreCard(
                     score = score,
                     onClick = {
+                        ScoreSelectionHolder.set(score)
                         navController.navigate(Screen.Practice.route) {
                             launchSingleTop = true
                         }
@@ -207,8 +215,20 @@ fun LibraryScreen(
                     ImportedScoreCard(
                         item = item,
                         onClick = {
-                            navController.navigate(Screen.Practice.route) {
-                                launchSingleTop = true
+                            // 加载导入的乐谱并传递到练习页（解析失败的乐谱提示用户）。
+                            val result = viewModel.loadScore(item.fileName)
+                            val loaded = result.getOrNull()
+                            if (loaded != null) {
+                                ScoreSelectionHolder.set(loaded)
+                                navController.navigate(Screen.Practice.route) {
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        result.exceptionOrNull()?.message ?: "无法加载乐谱，请检查文件格式"
+                                    )
+                                }
                             }
                         },
                         onLongClick = { showDeleteDialog = true }
@@ -238,6 +258,20 @@ fun LibraryScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 HelpCard()
             }
+        }
+
+        // === 视奏练习生成器对话框 ===
+        if (showSightReadingDialog) {
+            SightReadingGeneratorDialog(
+                onGenerate = { score ->
+                    showSightReadingDialog = false
+                    ScoreSelectionHolder.set(score)
+                    navController.navigate(Screen.Practice.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onDismiss = { showSightReadingDialog = false }
+            )
         }
     }
 }
@@ -417,6 +451,52 @@ private fun HelpCard() {
             Text("用 MuseScore / Finale 导出 .xml，或任何 .mid/.midi 文件，通过 SAF 选择即可导入",
                  fontSize = 12.sp,
                  color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+        }
+    }
+}
+
+/**
+ * 视奏练习生成器入口卡片。
+ *
+ * 放置在乐谱库顶部（搜索栏之后、内置乐谱之前），以渐变强调色突出显示，
+ * 引导用户进入视奏练习生成器。
+ */
+@Composable
+private fun SightReadingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎲", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "视奏练习生成器",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "自动生成调性/节奏/难度可控的练习旋律",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "生成视奏练习",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }
