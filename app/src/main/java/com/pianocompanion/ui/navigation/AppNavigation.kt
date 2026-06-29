@@ -27,6 +27,7 @@ import com.pianocompanion.ui.settings.SettingsScreen
 import com.pianocompanion.ui.omr.OmrScreen
 import com.pianocompanion.ui.splash.SplashScreen
 import com.pianocompanion.ui.stats.StatsScreen
+import com.pianocompanion.ui.training.EarTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -35,6 +36,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object Stats : Screen("stats", "统计", Icons.Filled.BarChart)
     data object Settings : Screen("settings", "设置", Icons.Filled.Settings)
     data object Omr : Screen("omr", "拍照识谱", Icons.Filled.PhotoCamera)
+    data object EarTraining : Screen("ear_training", "听音训练", Icons.Filled.Hearing)
 }
 
 private val screens = listOf(
@@ -149,6 +151,9 @@ fun AppScaffold() {
                     },
                     onBack = { navController.popBackStack() }
                 )
+            }
+            composable(Screen.EarTraining.route) {
+                EarTrainingScreen()
             }
         }
     }

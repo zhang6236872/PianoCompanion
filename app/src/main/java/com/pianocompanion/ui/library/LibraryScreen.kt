@@ -161,6 +161,15 @@ fun LibraryScreen(
                 SightReadingEntryCard(onClick = { showSightReadingDialog = true })
             }
 
+            // === Ear training entry ===
+            item {
+                EarTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.EarTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -496,6 +505,51 @@ private fun SightReadingEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "生成视奏练习",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 听音训练入口卡片。
+ *
+ * 引导用户进入听音训练（音程/和弦/音阶识别），训练音乐听觉素养。
+ */
+@Composable
+private fun EarTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("👂", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "听音训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "音程 · 和弦 · 音阶识别，训练你的耳朵",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "听音训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
