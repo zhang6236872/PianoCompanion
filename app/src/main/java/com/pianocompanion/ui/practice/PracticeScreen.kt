@@ -161,6 +161,18 @@ fun PracticeScreen(
                         }
                     }
                 }
+
+                // === 参考音频回放控制 ===
+                if (uiState.referenceDurationMs > 0L) {
+                    ReferencePlaybackBar(
+                        isPlaying = uiState.isReferencePlaying,
+                        currentMs = uiState.referencePlaybackMs,
+                        totalMs = uiState.referenceDurationMs,
+                        onToggle = { viewModel.toggleReferencePlayback() },
+                        onStop = { viewModel.stopReferencePlayback() }
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
             }
 
             // === Practice mode selector ===
@@ -840,6 +852,91 @@ private fun TempoRampProgressCard(
             }
         }
     }
+}
+
+/**
+ * 参考音频回放控制条 — 播放/暂停/停止合成乐谱音色，附带进度条和时间标签。
+ *
+ * 让用户在练习前先听一遍乐谱应该怎么弹（「听 → 模仿 → 练习」学习闭环）。
+ * 播放参考音频时会自动停止正在进行的练习（麦克风与扬声器不能同时使用）。
+ */
+@Composable
+private fun ReferencePlaybackBar(
+    isPlaying: Boolean,
+    currentMs: Long,
+    totalMs: Long,
+    onToggle: () -> Unit,
+    onStop: () -> Unit
+) {
+    val progress = if (totalMs > 0) (currentMs.toFloat() / totalMs).coerceIn(0f, 1f) else 0f
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 播放 / 暂停按钮
+            FilledIconButton(
+                onClick = onToggle,
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape
+            ) {
+                Icon(
+                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = if (isPlaying) "暂停参考音频" else "播放参考音频",
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+
+            // 进度条 + 时间标签
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "🔊 参考音频",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+                Spacer(Modifier.height(2.dp))
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "${formatMs(currentMs)} / ${formatMs(totalMs)}",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
+                )
+            }
+            Spacer(Modifier.width(4.dp))
+
+            // 停止按钮
+            IconButton(onClick = onStop, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Filled.Stop, contentDescription = "停止参考音频", modifier = Modifier.size(20.dp))
+            }
+        }
+    }
+}
+
+/** 将毫秒格式化为 m:ss 文本。 */
+private fun formatMs(ms: Long): String {
+    val totalSeconds = (ms / 1000).coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
 }
 
 /**

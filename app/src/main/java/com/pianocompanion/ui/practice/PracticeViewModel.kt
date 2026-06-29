@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.pianocompanion.audio.AudioRecorder
 import com.pianocompanion.audio.HapticFeedback
 import com.pianocompanion.audio.Metronome
+import com.pianocompanion.audio.ScorePlayer
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.model.*
 import com.pianocompanion.data.repository.StatsRepository
@@ -68,7 +69,11 @@ class PracticeViewModel(
         val tempoRampCompleted: Boolean = false,
         val tempoRampLoopsAtCurrentStep: Int = 0,
         // === Tempo progress tracking (渐速进度追踪) ===
-        val tempoProgressSummary: String? = null
+        val tempoProgressSummary: String? = null,
+        // === 参考音频回放 ===
+        val isReferencePlaying: Boolean = false,
+        val referencePlaybackMs: Long = 0L,
+        val referenceDurationMs: Long = 0L
     )
 
     enum class FeedbackType { NONE, CORRECT, WRONG_PITCH, EXTRA_NOTE, MISSING_NOTE }
@@ -88,6 +93,9 @@ class PracticeViewModel(
 
     // === Metronome ===
     private val metronome = Metronome()
+
+    // === 参考音频播放器（合成乐谱音色播放） ===
+    private val scorePlayer = ScorePlayer()
 
     // === Tempo ramp-up practice (渐速练习) ===
     private var tempoRampUp: TempoRampUp = TempoRampUp()
@@ -225,8 +233,65 @@ class PracticeViewModel(
                 tempoRampCurrentStep = 0,
                 tempoRampTotalSteps = tempoRampUp.totalSteps(),
                 tempoRampCompleted = tempoRampUp.isComplete(),
-                tempoRampLoopsAtCurrentStep = 0
+                tempoRampLoopsAtCurrentStep = 0,
+                isReferencePlaying = false,
+                referencePlaybackMs = 0L,
+                referenceDurationMs = 0L
             )
+        }
+        // 预渲染参考音频（后台执行，不阻塞 UI）
+        prepareReferencePlayback(score)
+    }
+
+    /**
+     * 预渲染参考音频。
+     * 在后台线程合成乐谱 PCM 数据，完成后更新 UI 状态中的总时长。
+     */
+    private fun prepareReferencePlayback(score: Score) {
+        scorePlayer.stop()
+        scorePlayer.onProgress = { currentMs, totalMs ->
+            _uiState.update {
+                it.copy(referencePlaybackMs = currentMs, referenceDurationMs = totalMs)
+            }
+        }
+        scorePlayer.onComplete = {
+            _uiState.update { it.copy(isReferencePlaying = false, referencePlaybackMs = 0L) }
+        }
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val success = scorePlayer.prepare(score)
+            if (success) {
+                _uiState.update {
+                    it.copy(referenceDurationMs = scorePlayer.getDuration())
+                }
+            }
+        }
+    }
+
+    /**
+     * 播放 / 暂停参考音频。
+     */
+    fun toggleReferencePlayback() {
+        if (!scorePlayer.isPrepared()) return
+        if (scorePlayer.isPlaying()) {
+            scorePlayer.pause()
+            _uiState.update { it.copy(isReferencePlaying = false) }
+        } else {
+            // 停止练习模式（不能同时听和练习）
+            if (_uiState.value.isPracticing) {
+                stopPractice()
+            }
+            scorePlayer.play()
+            _uiState.update { it.copy(isReferencePlaying = true) }
+        }
+    }
+
+    /**
+     * 停止参考音频播放。
+     */
+    fun stopReferencePlayback() {
+        scorePlayer.stop()
+        _uiState.update {
+            it.copy(isReferencePlaying = false, referencePlaybackMs = 0L)
         }
     }
 
@@ -543,5 +608,6 @@ class PracticeViewModel(
     override fun onCleared() {
         super.onCleared()
         stopPractice()
+        scorePlayer.release()
     }
 }
