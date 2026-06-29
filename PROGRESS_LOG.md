@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.66.0** (全部路线图 Phase 1-4 完成 + 后续增强: 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励)) + 音符掌握度分析引擎(NoteMasteryAnalyzer: 跨乐谱音高维度弱项分析——12音级错误分布+黑键vs白键归一化对比+音域分布+最易出错具体音符+音高混淆(expected→detected配对)，与WeakSpotAnalyzer小节维度互补))
+- 当前版本: **v2.67.0** (全部路线图 Phase 1-4 完成 + 后续增强: 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化... [truncated]
 - 当前分支: main
-- 最新 tag: v2.66.0
+- 最新 tag: v2.67.0
 
 ## 健康状态 (2026-06-30 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1655 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1764 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0
-- Kotlin 文件: 119 个 / 代码行数: 21500+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0
+- Kotlin 文件: 127 个 / 代码行数: 24500+ 行
 
 ## 开发历史
 
@@ -2240,4 +2240,66 @@
   - 单元测试 1608 → **1655** 全部通过；编译 + assembleDebug 通过
   - 已知限制：合成音色为近似（加法合成无法完全还原真实钢琴的共鸣/制音物理模型）；
     AudioTrack 实际播放需真机验证；MODE_STATIC 对超长乐谱可能内存占用较大
+
+- **v2.67.0: 听音训练模块 (EarTraining) ✅**
+  - 新增音乐听觉能力训练功能，帮助用户通过系统化的「听 → 识别」练习
+    提升对音程、和弦、音阶的辨别能力——这是乐理素养和视奏能力的核心基础
+  - 复用 v2.66.0 的 PianoToneSynthesizer 加法合成钢琴音色，无需外部音频资源
+  - **领域层（纯 Kotlin，无 Android 依赖，完全可单测）**:
+    - **EarTrainingModels**（音乐理论模型）：
+      · IntervalInfo（12 种音程）：纯一度、小二度、大二度、小二度...纯八度，
+        含半音数、名称、中文译名、是否协和属性
+      · ChordInfo（7 种和弦）：大三和弦、小三和弦、增三和弦、减三和弦、
+        大七和弦、属七和弦、小七和弦，含音程结构模式
+      · ScaleInfo（6 种音阶）：大调音阶、自然小调音阶、和声小调音阶、
+        五声大调、五声小调、布鲁斯音阶，含音阶音程结构
+    - **EarTrainingEngine**（出题引擎）：
+      · 确定性伪随机（可设种子，保证可复现/可测试）
+      · 支持三种训练类型（INTERVAL / CHORD / SCALE）× 三种难度（EASY / MEDIUM / HARD）
+      · EASY 难度限定协和音程/基础和弦；HARD 难度包含半音音程/七和弦
+      · generateQuestion 返回 EarTrainingQuestion（含正确答案 + 干扰项候选）
+      · 题目中所有 MIDI 音符限制在合理范围（避免超高/超低音）
+    - **EarTrainingSession**（会话状态机）：
+      · 状态流转：IDLE → PLAYING → ANSWERING → RESULT → ANSWERING...
+      · 跟踪得分（正确/总数）、连击 streak、当前题目、历史记录
+      · answer(selectedIndex): 判定对错，更新统计，自动推进
+      · nextQuestion(): 从 Engine 拉取下一题
+      · 会话可重置 (reset)，可获取实时正确率
+    - **EarTrainingAudioBuilder**（音频渲染）：
+      · 音程/和弦 → 柱式（blocked，同时发声）PCM 渲染
+      · 音阶 → 旋律序列（melodic，顺序发声）PCM 渲染
+      · 复用 PianoToneSynthesizer 合成，多音叠加后软限幅防削波
+      · 前导静音 + 尾部衰减，保证播放平滑
+    - **EarTrainingProgress**（跨会话进度持久化）：
+      · JSON 序列化/反序列化（手动解析，Gson 兼容格式）
+      · 按训练类型分别跟踪最佳正确率、总练习题数、历史得分
+      · ProgressEntry.fromJson 带格式校验（无效 JSON 安全返回 null）
+  - **Android 层**:
+    - **EarTrainingPlayer**：AudioTrack（MODE_STATIC）一次性播放预渲染 PCM
+    - **EarTrainingViewModel**：StateFlow<EarTrainingUiState> 不可变状态模式，
+      后台线程预渲染音频（Dispatchers.Default）
+    - **EarTrainingScreen**（Material 3 Compose UI）：
+      · 双模式界面：选择模式（选择训练类型/难度）→ 训练模式（答题循环）
+      · 播放脉冲动画（协程循环，提示音频正在播放）
+      · 答题反馈卡片：正确显示绿色✓，错误显示红色✗ + 正确答案
+      · 实时得分/连击/正确率显示
+      · 重听按钮（可重复播放当前题目音频）
+      · 进度统计展示
+    - **LibraryScreen 集成**：新增 EarTrainingEntryCard 入口卡片
+    - **AppNavigation 集成**：新增 ear_training 路由
+  - 修正 build.gradle.kts 版本号 → v2.67.0 / versionCode 81
+  - 新增 109 个单元测试（5 个测试类）：
+    - `EarTrainingModelsTest` (29)：音程半音数/名称/协和性、和弦结构/音程数、
+      音阶音程/音符数/名称验证
+    - `EarTrainingEngineTest` (25)：出题确定性（种子复现）、难度分流、
+      题目音符范围、答案唯一性、多类型/多难度覆盖
+    - `EarTrainingSessionTest` (20)：状态流转、得分统计、连击逻辑、
+      历史记录、重置、正确率计算
+    - `EarTrainingAudioBuilderTest` (15)：音程/和弦/音阶渲染长度、
+      静音边界、不削波、不同音符不同输出
+    - `EarTrainingProgressTest` (20)：序列化/反序列化往返、
+      无效 JSON 处理、多类型进度、默认值
+  - 单元测试 1655 → **1764** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：AudioTrack 实际播放需真机验证；合成音色为近似钢琴音色
+
 
