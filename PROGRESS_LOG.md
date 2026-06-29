@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.65.0** (全部路线图 Phase 1-4 完成 + 后续增强: 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励)) + 音符掌握度分析引擎(NoteMasteryAnalyzer: 跨乐谱音高维度弱项分析——12音级错误分布+黑键vs白键归一化对比+音域分布+最易出错具体音符+音高混淆(expected→detected配对)，与WeakSpotAnalyzer小节维度互补))
+- 当前版本: **v2.66.0** (全部路线图 Phase 1-4 完成 + 后续增强: 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(rit./accel./rall./riten./a tempo)检测 + MusicXML 导出器(Score→MusicXML 序列化，闭环 OMR 流程) + MIDI 导出器(Score→标准MIDI文件，闭环 MIDI 流程并修复 MidiParser 多轨解析Bug) + 薄弱环节分析引擎(WeakSpotAnalyzer: 逐小节弱项识别 + 趋势(改善/稳定/恶化)分析 + 相邻弱项合并为推荐练习段落 + 统计页/练习报告集成) + 段落循环练习模式(SectionLooper) + 渐速练习控制器(TempoRampUp: 慢练加速核心练习技巧) + 渐速进度追踪器(TempoProgressTracker: 跨会话速度进步趋势分析) + 成就徽章系统(AchievementEngine: 22个成就覆盖7个维度的游戏化练习激励) + 练习目标追踪系统(GoalTracker: 每日/每周5维度目标 + 连续达成streak + 三档预设 + 统计页可视化) + 目标编辑器(GoalEditor: 可视化目标编辑对话框 + 目标CRUD逻辑 + 预设快捷应用 + 建议值步进器) + 成就解锁持久化与通知(AchievementStore: 差分检测新解锁 + SharedPreferences持久化 + 解锁庆祝弹窗) + 乐谱难度评估引擎(DifficultyEstimator: 10维音乐复杂度分析(音符密度/节奏/复音/速度/音域/跳跃/半音化/装饰音/双手独立/长度)→0-100加权总分+5级评定，替代LibraryScreen的notes.size粗略启发式)) + 导入乐谱难度评估接入(ImportedScoreInfo.from 工厂: 解析时一次性计算难度，导入乐谱卡片与内置乐谱卡片展示一致难度信息)) + 练习日历热力图(PracticeCalendarHeatmap: GitHub风格贡献网格，按日聚合练习活动量→周×7天5级强度可视化，强化练习习惯激励)) + 音符掌握度分析引擎(NoteMasteryAnalyzer: 跨乐谱音高维度弱项分析——12音级错误分布+黑键vs白键归一化对比+音域分布+最易出错具体音符+音高混淆(expected→detected配对)，与WeakSpotAnalyzer小节维度互补))
 - 当前分支: main
-- 最新 tag: v2.65.0
+- 最新 tag: v2.66.0
 
-## 健康状态 (2026-06-29 核验)
+## 健康状态 (2026-06-30 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1608 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 1655 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0
-- Kotlin 文件: 116 个 / 代码行数: 20200+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0
+- Kotlin 文件: 119 个 / 代码行数: 21500+ 行
 
 ## 开发历史
 
@@ -2052,6 +2052,9 @@
 - SightReadingGeneratorTest: 97
 - ScoreSelectionHolderTest: 7
 - SightReadingDialogStateTest: 11
+- PianoToneSynthesizerTest: 21
+- ScorePlaybackEngineTest: 20
+- ScorePlayerTest: 6
 
 ## 阻塞
 （无）
@@ -2179,3 +2182,62 @@
   - 单元测试 1590 → **1608** 全部通过；编译 + assembleDebug 通过
   - 已知限制：Compose UI 组件需真机/模拟器验证；ScoreSelectionHolder 为进程内内存
     （不持久化），进程销毁后清空（练习页有内置乐谱选择器兜底）
+
+### 2026-06-30 (自主开发)
+- **v2.66.0: 参考音频回放引擎 (PianoToneSynthesizer + ScorePlaybackEngine + ScorePlayer) ✅**
+  - 新增乐谱参考音频播放功能，让用户在练习前先听一遍乐谱应该怎么弹
+    （「听 → 模仿 → 练习」学习闭环），无需依赖外部音频文件——App 内部用
+    加法合成实时生成钢琴音色播放整首乐谱
+  - 三层架构（音色合成 → 乐谱渲染 → Android 播放）:
+    - **PianoToneSynthesizer**（纯 Kotlin，无 Android 依赖，完全可单测）：
+      - 加法合成：基频 + 7 次谐波（递减幅度 1.0→0.03）近似钢琴泛音结构
+      - 指数衰减包络：钢琴物理特性（无持续阶段，音符持续衰减）；
+        高频衰减更快（频率幂律关系，低音延续长、高音短促）
+      - 快速起音（4ms 线性渐入避免 DC click/咔哒声）
+      - 力度→振幅平方根非线性映射（低力度区间更柔和，动态分辨率更好）
+      - 演奏法（articulation）感知：
+        · staccato/staccatissimo 缩短时值（×0.50/×0.30）
+        · accent/marcato 增强力度（×1.20/×1.30）
+        · tenuto 保持完整时值（×1.00）
+    - **ScorePlaybackEngine**（纯 Kotlin，无 Android 依赖，完全可单测）：
+      - 遍历乐谱所有音符，使用 PianoToneSynthesizer 合成，按时间轴混合（叠加）
+      - 和弦（同时发声的多音符）自动混合，treble + bass 双声部同时叠加
+      - 速度缩放：tempoBpm 参数全局缩放音符时间位置和时值（tempoScale = score.tempo / effectiveTempo）
+      - 软限幅（softClip: tanh 近似 x/(1+|x|/K)）防止多音符叠加时削波，输出始终在 [-1.0, 1.0]
+      - 前导静音（200ms，给用户准备时间）+ 结尾静音（500ms，让最后一个音符自然衰减）
+      - 跳过无效音符（midiNumber <= 0 或 velocity <= 0）
+      - msToSamples / samplesToMs 双向转换工具
+    - **ScorePlayer**（Android 层）：
+      - 使用 AudioTrack（MODE_STATIC）预渲染完整 PCM 缓冲区后写入
+      - 播放/暂停/停止/跳转控制
+      - 进度回调（onProgress: 当前 ms / 总 ms，50ms 更新间隔）驱动 UI 进度条
+      - 完成回调（onComplete）驱动 UI 状态重置
+      - floatToPcm16 格式转换（[-1.0,1.0] Float → 16-bit Short，钳位保护）
+      - 资源管理：prepare/play/pause/stop/seekTo/release 完整生命周期
+  - **PracticeViewModel 集成**：
+    - setScore 时后台预渲染参考音频（Dispatchers.Default，不阻塞 UI）
+    - toggleReferencePlayback / stopReferencePlayback 控制
+    - 播放参考音频时自动停止正在进行的练习（麦克风与扬声器不能同时使用）
+    - onCleared 时释放 ScorePlayer 资源
+  - **PracticeScreen 集成**：
+    - 新增 `ReferencePlaybackBar` 组件（Material 3）：
+      · 播放/暂停 FilledIconButton（CircleShape，动态切换 PlayArrow/Pause 图标）
+      · LinearProgressIndicator 进度条（圆角裁剪）
+      · 时间标签（formatMs: m:ss 格式，当前/总时长）
+      · 停止 IconButton
+      · 仅在参考音频已预渲染时显示（referenceDurationMs > 0）
+  - 修正 build.gradle.kts 版本号 → v2.66.0 / versionCode 80
+  - 新增 47 个单元测试：
+    - `PianoToneSynthesizerTest` (21)：样本数与时长匹配/短音符样本数/极短音符/
+      采样值范围/起音渐入/峰值振幅正/高力度>低力度/力度0=静音/指数衰减/高频衰减更快/
+      断奏更短/短断奏更短/保持音完整/默认0.9倍/重音更强/强音最强/不同频率不同波形/
+      MIDI频率正确/相同参数相同输出/不同力度不同输出/自定义采样率
+    - `ScorePlaybackEngineTest` (20)：空乐谱/单音符缓冲区长度/非零内容/前导静音/
+      多音符缓冲区/音符间隙静音/和弦混合增强/和弦不削波/力度影响振幅/速度缩放/
+      默认速度/多声部混合/力度0不发声/无效音符跳过/总时长/msToSamples/samplesToMs/
+      结尾静音/三音符时间轴
+    - `ScorePlayerTest` (6)：floatToPcm16 正常值/超出范围钳位/空数组/单元素/长度一致/正弦波保真
+  - 单元测试 1608 → **1655** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：合成音色为近似（加法合成无法完全还原真实钢琴的共鸣/制音物理模型）；
+    AudioTrack 实际播放需真机验证；MODE_STATIC 对超长乐谱可能内存占用较大
+
