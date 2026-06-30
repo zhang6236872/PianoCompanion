@@ -244,6 +244,31 @@ class PracticeViewModel(
     }
 
     /**
+     * 将当前乐谱移调指定半音数并重新加载。
+     *
+     * 移调后重建 ScoreFollower 并重新预渲染参考音频。
+     * 若当前正在练习或播放参考音频，先停止。
+     */
+    fun transposeScore(semitones: Int) {
+        val current = _uiState.value.score ?: return
+        if (semitones == 0) return
+        if (_uiState.value.isPracticing) stopPractice()
+        if (_uiState.value.isReferencePlaying) stopReferencePlayback()
+        val transposed = com.pianocompanion.music.Transposer.transpose(current, semitones)
+        setScore(transposed)
+    }
+
+    /**
+     * 检测当前乐谱的调性。
+     *
+     * @return 检测到的调性信息；无乐谱时返回 null。
+     */
+    fun detectCurrentKey(): com.pianocompanion.music.KeyInfo? {
+        val score = _uiState.value.score ?: return null
+        return com.pianocompanion.music.KeyDetector.detect(score)
+    }
+
+    /**
      * 预渲染参考音频。
      * 在后台线程合成乐谱 PCM 数据，完成后更新 UI 状态中的总时长。
      */

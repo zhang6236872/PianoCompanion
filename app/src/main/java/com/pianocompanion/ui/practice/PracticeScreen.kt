@@ -43,6 +43,7 @@ fun PracticeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showScorePicker by remember { mutableStateOf(false) }
+    var showTransposeDialog by remember { mutableStateOf(false) }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -153,6 +154,11 @@ fun PracticeScreen(
                                  color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Text(score.composer, fontSize = 12.sp,
                                  color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f))
+                        }
+                        TextButton(onClick = { showTransposeDialog = true }) {
+                            Icon(Icons.Filled.MusicNote, null, Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("移调", fontSize = 13.sp)
                         }
                         TextButton(onClick = { showScorePicker = true }) {
                             Icon(Icons.Filled.SwapHoriz, null, Modifier.size(18.dp))
@@ -446,6 +452,15 @@ fun PracticeScreen(
             confirmButton = {
                 TextButton(onClick = { showScorePicker = false }) { Text("取消") }
             }
+        )
+    }
+
+    // === 移调对话框 ===
+    if (showTransposeDialog) {
+        TransposeDialog(
+            detectedKey = viewModel.detectCurrentKey(),
+            onDismiss = { showTransposeDialog = false },
+            onTranspose = { semitones -> viewModel.transposeScore(semitones) }
         )
     }
 }
