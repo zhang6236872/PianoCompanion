@@ -197,6 +197,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Chord progression entry ===
+            item {
+                ChordProgressionEntryCard(onClick = {
+                    navController.navigate(Screen.ChordProgression.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -701,6 +710,50 @@ private fun ScaleLibraryEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "音阶词典",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 和弦进行词典入口卡片。
+ * 引导用户浏览和学习常见和弦进行模式（罗马数字分析、调性移调、试听）。
+ */
+@Composable
+private fun ChordProgressionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎶", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "和弦进行词典",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "流行万能进行 · 爵士ii-V-I · 蓝调 · 古典终止式",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "和弦进行词典",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
