@@ -31,6 +31,7 @@ import com.pianocompanion.ui.rhythm.RhythmScreen
 import com.pianocompanion.ui.training.EarTrainingScreen
 import com.pianocompanion.ui.chord.ChordDictionaryScreen
 import com.pianocompanion.ui.scale.ScaleLibraryScreen
+import com.pianocompanion.ui.progression.ChordProgressionScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -43,6 +44,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object RhythmTraining : Screen("rhythm_training", "节奏训练", Icons.Filled.GraphicEq)
     data object ChordDictionary : Screen("chord_dictionary", "和弦词典", Icons.Filled.Piano)
     data object ScaleLibrary : Screen("scale_library", "音阶词典", Icons.Filled.MusicNote)
+    data object ChordProgression : Screen("chord_progression", "和弦进行", Icons.Filled.QueueMusic)
 }
 
 private val screens = listOf(
@@ -169,6 +171,9 @@ fun AppScaffold() {
             }
             composable(Screen.ScaleLibrary.route) {
                 ScaleLibraryScreen()
+            }
+            composable(Screen.ChordProgression.route) {
+                ChordProgressionScreen()
             }
         }
     }
