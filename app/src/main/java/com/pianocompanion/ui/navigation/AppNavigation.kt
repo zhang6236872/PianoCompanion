@@ -30,6 +30,7 @@ import com.pianocompanion.ui.stats.StatsScreen
 import com.pianocompanion.ui.rhythm.RhythmScreen
 import com.pianocompanion.ui.training.EarTrainingScreen
 import com.pianocompanion.ui.chord.ChordDictionaryScreen
+import com.pianocompanion.ui.scale.ScaleLibraryScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -41,6 +42,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object EarTraining : Screen("ear_training", "听音训练", Icons.Filled.Hearing)
     data object RhythmTraining : Screen("rhythm_training", "节奏训练", Icons.Filled.GraphicEq)
     data object ChordDictionary : Screen("chord_dictionary", "和弦词典", Icons.Filled.Piano)
+    data object ScaleLibrary : Screen("scale_library", "音阶词典", Icons.Filled.MusicNote)
 }
 
 private val screens = listOf(
@@ -164,6 +166,9 @@ fun AppScaffold() {
             }
             composable(Screen.ChordDictionary.route) {
                 ChordDictionaryScreen()
+            }
+            composable(Screen.ScaleLibrary.route) {
+                ScaleLibraryScreen()
             }
         }
     }
