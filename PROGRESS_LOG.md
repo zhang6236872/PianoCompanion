@@ -2574,3 +2574,58 @@
   - 单元测试 2104 → **2180** 全部通过；编译 + assembleDebug 通过
   - 已知限制：AudioTrack 实际播放需真机验证；Canvas 键盘绘制为近似可视化
 
+---
+
+### 2026-07-02 — v2.73.0 / versionCode 87：五度圈交互工具（Circle of Fifths）
+
+**新增功能：交互式五度圈音乐理论工具**，连接已有的 KeyDetector、ScaleEngine、ChordEngine，
+为用户提供调性关系的可视化学习体验。遵循项目既有架构：纯 Kotlin 领域层 → Android 层 → Compose UI 层。
+
+- **新增包**: `com.pianocompanion.circle`
+- **领域层（纯 Kotlin，完全可单测）**:
+  - **CircleOfFifthsModels.kt** (~150 行): 枚举 `CircleMode`(大调/小调)、`ChordQuality`(大三/小三/减三/增三)、
+    数据类 `CircleKey`(主音音级类+调式)、`KeySignature`(调号: 升降号数+音名字母集合，含 displayString)、
+    `DiatonicChord`(调内顺阶三和弦: 级数/罗马数字/性质/音名/MIDI)、`KeyInfo`(完整调性信息)、
+    `CirclePlayMode`(顺阶和弦/音阶播放模式)
+  - **CircleOfFifthsEngine.kt** (~334 行, `object`):
+    · `majorPosition()`: 音级类→圆环位置 `p ≡ 7·pc (mod 12)`（因为每顺时针一格+7半音，7·7≡1 mod 12）
+    · `positionOf()`: 调性→位置（小调用关系大调位置）
+    · `keySignature()`: 正确的升号/降号数量与字母集合（升号序 F-C-G-D-A-E-B，降号序 B-E-A-D-G-C-F）
+    · `tonicLetter()`/`tonicName()`: 升号侧用升号记法(F♯)、降号侧用降号记法(D♭)的等音记谱
+    · `scaleNoteNames()`: 从主音字母出发的7个连续字母 + 调号升降，确保每个字母唯一（无等音歧义）
+    · `diatonicChords()`: 罗马数字分析（大调 I-ii-iii-IV-V-vi-vii°；小调 i-ii°-III-iv-v-VI-VII）
+    · `relativeKey()`: 关系大小调换算（±3 半音）
+    · `closelyRelatedKeys()`: 近关系调（属调+下属调+关系调+各自关系调）
+    · `allKeys()`/`majorPcAt()`: 圆环位置↔主音反演
+- **Android 音频层**:
+  - **CircleOfFifthsAudioBuilder.kt** (~179 行): 复用 PianoToneSynthesizer，两种渲染模式：
+    · `renderDiatonicChords()`: 7个顺阶三和弦依次播放（柱式和弦三音叠加，600ms/和弦），含前导200ms+尾部400ms静音
+    · `renderScale()`: 7个音阶音上行播放（400ms/音）
+    · 软限幅（tanh 近似）防削波，三音叠加后 1/n 缩放
+  - **CircleOfFifthsPlayer.kt** (~100 行): AudioTrack MODE_STATIC 播放，Handler 完成轮询（遵循 ScalePlayer 模式）
+- **ViewModel 层**:
+  - **CircleOfFifthsViewModel.kt** (~132 行): `AndroidViewModel` + `StateFlow<CircleOfFifthsUiState>`，
+    selectKey/toggleMode/selectPlayMode/play/stop，协程在 Dispatchers.Default 后台预渲染音频
+- **UI 层 (Material 3 Compose)**:
+  - **CircleOfFifthsScreen.kt** (~593 行):
+    · Canvas 绘制12扇区圆环（大调外环 primaryContainer 渐变 + 小调内环 secondary 渐变 + 中心白圆）
+    · 12 条分隔线 + 选中扇区高亮描边
+    · Compose Text 覆盖层：24个调名标签（大调外环大号字 + 小调内环小号字），选中加粗放大
+    · pointerInput 点击命中检测（极坐标→位置→调性，大调环/小调环按半径区分）
+    · 调式切换 FilterChip（大调/小调）
+    · 选中调性信息卡（显示名、调号详情、关系调、音阶音名）
+    · 播放控制（播放/停止 FilledIconButton + 顺阶和弦/音阶 FilterChip + 音频预加载进度指示器）
+    · 调内顺阶和弦列表（罗马数字徽章 + 和弦名 + 音名，按性质着色）
+    · 近关系调 AssistChip 快速跳转行
+  - **LibraryScreen 集成**: 新增五度圈入口卡片（primaryContainer 配色，🎡 图标）
+  - **AppNavigation 集成**: 新增 circle_of_fifths 路由 + AllInclusive 图标
+- **版本号**: v2.72.0 → **v2.73.0**, versionCode 86 → 87
+- **单元测试** 2180 → **2248**（新增 68 个，全部通过）:
+  - **CircleOfFifthsEngineTest** (44): 圆环位置换算(C/G/D/F/a多调)、调号(升号≤6/降号≤5/不同时出现/顺序验证)、
+    等音记谱(C/G/D/F大调音阶拼写字母唯一)、音阶级类与MIDI(钢琴范围21-108)、关系调(可逆性/模式反转)、
+    顺阶和弦罗马数字(大调I~vii°/小调i~VII/性质/3音/升序MIDI)、近关系调(属/下属/关系)、keyInfo完整性
+  - **CircleOfFifthsAudioBuilderTest** (24): 顺阶和弦/音阶渲染非空、长度精确(4800ms/3400ms)、
+    前导与尾部静音区为0、有声音区非零、采样值[-1,1]不削波、时长估算、多调性一致性、小调渲染
+- 编译通过 + assembleDebug 通过
+- 下一步: 真机音频播放验证；可考虑增加和弦进度联动（点击和弦→跳转和弦词典）
+
