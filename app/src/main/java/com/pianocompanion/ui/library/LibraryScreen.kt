@@ -206,6 +206,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Circle of Fifths entry ===
+            item {
+                CircleOfFifthsEntryCard(onClick = {
+                    navController.navigate(Screen.CircleOfFifths.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -754,6 +763,50 @@ private fun ChordProgressionEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "和弦进行词典",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 五度圈入口卡片。
+ * 引导用户进入交互式五度圈工具，学习调性关系、调号与顺阶和弦。
+ */
+@Composable
+private fun CircleOfFifthsEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎡", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "五度圈工具",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "调性关系 · 调号 · 顺阶和弦 · 罗马数字分析",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "五度圈工具",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
