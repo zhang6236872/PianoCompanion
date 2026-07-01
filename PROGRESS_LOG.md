@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.71.0** (全部路线图 Phase 1-4 完成 + 后续增强: 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(... [truncated]
+- 当前版本: **v2.72.0** (全部路线图 Phase 1-4 完成 + 后续增强: 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(... [truncated]
 - 当前分支: main
-- 最新 tag: v2.71.0
+- 最新 tag: v2.72.0
 
-## 健康状态 (2026-07-01 核验)
+## 健康状态 (2026-07-02 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2104 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2180 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0
-- Kotlin 文件: 146 个 / 代码行数: 33000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0
+- Kotlin 文件: 236 个 / 代码行数: 68000+ 行
 
 ## 开发历史
 
@@ -2509,5 +2509,68 @@
       不同根音不同输出、半音阶比大调更长、五声比大调更短、力度影响振幅、
       estimateDurationMs、旋律小调上下行音频不同、空输入处理
   - 单元测试 2019 → **2104** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：AudioTrack 实际播放需真机验证；Canvas 键盘绘制为近似可视化
+
+### 2026-07-02 (自主开发)
+- **v2.72.0: 和弦进行词典 (ChordProgressionLibrary) ✅**
+  - 新增和弦进行参考库，收录 14 种常见和弦进行模板，覆盖流行、爵士、蓝调、古典、
+    民谣、影视、世界音乐等多种风格。支持 12 调性移调、罗马数字分析、连续试听
+    PCM 渲染和可视化钢琴键盘高亮，帮助用户理解、学习和声进行。
+  - **领域层（纯 Kotlin，无 Android 依赖，完全可单测）**:
+    - **ProgressionModels**（数据模型）:
+      · ProgressionMode（大调/和声小调/自然小调）
+      · ProgressionGenre（7 种风格分类: 流行/爵士/蓝调/古典/民谣/影视/世界音乐）
+      · RomanNumeral: 度数(I-VII) + 大小写（大/小/减/增三和弦推断）+ isSeventh + explicitType
+        （explicitType 字段用于处理蓝调属七和弦 I7=dominant_7 等非顺阶和弦类型）
+      · ProgressionTemplate: ID + 名称 + 和弦进行描述 + 风格标签 + 适用调式
+      · ProgressionInstance: 具体调性实例化的和弦序列（根音 ChordRoot + 类型 ChordType）
+    - **ProgressionEngine**（核心引擎）:
+      · `chordRootForDegree`: 度数(0-6) + 调式 + 根音 → 调内顺阶和弦根音
+        （和声/自然小调使用不同半音偏移表）
+      · `chordTypeFor`（三层优先级）: (1) explicitType 优先 → (2) 七和弦用调内类型表
+        (MAJOR_SEVENTH_TYPES/MINOR_SEVENTH_TYPES) → (3) 三和弦用罗马数字大小写推断
+        （大写=大三、小写=小三、°=减三、+=增三）
+      · `instantiate(template, key)`: 将罗马数字模板实例化为具体调性的和弦序列
+      · `findTemplate(id)` / `allTemplates()`: 模板查找与列举
+      · 内置 ~14 个模板: 流行万能 I-V-vi-IV / 50年代 I-vi-IV-V / 爵士 ii-V-I(大调) /
+        ii-V-i(小调) / 蓝调 12 小节 I7-IV7-I7-V7 / 安达卢西亚 i-VII-VI-V /
+        古典终止式 I-IV-V-I / 卡农进行 I-V-vi-iii-IV-I-IV-V /
+        民谣 waltz / 影视 i-VI-III-VII / 多利亚 i-IV-VII-III 等
+    - **ProgressionAudioBuilder**（PCM 音频渲染器）:
+      · 复用 PianoToneSynthesizer 合成钢琴音色
+      · `chordDurationMs(bpm, beats)`: 节拍时长计算（Long 整数除法 60000L/bpm）
+      · `render(instance, bpm)`: 和弦进行→PCM 缓冲区，依次播放每个和弦（非叠加）
+      · 时间轴排列 + 软限幅防削波 + 前导/尾部静音
+  - **Android 层**:
+    - **ProgressionPlayer**: AudioTrack（MODE_STATIC）播放预渲染 PCM
+    - **ProgressionLibraryViewModel**: StateFlow<ProgressionLibraryUiState>，
+      后台线程预渲染，调性/模板/BPM 切换，播放/停止控制
+  - **UI 层 (Material 3 Compose)**:
+    - **ChordProgressionScreen**（~444 行）:
+      · 进行模板列表（风格分类 FilterChip 筛选）
+      · 当前选中进行大标题卡（tertiaryContainer 配色，模板名 + 罗马数字描述）
+      · 调性选择器（12 个根音 FilterChip）
+      · BPM 调节滑块（60-180）
+      · 播放控制栏（播放/停止 FilledIconButton）
+      · 可视化 2 八度钢琴键盘（Canvas 手绘，高亮当前和弦音符）
+      · 和弦序列卡片列表（每步：罗马数字 + 具体和弦名 + 音名）
+    - **LibraryScreen 集成**: 新增和弦进行入口卡片（tertiaryContainer 配色，🎶 图标）
+    - **AppNavigation 集成**: 新增 chord_progression 路由 + QueueMusic 图标
+  - **关键设计决策**:
+    - RomanNumeral 添加 `explicitType` 字段: 初始设计仅用罗马数字大小写 + isSeventh
+      推断和弦类型，但无法正确处理蓝调中的属七和弦（I7 应为 dominant_7 而非 maj7）。
+      添加 explicitType 允许模板指定非顺阶和弦类型。
+    - `chordTypeFor` 重构为三层优先级: (1) explicitType 优先 → (2) 七和弦用调内类型表 →
+      (3) 三和弦用罗马数字大小写推断。同时解决和声小调 V 级（大写→大三和弦）的正确性。
+    - chordDurationMs 使用 Long 整数除法: 60000L/bpm 导致 90BPM 时为 666 而非 666.67，
+      2 拍为 1332ms，测试期望值已据此修正。
+  - 修正 build.gradle.kts 版本号 → v2.72.0 / versionCode 86
+  - 新增 76 个单元测试（2104 → 2180）:
+    - **ProgressionEngineTest** (54): 罗马数字→和弦根音映射（大调7级/小调7级/和声小调）、
+      chordTypeFor 三层优先级、explicitType 覆盖、七和弦调内类型表、罗马数字大小写推断、
+      移调实例化（12 调 × 多模板）、模板查找、模板完整性、风格分类
+    - **ProgressionAudioBuilderTest** (22): PCM 缓冲区长度、静音边界、不削波(±1.0)、
+      确定性（相同参数相同输出）、不同模板不同输出、BPM 影响时长、estimateDurationMs
+  - 单元测试 2104 → **2180** 全部通过；编译 + assembleDebug 通过
   - 已知限制：AudioTrack 实际播放需真机验证；Canvas 键盘绘制为近似可视化
 
