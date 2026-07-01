@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.70.0** (全部路线图 Phase 1-4 完成 + 后续增强: 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(... [truncated]
+- 当前版本: **v2.71.0** (全部路线图 Phase 1-4 完成 + 后续增强: 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(... [truncated]
 - 当前分支: main
-- 最新 tag: v2.70.0
+- 最新 tag: v2.71.0
 
 ## 健康状态 (2026-07-01 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2019 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2104 个用例, 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0
-- Kotlin 文件: 140 个 / 代码行数: 31000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0
+- Kotlin 文件: 146 个 / 代码行数: 33000+ 行
 
 ## 开发历史
 
@@ -2444,4 +2444,70 @@
   - 单元测试 1951 → **2019** 全部通过；编译 + assembleDebug 通过
   - 已知限制：AudioTrack 实际播放需真机验证；Canvas 键盘绘制为近似可视化
     （C 音位置标记简化为圆点，因 DrawScope 不直接支持 drawText）
+
+### 2026-07-01 (自主开发)
+- **v2.71.0: 音阶词典 (ScaleLibrary) ✅**
+  - 新增钢琴音阶参考库，帮助用户查阅、试听和学习各种音阶结构。
+    涵盖 17 种音阶类型 × 12 个根音，支持上行/下行/上下行三种试听模式，
+    可视化钢琴键盘高亮音阶音符位置，展示音级名称、音程步进和指法建议。
+  - **领域层（纯 Kotlin，无 Android 依赖，完全可单测）**:
+    - **ScaleModels**（音阶数据模型）:
+      · ScaleRoot（12 个根音音级类）：升号/降号双记法
+      · ScaleCategory（6 个分类）：大调/小调/教会调式/五声/蓝调/其他
+      · ScaleType（17 种音阶类型）：自然大调 + 3 种小调(自然/和声/旋律) +
+        7 种教会调式(Ionian/Dorian/Phrygian/Lydian/Mixolydian/Aeolian/Locrian) +
+        大/小调五声音阶 + 蓝调音阶 + 半音阶 + 全音阶
+      · 旋律小调支持上行/下行不同音程结构（上行=旋律小调，下行=自然小调）
+      · ScaleInfo：完整音阶表示（上行/下行 MIDI 音符 + 音名 + 完整名称）
+    - **ScaleEngine**（音阶构建引擎）:
+      · `build(root, type)`: 根音 + 音程偏移 → 上行/下行 MIDI 音符列表，
+        钢琴范围钳位(A0~C8)
+      · `formatScaleName`: 完整音阶名称格式化（如 "C自然大调"、"A和声小调"）
+      · `preferFlatsKey`: 五度圈升降号偏好（F/B♭/E♭/A♭ 使用降号）
+      · `relativeMinor` / `relativeMajor`: 关系大小调互逆计算
+      · `degreeNames`: 音阶级数名称（主音/上主音/中音/下属音/属音/下中音/下主音）
+      · `suggestedFingering`: 标准钢琴右手音阶指法建议（1-2-3-1-2-3-4-5 穿指）
+      · `intervalSteps`: 音程步进序列（W=全音 H=半音），修复首步包含根音0的bug
+      · `areEquivalent`: 判断两音阶音程结构是否等价（如大调=Ionian）
+      · `frequencies`: MIDI 音符 → 频率列表
+    - **ScaleAudioBuilder**（音频渲染器）:
+      · 复用 v2.66.0 的 PianoToneSynthesizer 合成钢琴音色
+      · `renderAscending` / `renderDescending` / `renderAscendingDescending`:
+        上行/下行/上下行三种播放模式渲染
+      · 依次播放（非叠加），时间轴排列 + 软限幅防削波
+      · 前导静音（200ms）+ 尾部静音（400ms）
+      · `estimateDurationMs`: 预估渲染时长
+  - **Android 层**:
+    - **ScalePlayer**: AudioTrack（MODE_STATIC）播放预渲染 PCM，播放/停止/完成回调
+    - **ScaleLibraryViewModel**: StateFlow<ScaleLibraryUiState> 不可变状态，
+      后台线程预渲染音频，根音/类型/方向切换
+  - **UI 层 (Material 3 Compose)**:
+    - **ScaleLibraryScreen**（475 行）:
+      · 当前音阶大标题卡片（primaryContainer 配色，36sp 音阶名称 + 关系调）
+      · 可视化 2 八度钢琴键盘（Canvas 手绘，高亮音阶音符白键/黑键）
+      · 播放控制栏：播放/停止 FilledIconButton + 上行/下行/上下行 FilterChip
+      · 根音选择器（12 个 FilterChip）
+      · 音阶类型选择器（按 6 个分类分组）
+      · 音阶信息卡：音名、级数名称、音程步进(W/H)、指法建议
+    - **LibraryScreen 集成**: 新增音阶词典入口卡片（secondaryContainer 配色）
+    - **AppNavigation 集成**: 新增 scale_library 路由
+  - **Bug 修复**:
+    - `ScaleEngine.intervalSteps` 修复首步误包含根音(0)的 bug——
+      原代码 `result.add(intervals.first())` 将根音偏移 0 作为第一步加入，
+      导致步进序列多一个 0 且长度+1，大调步进显示为 [0,2,2,1,2,2,2,1] 而非 [2,2,1,2,2,2,1]
+    - F 利底亚(Lydian)测试期望值修正：F Lydian = F,G,A,B,C,D,E,F，
+      第5音为 C(72) 而非 C#(73)，原测试注释和期望值均有误
+  - 修正 build.gradle.kts 版本号 → v2.71.0 / versionCode 85
+  - 新增 85 个单元测试:
+    - **ScaleEngineTest** (~55): C大调/A小调/G大调/F大调上下行序列验证、
+      和声小调增二度、旋律小调上下行不同、多利亚/弗利吉亚/利底亚/混合利底亚调式、
+      大/小调五声音阶、蓝调音阶、半音阶、全音阶、名称格式化(升/降号)、
+      关系大小调互逆、级数名称、指法建议(1-5范围)、音程步进(WWHWWWH)、
+      步进总和=12、分类分组(6类)、等价音阶、钢琴范围钳位(全组合)、noteCount
+    - **ScaleAudioBuilderTest** (~30): 上行/下行/上下行渲染缓冲区长度、
+      前导/尾部静音边界、不削波(±1.0)、音符区域非零内容、确定性(相同参数相同输出)、
+      不同根音不同输出、半音阶比大调更长、五声比大调更短、力度影响振幅、
+      estimateDurationMs、旋律小调上下行音频不同、空输入处理
+  - 单元测试 2019 → **2104** 全部通过；编译 + assembleDebug 通过
+  - 已知限制：AudioTrack 实际播放需真机验证；Canvas 键盘绘制为近似可视化
 
