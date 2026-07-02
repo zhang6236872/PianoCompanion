@@ -224,6 +224,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Note reading trainer entry ===
+            item {
+                NoteReadingEntryCard(onClick = {
+                    navController.navigate(Screen.NoteReading.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -861,6 +870,51 @@ private fun CadenceLibraryEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "终止式参考库",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 识谱训练入口卡片。
+ * 引导用户进入五线谱识谱训练工具：在五线谱上显示音符，
+ * 测试识谱能力，可选不同难度与谱号，并提供音频反馈与进度跟踪。
+ */
+@Composable
+private fun NoteReadingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎹", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "识谱训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "五线谱识谱练习 · 高音/低音谱号 · 多级难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "识谱训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }

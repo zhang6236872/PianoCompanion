@@ -34,6 +34,7 @@ import com.pianocompanion.ui.scale.ScaleLibraryScreen
 import com.pianocompanion.ui.progression.ChordProgressionScreen
 import com.pianocompanion.ui.circle.CircleOfFifthsScreen
 import com.pianocompanion.ui.cadence.CadenceLibraryScreen
+import com.pianocompanion.ui.notation.NoteReadingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -49,6 +50,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ChordProgression : Screen("chord_progression", "和弦进行", Icons.Filled.QueueMusic)
     data object CircleOfFifths : Screen("circle_of_fifths", "五度圈", Icons.Filled.AllInclusive)
     data object CadenceLibrary : Screen("cadence_library", "终止式", Icons.Filled.Flag)
+    data object NoteReading : Screen("note_reading", "识谱训练", Icons.Filled.MenuBook)
 }
 
 private val screens = listOf(
@@ -184,6 +186,9 @@ fun AppScaffold() {
             }
             composable(Screen.CadenceLibrary.route) {
                 CadenceLibraryScreen()
+            }
+            composable(Screen.NoteReading.route) {
+                NoteReadingScreen()
             }
         }
     }
