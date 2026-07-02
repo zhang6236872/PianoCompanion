@@ -2671,3 +2671,51 @@
   - git tag v2.74.0 已推送
   - 下一步: 可考虑增加终止式音频对照听辨练习；或增加终止式在不同风格(古典/爵士/流行)中的实例分析
 
+### 2026-07-03 (自主开发)
+- **v2.75.0: 识谱训练器 (Note Reading Trainer) — ✅ 完成**
+  - 新增交互式五线谱识谱训练工具，帮助用户练习在高音/低音谱号上快速识别音符：
+    · 三档难度: 初级(仅线上间内自然音)、中级(含加线/下加线)、高级(随机谱号 + 位置扩展)
+    · 两种谱号: 高音谱号(TREBLE)与低音谱号(BASS)
+    · 4选1答题模式: 显示一个五线谱音符，从4个选项中选择正确的音名
+    · 音频反馈: 答题后用钢琴音色播放该音符
+    · 跨会话进度跟踪: 按谱号×难度累计统计（总题数、正确数、连击、最佳连击）
+    · 实时统计面板: 本轮答题数/正确数、当前连击、准确率
+  - **新文件（7个源码 + 4个测试 = 11个文件）**:
+    - **NoteReadingModels.kt** (~81行): Clef枚举(TREBLE/BASS)、Difficulty枚举(BEGINNER/INTERMEDIATE/ADVANCED)、Question(谱号/谱表位置staffStep/MIDI/音名/选项列表/难度)、AnswerRecord(问题/选择/正确性/时间戳)
+    - **NoteReadingEngine.kt** (~167行, `class`): 纯Kotlin出题引擎
+      · diatonicStepToMidi: 谱号×staffStep(全音位置序数)→MIDI音符号（高音谱号基准E4=64/低音谱号基准G2=43）
+      · 难度池: 初级(全音位置0-9)、中级(0-14含加线)、高级(0-14随机谱号)
+      · withSeed确定性随机: 种子驱动出题，完全可复现/可测试
+      · 构建4个干扰选项（同音名不同八度 + 近邻自然音）
+    - **NoteReadingSession.kt** (~140行): 会话状态机
+      · 生命周期: 出题(IDLE/ASKING)→答题→判定(JUDGE)→下一题
+      · 连击跟踪: currentStreak/bestStreak 本轮记录
+      · 答题记录: answerRecords 列表
+    - **NoteReadingProgress.kt** (~239行): 跨会话进度跟踪
+      · 谱号×难度累计统计: PerDifficultyStats(total/correct/streak/bestStreak)
+      · toJson/fromJson JSON序列化 + 容错（损坏JSON→空进度）
+      · recordAnswer: 更新统计
+      · summary: 汇总信息
+    - **NoteReadingAudioBuilder.kt** (~93行): 复用PianoToneSynthesizer渲染PCM
+      · 单音渲染: 前导静音 + 音符 + 尾部静音 → 软限幅防削波
+    - **NoteReadingPlayer.kt** (~137行): AudioTrack MODE_STATIC 播放器
+    - **NoteReadingViewModel.kt** (~206行): AndroidViewModel + StateFlow<NoteReadingUiState>
+      · 谱号/难度选择、开始/答题/下一题、播放音频
+      · 协程后台渲染 + Handler完成轮询
+    - **NoteReadingScreen.kt** (~638行): Material 3 Compose UI
+      · Canvas自定义五线谱渲染: 5条线 + 谱号Unicode符号(𝄞/𝄢) + 加线 + 实心椭圆音符头 + 符干
+      · 答题区: 4个选项按钮（正确=绿色/错误=红色高亮反馈）
+      · 统计面板: 答题数/连击/准确率卡片
+      · 谱号×难度选择器(FilterChip)
+      · 播放按钮（钢琴音色试听）
+      · 动画: 答题反馈缩放动画(animateFloatAsState)
+    - **NoteReadingEngineTest.kt** (~368行): 谱表位置→MIDI映射验证(高音/低音多位置)、难度池范围验证、确定性出题(相同种子→相同序列)、干扰选项正确性、音名生成
+    - **NoteReadingSessionTest.kt** (~292行): 会话生命周期(出题→答题→判定→下一题)、连击增减与清零、答题记录完整性、多轮统计
+    - **NoteReadingProgressTest.kt** (~235行): 累计统计更新、JSON往返(toJson→fromJson数据完整)、损坏JSON容错、summary汇总
+    - **NoteReadingAudioBuilderTest.kt** (~224行): 缓冲区非空/长度正确、前导与尾部静音区为0、有声音区非零、采样值[-1,1]不削波、不同MIDI产生不同音频
+  - **修改文件**: AppNavigation.kt(新增note_reading路由+MenuBook图标), LibraryScreen.kt(新增🎹识谱训练入口卡片/tertiaryContainer配色), build.gradle.kts(versionCode 88→89, versionName 2.74.0→2.75.0)
+  - **版本号**: v2.74.0 → **v2.75.0**, versionCode 88 → 89
+  - **单元测试**: 新增约80+个用例（Engine/Session/Progress/AudioBuilder），全部通过
+  - 编译通过 + testDebugUnitTest 通过 + assembleDebug 通过
+  - 下一步: 可考虑增加计时模式（限时答题）、定制训练（如只练加线音）、或与听音训练联动
+
