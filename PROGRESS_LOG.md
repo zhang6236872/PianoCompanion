@@ -2719,3 +2719,54 @@
   - 编译通过 + testDebugUnitTest 通过 + assembleDebug 通过
   - 下一步: 可考虑增加计时模式（限时答题）、定制训练（如只练加线音）、或与听音训练联动
 
+### v2.76.0 — 音程识别训练器(Interval Identification Trainer) (2026-07-03)
+- **目标**：新增音程识别训练功能模块。用户在五线谱上看到两个音符，需判断它们之间的
+  音程（度数 + 性质）。与识谱训练器（单音符识别）和听音训练（纯听觉）互补——本模块
+  是**视觉音程判断**，训练用户快速读谱时识别音程关系
+- **技术方案**：纯 Kotlin 领域层 + Android ViewModel + Compose UI（与 NoteReadingTrainer 架构完全一致）
+  - **新文件（8个源码 + 4个测试 = 12个文件）**:
+    - **IntervalModels.kt** (~206行): 纯 Kotlin 数据模型
+      · `IntervalClef`(TREBLE/BASS)、`IntervalDifficulty`(BEGINNER不含性质/INTERMEDIATE/ADVANCED含性质)
+      · `IntervalNumber`(一度~八度, diatonicSteps, isPerfect标记纯音程系列)
+      · `IntervalQuality`(纯/大/小/增/减)
+      · `Interval`(度数+性质, displayName如"大三度", classify()按度数+半音差查表分类)
+      · `IntervalQuestion`(两音符staffStep/MIDI/音名/音程/选项/正确答案)
+      · `IntervalAnswerRecord`(题目/答案/正确性/正确答案)
+    - **IntervalEngine.kt** (~316行): 纯 Kotlin 出题引擎
+      · 难度跨度控制: 初级最大五度(4步)/中级最大七度(6步)/高级最大八度(7步)
+      · diatonicStepToMidi: 谱表位置→MIDI(与NoteReadingEngine算法一致)
+      · 干扰选项策略: 不含性质时随机其他度数; 含性质时同度数不同性质+相近度数
+      · withSeed确定性随机: 相同种子→相同题目序列, 完全可复现
+      · 保证较高音始终在较低音上方
+    - **IntervalSession.kt** (~140行): 会话状态机
+      · 生命周期: start→submit→next→reset
+      · 连击跟踪: currentStreak/bestStreak
+      · accuracy计算, history记录, clef()/difficulty()访问器
+    - **IntervalProgress.kt** (~239行): 跨会话进度跟踪
+      · 谱号×难度独立统计(累计答题/正确/会话数/最佳连击/最佳准确率)
+      · toJson/fromJson JSON序列化(手动解析, 无外部依赖) + 容错(损坏JSON→空进度)
+      · overallAccuracy 全局汇总
+    - **IntervalAudioBuilder.kt** (~111行): 旋律性音程音频渲染
+      · 依次播放: 前导静音→较低音→间隔→较高音→尾部静音
+      · 复用PianoToneSynthesizer + MusicUtils.midiToFrequency
+      · softLimit软限幅防削波
+    - **IntervalPlayer.kt** (~Android AudioTrack MODE_STATIC播放器): play/stop/replay/release + 完成回调
+    - **IntervalViewModel.kt** (~AndroidViewModel + StateFlow<IntervalUiState>): 连接领域层与UI
+    - **IntervalTrainerScreen.kt** (~Material 3 Compose UI):
+      · SetupPanel: 谱号FilterChip(高音/低音) + 难度FilterChip(初级/中级/高级)
+      · PracticePanel: Canvas自定义五线谱渲染两个音符(实心椭圆音符头+符干+加线)
+      · 4个选项按钮(正确=绿色/错误=红色高亮反馈)
+      · 统计面板: 答题数/连击/准确率
+      · 播放按钮: 钢琴音色播放旋律性音程(低音→高音)
+      · 答题反馈缩放动画
+    - **测试文件(4个, 92个用例)**:
+      · IntervalEngineTest.kt(37个): 谱表位置→MIDI映射、音程分类(大/小/纯/增/减)、确定性出题、选项唯一性、跨度约束、两音高低关系
+      · IntervalSessionTest.kt(21个): 会话生命周期、连击机制、答题记录、准确率计算、边界情况
+      · IntervalProgressTest.kt(17个): 累计统计、多组合独立跟踪、JSON往返一致性、损坏JSON容错
+      · IntervalAudioBuilderTest.kt(17个): 缓冲区长度、静音区验证、不削波、确定性渲染、不同音程产生不同音频
+  - **修改文件**: AppNavigation.kt(新增interval_trainer路由+Straighten图标), LibraryScreen.kt(新增📐音程识别训练入口卡片/secondaryContainer配色), build.gradle.kts(versionCode 89→90, versionName 2.75.0→2.76.0)
+  - **版本号**: v2.75.0 → **v2.76.0**, versionCode 89 → 90
+  - **单元测试**: 新增92个用例(37+21+17+17), 全部通过
+  - 编译通过 + testDebugUnitTest通过 + assembleDebug通过
+  - 下一步: 可考虑增加和声音程模式(同时播放两音而非旋律)、反向音程识别、或与听音训练整合
+
