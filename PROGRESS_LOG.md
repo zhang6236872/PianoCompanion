@@ -2629,3 +2629,45 @@
 - 编译通过 + assembleDebug 通过
 - 下一步: 真机音频播放验证；可考虑增加和弦进度联动（点击和弦→跳转和弦词典）
 
+### 2026-07-02 (自主开发)
+- **v2.74.0: 终止式参考库 (Cadence Library) — ✅ 完成**
+  - 新增交互式终止式学习工具，覆盖和声学6种核心终止式类型：
+    · 完满完全终止 (PAC): V⁷→I（两和弦均原位）
+    · 不完满完全终止 (IAC): V⁶→I（属和弦第一转位）
+    · 变格终止 (PC): IV→I / iv→i（"阿门终止式"）
+    · 阻碍终止 (DC): V→vi（大调）/ V→VI（小调）
+    · 半终止 (HC): IV→V（乐句悬置逗号）
+    · 弗里几亚半终止 (PHC): iv⁶→V（仅小调，西班牙/弗拉明戈色彩）
+  - **新文件（6个源码 + 2个测试 = 8个文件）**:
+    - **CadenceModels.kt** (~156行): CadenceType枚举(6类型×分类×描述×大小调支持)、CadenceCategory(4分类)、CadenceMode(大调/和声小调)、CadenceStep(级数+和弦类型+转位+罗马数字+voicing)、CadenceInstance(实例化终止式+chordCount/finalChord/allMidiNotes属性)
+    - **CadenceEngine.kt** (~329行, `object`): 纯Kotlin终止式构建引擎
+      · 音阶偏移表: 大调[0,2,4,5,7,9,11] / 和声小调[0,2,3,5,7,8,11]
+      · 顺阶三和弦质量表: 大调(I大ii小iii小IV大V大vi小vii°减) / 小调(i小ii°减III+增iv小V大VI大vii°减)
+      · chordRootForDegree: 主音+偏移→ChordRoot（支持12调性移调）
+      · romanNumeral: 级数+类型+转位→罗马数字（大写大三/小写小三/°减/+/半减ø/⁷七和弦/ᴹ⁷大七/⁶第一转位/⁶₄第二转位/⁴₂第三转位）
+      · buildDiatonicStep: 构建单步（含useDominantSeventh开关→V7属七扩展）
+      · instantiate: 终止式类型→StepSpec列表→实例化（6种终止式各自的声部进行规格）
+      · formatKeyName: 调性名称格式化（大调用大写字母，小调用小写字母）
+      · allCadencesByCategory/supportedModes/resolutionRoot/preferFlatsFor 辅助方法
+    - **CadenceAudioBuilder.kt** (~128行): 复用PianoToneSynthesizer渲染终止式PCM音频
+      · 柱式和弦混合（所有音同时发声）→ 时间轴排列 → 软限幅防削波
+      · 前导200ms静音 + 每和弦1000ms + 间隔100ms + 尾部500ms静音
+      · estimateDurationMs 时长估算（2和弦=2800ms）
+    - **CadencePlayer.kt** (~120行): AudioTrack MODE_STATIC 播放，Handler 完成轮询
+    - **CadenceLibraryViewModel.kt** (~176行): AndroidViewModel + StateFlow，调性/终止式选择+协程后台预渲染
+    - **CadenceLibraryScreen.kt** (~568行): Material 3 Compose UI
+      · 终止式分类列表（AUTHENTIC/PLAGAL/DECEPTIVE/HALF四类卡片）
+      · 选中终止式详情卡（罗马数字摘要、调性名称、和弦序列步进展示）
+      · 钢琴键盘可视化（2八度，高亮当前和弦音符，颜色区分步骤）
+      · 调性选择器（12根音FilterChip + 大调/小调切换）
+      · 播放/停止控制 + 音频预加载进度
+      · 每种终止式的详细教学说明文字
+    - **CadenceEngineTest.kt** (~561行, 55项测试): 音阶偏移表/顺阶三和弦质量/级数→根音映射/罗马数字格式化(大写/小写/°/+/ø/⁷/ᴹ⁷/⁶/⁶₄/⁴₂)/buildDiatonicStep(MIDI验证)/6种终止式实例化/12调性移调/调性名称格式化/allCadencesByCategory/supportedModes/resolutionRoot/preferFlatsFor/实例属性/MIDI音符精确验证(PAC/Plagal/Deceptive/Phrygian)
+    - **CadenceAudioBuilderTest.kt** (~227行, 18项测试): 缓冲区非空/长度精确/前导尾部静音区为0/有声音区非零/采样值[-1,1]不削波/时长估算/确定性渲染/不同终止式产生不同音频/不同调性产生不同音频/velocity影响振幅/小调渲染/12调性渲染/空终止式处理
+  - **修改文件**: AppNavigation.kt(新增cadence_library路由+Flag图标), LibraryScreen.kt(新增🎼入口卡片), build.gradle.kts(versionCode 87→88, versionName 2.73.0→2.74.0)
+  - **版本号**: v2.73.0 → **v2.74.0**, versionCode 87 → 88
+  - **单元测试** 2248 → **2321**（新增 73 个，全部通过）
+  - 编译通过 + testDebugUnitTest 通过 + assembleDebug 通过
+  - git tag v2.74.0 已推送
+  - 下一步: 可考虑增加终止式音频对照听辨练习；或增加终止式在不同风格(古典/爵士/流行)中的实例分析
+
