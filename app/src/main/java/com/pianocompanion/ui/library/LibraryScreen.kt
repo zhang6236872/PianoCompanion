@@ -215,6 +215,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Cadence library entry ===
+            item {
+                CadenceLibraryEntryCard(onClick = {
+                    navController.navigate(Screen.CadenceLibrary.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -807,6 +816,51 @@ private fun CircleOfFifthsEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "五度圈工具",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 终止式参考库入口卡片。
+ * 引导用户进入终止式学习工具，了解完全终止/变格终止/阻碍终止/半终止等
+ * 乐句结尾和弦进行，含音频试听和罗马数字分析。
+ */
+@Composable
+private fun CadenceLibraryEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎼", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "终止式参考库",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "完全终止 · 变格终止 · 阻碍终止 · 半终止 · 弗里几亚半终止",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "终止式参考库",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }
