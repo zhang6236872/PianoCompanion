@@ -242,6 +242,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Chord reading trainer entry ===
+            item {
+                ChordReadingTrainerEntryCard(onClick = {
+                    navController.navigate(Screen.ChordReading.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -969,6 +978,51 @@ private fun IntervalTrainerEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "音程训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 和弦识别训练入口卡片。
+ * 引导用户进入和弦识别训练工具：在五线谱上显示叠置的和弦，
+ * 测试用户判断和弦类型（大三/小三/减三/增三/七和弦）的能力。
+ */
+@Composable
+private fun ChordReadingTrainerEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎸", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "和弦识别训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "看五线谱判断和弦 · 三和弦/七和弦 · 多级难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "和弦训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
