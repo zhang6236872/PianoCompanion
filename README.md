@@ -16,11 +16,34 @@
 - 📂 **Score Library** — Import and manage MusicXML/MIDI sheet music files
 - 🔇 **Fully Offline** — All processing runs locally on your device, no internet required
 
+### Music Theory Tools
+- 🎹 **Sight Reading** — Deterministic melody generator for unlimited practice material
+- 👂 **Ear Training** — Interval / chord / scale identification with synthesized piano tones
+- 🥁 **Rhythm Training** — Listen to a rhythm, tap it back, get scored
+- 🎵 **Chord Dictionary** — 18 chord types × 12 roots × 4 inversions with audio
+- 🎶 **Scale Library** — 17 scale types × 12 roots with fingering suggestions
+- 🎼 **Chord Progressions** — 14 common progressions (pop / jazz / blues / canon) with Roman-numeral analysis
+- 🎡 **Circle of Fifths** — Interactive key wheel with diatonic chords and closely-related keys
+- 📚 **Cadence Library** — 6 cadence types × 12 keys with voice-leading playback
+- 📖 **Note Reading Trainer** — Sight-read single notes on the staff (treble/bass, 3 difficulty levels)
+- 📐 **Interval Trainer** — Identify intervals visually from two notes on the staff
+
 ### Planned Features
 - 📸 **OMR Recognition** — Photograph sheet music and auto-convert to digital format
 - 📊 **Practice Statistics** — Track accuracy, error patterns, and progress over time
 - 🎵 **Built-in Metronome** — Synced with auto page turning
 - 🐌 **Slow Practice Mode** — Reduced tempo following for practice sessions
+
+## 📸 Screenshots
+
+> Rendered headlessly via [Paparazzi](https://github.com/cashapp/paparazzi) (no device/emulator required).
+
+<p align="center">
+  <img src="screenshots/library.png" width="200" alt="乐谱库 Library" />
+  <img src="screenshots/circle_of_fifths.png" width="200" alt="五度圈 Circle of Fifths" />
+  <img src="screenshots/note_reading.png" width="200" alt="识谱训练 Note Reading" />
+  <img src="screenshots/interval_trainer.png" width="200" alt="音程训练 Interval Trainer" />
+</p>
 
 ## 🏗️ Architecture
 
@@ -107,10 +130,17 @@ PianoCompanion/
 
 ## 🧪 Testing
 
-Unit tests cover:
+The project has **2500+ unit tests** (100% passing), covering:
+
 - `MusicUtils` — MIDI/frequency conversions, note name parsing
 - `PitchDetector` — YIN algorithm accuracy with synthesized sine waves
 - `OnlineDTW` — Score following with correct, wrong, and extra notes
+- **OMR engine** — Staff detection, noteheads, rhythm analysis, rests, key/time signatures, deskew, denoise, keystone correction (250+ tests)
+- **Music theory** — Chord/Scale/Progression/Cadence engines, Circle of Fifths, KeyDetector, Transposer
+- **Training modules** — Ear/Rhythm/Note-reading/Interval trainers (deterministic seeds, session state machines, progress persistence)
+- **Audio builders** — PCM rendering (PianoToneSynthesizer), buffer lengths, no-clipping, determinism
+
+**Screenshot tests** (via [Paparazzi](https://github.com/cashapp/paparazzi)) render key Compose screens headlessly to PNG — no device or emulator required. See the `📸 Screenshots` section above. Run with `gradle :app:testDebugUnitTest` and view the report at `app/build/reports/paparazzi/debug/`.
 
 ## 📝 License
 
