@@ -64,6 +64,7 @@
 | 2p | **OMR 反复跳房子(volta)检测** | 🟡 P1 | VoltaDetector: 顶线上方方括号 + 左右竖钩验证 + 序号连通块识别；修复 SignatureDetector 误判序号数字为拍号的 bug ✅ (v2.19.0) |
 | 2q | **OMR 高大旗形休止符与四分休止符区分** | 🟡 P1 | tallFlaggedRest: 在四分休止符前拦截高度≥1.5间距的旗形休止符 + countStrongFlags 强对比旗钩计数(中位数基线+高对比阈值)区分旗形结构与锯齿笔画 ✅ (v2.20.0) |
 | 2r | **OMR 延音线(tie)检测** | 🟡 P1 | TieDetector: 列投影覆盖率法(≥75%)检测同音高符头间连续弧线 + 音高判别(Y差异≤0.5间距排除slur) + 延音线链(A→B→C)支持；OmrPipeline 被 tie 的第二个音符时值合并到第一个 ✅ (v2.25.0) |
+| 2s | **调号识别训练 (KeySigTrainer)** | 🟡 P1 | keysig/: 五度圈调号出题引擎(KeySigEngine 30 种调性) + 纯 Kotlin 会话/进度(JSON) + AudioTrack 音阶试听 + Compose 五线谱 Canvas 渲染(高低音谱号升降号) + 3 难度(初级0-3/中级0-5/高级大调+小调) + 4 选项选择题 + LibraryScreen 入口卡片；53 单元测试通过 ✅ (v2.79.0) |
 | 3 | **云端同步传输层** | 🟢 P2 | 接入 Firebase/Google Drive, 复用已就绪的 SyncEngine |
 | 4 | **真机端到端测试** | 🔴 P0 | 需物理设备验证音频全链路 |
 

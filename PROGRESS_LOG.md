@@ -2878,3 +2878,63 @@ v2.77.0 → **v2.78.0**
 - 视奏三部曲已完成，可考虑：和声听辨训练（耳朵版和弦识别）、
   节奏型识别训练、更多页面截图补充、或其他功能增强
 
+---
+
+## v2.79.0 — 调号识别训练 (Key Signature Identification Trainer)
+
+**日期**: 2026-07-04
+**分支**: feature/key-signature-trainer → main
+**类型**: 新功能（视唱练耳训练模块）
+
+### 完成内容
+新增「调号识别训练」模块 — 一个全新的音乐理论视唱练耳训练器，
+基于五度圈调号系统，让用户通过看五线谱上的调号（升降号组合）判断调性。
+
+**架构**（纯 Kotlin 领域层 + Android UI/音频层分离，与 ChordReading 一致）：
+
+领域层（`keysig/` 包，7 个文件，纯 Kotlin 无 Android 依赖）：
+- `KeySigModels.kt` — 数据模型：KeySigClef(TREBLE/BASS)、KeySigDifficulty
+  (BEGINNER/INTERMEDIATE/ADVANCED)、KeyMode、AccidentalType、KeyInfo
+  (含 displayName/scaleMidis/accidentalSteps/五线谱位置表)、KeySigQuestion、
+  KeySigAnswerRecord
+- `KeySigEngine.kt` — 出题引擎：基于五度圈调号表（升号调 F-C-G-D-A-E-B 顺序、
+  降号调 B-E-A-D-G-C-F 顺序）生成题目；30 种调性候选池（15 大调 + 15 小调）；
+  4 选项 + 干扰项策略（关系调 + 相邻升降号数）；确定性随机数（注入种子可测试）
+- `KeySigSession.kt` — 会话状态机：start/submit/next/reset，跟踪连击/历史/准确率
+- `KeySigProgress.kt` — 跨会话进度：per clef+difficulty 统计，手动 JSON 序列化
+- `KeySigAudioBuilder.kt` — PCM 渲染：将调性音阶各音依次合成（旋律上行），
+  复用 PianoToneSynthesizer，软限幅
+- `KeySigPlayer.kt` — AudioTrack (MODE_STATIC) 播放器：prepare/play/stop/release
+
+UI 层（`ui/keysig/`）：
+- `KeySigScreen.kt`（580 行）— Material 3 Compose：配置面板（谱号/难度选择 + 进度展示 +
+  调号知识说明）+ 练习面板（五线谱 Canvas 渲染高低音谱号调号升降号 + 4 选项答题 +
+  试听音阶 + 答题反馈 + 会话统计）
+
+**集成**：
+- `AppNavigation.kt` — Screen.KeySignature 路由注册
+- `LibraryScreen.kt` — KeySignatureTrainerEntryCard 入口卡片（secondaryContainer 配色）
+
+**难度设计**：
+- 初级：仅大调，0-3 个升降号（C/G/D/A/F/B♭/E♭ 大调，7 种）
+- 中级：仅大调，最多 5 个升降号（11 种）
+- 高级：大调 + 小调，最多 7 个升降号（30 种，需区分关系大小调）
+
+**测试**（3 个测试文件，53 用例全部通过）：
+- `KeySigEngineTest.kt` — 候选池/调名/升降号数/五线谱位置/出题确定性/
+  关系调/音阶音程/step→MIDI（26 用例）
+- `KeySigSessionTest.kt` — 会话生命周期/答题/连击/准确率/历史/重置（17 用例）
+- `KeySigProgressTest.kt` — 累计统计/JSON 往返/隔离性/容错（13 用例）
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 53 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.77.0 → **v2.79.0** (versionCode 91 → 92)
+
+### 下一步计划
+- 视唱练耳训练套件继续扩充：可考虑音程听辨训练增强、节奏型识别训练、
+  或为调号训练添加五度圈可视化学习模式
+

@@ -251,6 +251,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Key signature trainer entry ===
+            item {
+                KeySignatureTrainerEntryCard(onClick = {
+                    navController.navigate(Screen.KeySignature.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1023,6 +1032,49 @@ private fun ChordReadingTrainerEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "和弦训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 调号识别训练入口卡片。
+ */
+@Composable
+private fun KeySignatureTrainerEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎼", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "调号识别训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "看五线谱调号判断调性 · 五度圈 · 大调/小调",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "调号训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }
