@@ -2811,3 +2811,70 @@
 - 下一步: 可为更多页面（和弦词典/音阶库/终止式/听音/节奏训练）补充截图；
   或回到功能开发（如和声音程模式、练习报告导出增强等）
 
+---
+
+## v2.78.0 — 和弦识别训练 (2026-07-04)
+
+### 完成内容
+**和弦识别训练（Chord Identification Trainer）** — 视奏三部曲的终章：
+单音识别 (v2.75.0) → 音程识别 (v2.76.0) → **和弦识别 (v2.78.0)**
+
+在五线谱上显示叠置的和弦（3-4 个音符同时排列），用户需判断和弦类型：
+- 三和弦阶段：大三 / 小三 / 减三 / 增三
+- 七和弦阶段：大七 / 属七 / 小七 / 半减七
+
+### 功能特性
+- **三级难度系统**：
+  - 初级：大三/小三三和弦（根音避开 B，避免减三）
+  - 中级：加入减三和弦（含 B 根音）
+  - 高级：七和弦（四音叠置）
+- **双谱号支持**：高音谱号（底线 E4）/ 低音谱号（底线 G2）
+- **柱式和弦音频**：所有音符同时发声，叠加后软限幅防削波
+- **答题反馈**：对错提示、正确答案显示、连击/准确率统计
+- **跨会话进度**：SharedPreferences 持久化，按谱号+难度隔离统计
+- **中文界面**：含和弦知识说明卡片
+
+### 技术实现（16 个文件，3005 行新增）
+**纯 Kotlin 领域层**（`com.pianocompanion.chordreading`，无 Android 依赖）：
+- `ChordReadingModels.kt` — 枚举（Clef/Difficulty/ChordType）+ 数据类（Question/AnswerRecord）
+- `ChordReadingEngine.kt` — 出题引擎：确定性随机（可注入种子）、和弦分类算法
+  （classifyTriad/classifySeventh/classify，基于 MIDI 半音间隔查表）
+- `ChordReadingSession.kt` — 会话状态机：start/submit/next/reset，连击/历史跟踪
+- `ChordReadingProgress.kt` — 跨会话进度：手动 JSON 序列化（无外部依赖）
+- `ChordReadingAudioBuilder.kt` — 柱式和弦 PCM 渲染：音符缓冲区叠加 + 软限幅
+
+**Android 层**：
+- `ChordReadingPlayer.kt` — AudioTrack MODE_STATIC 播放
+- `ChordReadingViewModel.kt` — StateFlow<UiState>，协程异步音频准备
+
+**Compose UI**：
+- `ChordReadingScreen.kt`（648 行）— Canvas 绘制叠置和弦五线谱（同 X 位置音符头 +
+  连接符干 + 去重加线），配置面板/练习面板/答题反馈/统计卡片
+
+**集成**：
+- `AppNavigation.kt` — Screen.ChordReading 路由注册
+- `LibraryScreen.kt` — ChordReadingTrainerEntryCard 入口卡片（tertiaryContainer 配色）
+
+**测试**（4 个测试文件，55+ 用例）：
+- `ChordReadingEngineTest.kt` — 谱表位置/MIDI/和弦分类/出题确定性/难度规则（29 用例）
+- `ChordReadingSessionTest.kt` — 会话生命周期/连击/准确率（19 用例）
+- `ChordReadingProgressTest.kt` — 累计统计/JSON 往返/隔离性（12 用例）
+- `ChordReadingAudioBuilderTest.kt` — 空输入/静音区/范围/非零验证（11 用例）
+
+**Paparazzi 截图测试**：
+- `ScreenPreviews.kt` — ChordReadingPreviewContent + PreviewChordStaff（叠置和弦绘制）
+- `ScreenshotTest.kt` — renderChordReadingTrainer 截图
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+- ✅ git push origin main + tag v2.78.0 成功
+
+### 版本号
+v2.77.0 → **v2.78.0**
+
+### 下一步计划
+- 视奏三部曲已完成，可考虑：和声听辨训练（耳朵版和弦识别）、
+  节奏型识别训练、更多页面截图补充、或其他功能增强
+
