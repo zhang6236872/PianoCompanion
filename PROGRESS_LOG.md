@@ -7,12 +7,12 @@
 - 当前分支: main
 - 最新 tag: v2.72.0
 
-## 健康状态 (2026-07-02 核验)
+## 健康状态 (2026-07-03 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2180 个用例, 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2517 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0
-- Kotlin 文件: 236 个 / 代码行数: 68000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0
+- Kotlin 文件: 240 个 / 代码行数: 70000+ 行
 
 ## 开发历史
 
@@ -2769,4 +2769,45 @@
   - **单元测试**: 新增92个用例(37+21+17+17), 全部通过
   - 编译通过 + testDebugUnitTest通过 + assembleDebug通过
   - 下一步: 可考虑增加和声音程模式(同时播放两音而非旋律)、反向音程识别、或与听音训练整合
+
+### v2.77.0 — Paparazzi 无头截图测试基础设施 + README 截图展示 (2026-07-03)
+- **目标**：为这个 emoji 重度使用的 App 建立**无头（无需真机/模拟器）UI 截图测试**基础设施，
+  实现「代码变更 → 自动渲染关键页面 PNG → 视觉回归」的闭环，并为 GitHub README
+  提供真实截图展示。此前 PROGRESS_LOG 一再标注「Canvas 键盘绘制为近似可视化」、
+  「AudioTrack 实际播放需真机验证」，但 UI 布局本身一直没有自动化截图验证。
+- **技术方案**：接入 [Paparazzi](https://github.com/cashapp/paparazzi) 1.3.4 ——
+  基于 Android layoutlib（Robolectric）在纯 JVM 内渲染 Compose UI，无需设备。
+- **新增依赖配置**:
+  - `gradle/libs.versions.toml`: 新增 `paparazzi = "1.3.4"` 版本 + plugin 声明
+  - `build.gradle.kts` (root): `alias(libs.plugins.paparazzi) apply false`
+  - `app/build.gradle.kts`: 应用 `paparazzi` 插件 +
+    `testOptions.unitTests.isIncludeAndroidResources = true`
+- **新增测试文件（3个）**:
+  - **EmojiSmokeTest.kt** (~46行): 冒烟测试，验证 layoutlib 对 emoji（🎼🎹🎡📐）
+    + CJK（乐谱库/和弦/音阶）+ 音乐符号（𝄞 𝄢 F♯ B♭）的渲染能力——确认截图路径
+    对本 emoji 重度 App 可行（非 tofu/缺字方块）
+  - **ScreenPreviews.kt** (~724行): 关键页面的纯 Compose 预览内容（无 ViewModel 依赖，
+    使用确定性状态/remember），包含:
+    · `LibraryScreenPreviewContent`: 乐谱库主界面（10个功能入口卡片 + 2张示例乐谱卡）
+    · `CircleOfFifthsPreviewContent`: 五度圈（Canvas 12扇区圆环 + 调性信息卡 + 顺阶和弦列表 + 近关系调）
+    · `NoteReadingPreviewContent`: 识谱训练设置面板（谱号/难度选择 + 五线谱预览）
+    · `IntervalTrainerPreviewContent`: 音程训练设置面板（双音符五线谱预览）
+    · `PreviewStaff`: 共享五线谱 Canvas 绘制组件（5线/谱号符号/音符头椭圆/符干/加线）
+  - **ScreenshotTest.kt** (~94行): 4个关键页面截图测试（PIXEL_5 设备配置 + Material 3 主题）
+    · 截图输出到 `app/build/reports/paparazzi/debug/images/`
+- **提交展示截图**: 4 张 PNG 到 `screenshots/`（library / circle_of_fifths / note_reading / interval_trainer）
+  供 README 展示使用
+- **README.md 更新**:
+  - 新增「🎵 Music Theory Tools」特性清单（10个音乐理论工具完整列举）
+  - 新增「📸 Screenshots」展示区（4张截图横向排列）
+  - 测试章节更新：2500+ 单元测试 + OMR/音乐理论/训练模块/音频构建分类说明 + 截图测试说明
+- **验证**:
+  - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+  - ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — **2517** 个用例, 0 失败
+    （含 5 个 Paparazzi 截图测试: 1 emoji 冒烟 + 4 页面截图）
+  - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+- **版本号**: v2.76.0 → **v2.77.0**, versionCode 90 → 91
+- git push origin main 成功
+- 下一步: 可为更多页面（和弦词典/音阶库/终止式/听音/节奏训练）补充截图；
+  或回到功能开发（如和声音程模式、练习报告导出增强等）
 
