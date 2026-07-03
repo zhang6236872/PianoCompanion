@@ -91,4 +91,13 @@ class ScreenshotTest {
             }
         }
     }
+
+    @Test
+    fun renderChordReadingTrainer() {
+        paparazzi.snapshot("chord_reading") {
+            MaterialTheme(colorScheme = LightColors, shapes = AppShapes) {
+                ChordReadingPreviewContent()
+            }
+        }
+    }
 }

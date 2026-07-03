@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.pianocompanion.circle.*
 import com.pianocompanion.notation.*
 import com.pianocompanion.interval.*
+import com.pianocompanion.chordreading.*
 import kotlin.math.*
 
 // ════════════════════════════════════════════════════════════
@@ -715,6 +716,225 @@ private fun PreviewStaff(
                 color = noteColor,
                 start = Offset(stemX, noteY),
                 end = Offset(stemX, noteY - lineSpacing * 3f),
+                strokeWidth = 2f
+            )
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════════════
+//  和弦识别训练预览内容
+// ════════════════════════════════════════════════════════════
+
+/**
+ * 和弦识别训练页面预览内容（用于 Paparazzi 截图测试）。
+ * 无 ViewModel 依赖，使用静态状态展示页面布局。
+ */
+@Composable
+fun ChordReadingPreviewContent() {
+    var clef by remember { mutableStateOf(ChordReadingClef.TREBLE) }
+    var difficulty by remember { mutableStateOf(ChordReadingDifficulty.INTERMEDIATE) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("🎸 和弦识别训练", fontWeight = FontWeight.Bold) })
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            // ── 选择谱号 ──
+            Text("选择谱号", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = clef == ChordReadingClef.TREBLE, onClick = { clef = ChordReadingClef.TREBLE },
+                    label = { Text("𝄞 高音谱号") })
+                FilterChip(selected = clef == ChordReadingClef.BASS, onClick = { clef = ChordReadingClef.BASS },
+                    label = { Text("𝄢 低音谱号") })
+            }
+
+            // ── 选择难度 ──
+            Text("选择难度", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = difficulty == ChordReadingDifficulty.BEGINNER, onClick = { difficulty = ChordReadingDifficulty.BEGINNER },
+                    label = { Text("初级") })
+                FilterChip(selected = difficulty == ChordReadingDifficulty.INTERMEDIATE, onClick = { difficulty = ChordReadingDifficulty.INTERMEDIATE },
+                    label = { Text("中级") })
+                FilterChip(selected = difficulty == ChordReadingDifficulty.ADVANCED, onClick = { difficulty = ChordReadingDifficulty.ADVANCED },
+                    label = { Text("高级") })
+            }
+
+            // ── 五线谱预览（叠置和弦） ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFEF7))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(220.dp).padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PreviewChordStaff(
+                        isTreble = clef == ChordReadingClef.TREBLE,
+                        noteSteps = listOf(2, 4, 6), // 叠置三和弦
+                        modifier = Modifier.fillMaxWidth().height(180.dp)
+                    )
+                }
+            }
+
+            // ── 答案选项预览 ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("大三和弦", "小三和弦", "减三和弦", "增三和弦").forEach { choice ->
+                    OutlinedButton(
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(choice, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // ── 开始练习按钮 ──
+            Button(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("开始练习", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // ── 说明卡片 ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("💡 如何练习", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Text("• 看五线谱上叠置的和弦，判断和弦类型", fontSize = 13.sp)
+                    Text("• 初级：大三/小三 · 中级：加入减三 · 高级：七和弦", fontSize = 13.sp)
+                    Text("• 答题后可试听柱式和弦效果", fontSize = 13.sp)
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+/**
+ * 叠置和弦五线谱预览组件（所有音符在同一 X 位置）。
+ */
+@Composable
+private fun PreviewChordStaff(
+    isTreble: Boolean,
+    noteSteps: List<Int>,
+    modifier: Modifier = Modifier
+) {
+    val staffLineColor = Color(0xFF333333)
+    val noteColor = Color(0xFF1A1A1A)
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val centerY = h / 2f
+        val lineSpacing = h / 12f
+        val staffTop = centerY - 2 * lineSpacing
+        val staffBottom = centerY + 2 * lineSpacing
+
+        // 5 条线
+        for (i in 0..4) {
+            val y = staffTop + i * lineSpacing
+            drawLine(
+                color = staffLineColor,
+                start = Offset(w * 0.1f, y),
+                end = Offset(w * 0.9f, y),
+                strokeWidth = 1.5f
+            )
+        }
+
+        // 谱号
+        val clefSymbol = if (isTreble) "𝄞" else "𝄢"
+        drawContext.canvas.nativeCanvas.drawText(
+            clefSymbol,
+            w * 0.13f,
+            staffBottom + lineSpacing * 0.3f,
+            android.graphics.Paint().apply {
+                textSize = lineSpacing * 4.5f
+                color = android.graphics.Color.argb(200, 26, 26, 26)
+                textAlign = android.graphics.Paint.Align.LEFT
+            }
+        )
+
+        // 所有音符叠置在同一 X 位置
+        val noteX = w * 0.6f
+        val noteWidth = lineSpacing * 1.1f
+        val noteHeight = lineSpacing * 0.8f
+
+        // 绘制加线（去重）
+        val ledgerSteps = mutableSetOf<Int>()
+        for (step in noteSteps) {
+            val noteY = centerY - step * lineSpacing / 2f
+            if (noteY < staffTop - lineSpacing * 0.5f) {
+                var s = 10
+                while (s <= step + 1) { ledgerSteps.add(s); s += 2 }
+            }
+            if (noteY > staffBottom + lineSpacing * 0.5f) {
+                var s = -2
+                while (s >= step - 1) { ledgerSteps.add(s); s -= 2 }
+            }
+        }
+        for (step in ledgerSteps) {
+            val y = centerY - step * lineSpacing / 2f
+            drawLine(
+                color = staffLineColor,
+                start = Offset(noteX - lineSpacing * 0.9f, y),
+                end = Offset(noteX + lineSpacing * 0.9f, y),
+                strokeWidth = 1.5f
+            )
+        }
+
+        // 绘制所有音符头
+        for (step in noteSteps) {
+            val noteY = centerY - step * lineSpacing / 2f
+            drawOval(
+                color = noteColor,
+                topLeft = Offset(noteX - noteWidth / 2, noteY - noteHeight / 2),
+                size = GeometrySize(noteWidth, noteHeight)
+            )
+        }
+
+        // 绘制和弦符干（连接最低音和最高音）
+        if (noteSteps.size >= 2) {
+            val lowestStep = noteSteps.min()
+            val highestStep = noteSteps.max()
+            val lowestY = centerY - lowestStep * lineSpacing / 2f
+            val highestY = centerY - highestStep * lineSpacing / 2f
+            val middleY = centerY
+            val stemX: Float
+            val stemStart: Float
+            val stemEnd: Float
+            if (lowestY < middleY) {
+                stemX = noteX - noteWidth / 2
+                stemStart = highestY
+                stemEnd = highestY + lineSpacing * 3.5f
+            } else {
+                stemX = noteX + noteWidth / 2
+                stemStart = lowestY
+                stemEnd = lowestY - lineSpacing * 3.5f
+            }
+            drawLine(
+                color = noteColor,
+                start = Offset(stemX, stemStart),
+                end = Offset(stemX, stemEnd),
                 strokeWidth = 2f
             )
         }
