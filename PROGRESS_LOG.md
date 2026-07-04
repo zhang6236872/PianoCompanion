@@ -7,9 +7,9 @@
 - 当前分支: main
 - 最新 tag: v2.72.0
 
-## 健康状态 (2026-07-03 核验)
+## 健康状态 (2026-07-05 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2517 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2744 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0
 - Kotlin 文件: 240 个 / 代码行数: 70000+ 行
@@ -3010,3 +3010,83 @@ v2.79.0 → **v2.80.0** (versionCode 92 → 93)
 - 视唱练耳训练套件 5 个训练器已齐全（音符/音程/和弦/调号/节奏），
   可考虑：综合练习模式（混合多种题型）、训练数据汇总统计页、
   或转向 Phase 1/2/3 路线图中的其他任务
+
+---
+
+## 2026-07-05: v2.81.0 — 训练数据汇总统计仪表盘 (Training Summary Dashboard)
+
+### 概述
+新增「训练汇总」页面，将全部 7 个视唱练耳训练模块（识谱/音程/和弦/调号/
+节奏视读/听音/节奏训练）的进度数据聚合到一个统一统计仪表盘。用户可在
+LibraryScreen 点击「📊 训练汇总」入口，查看全局总览、技能等级评估、
+准确率排名、智能改进建议和每个训练模块的详细统计。
+
+### 核心功能
+- **全局总览卡片**：总会话数、总答题数、活跃训练模块数、综合准确率进度条
+- **技能等级评估**：5 级体系（新手🌱 → 进阶🌿 → 熟练🎯 → 精通⭐ → 大师🏆），
+  根据综合准确率自动评定，每级附带鼓励性描述
+- **智能改进建议**：基于训练数据分析，生成针对性建议（如薄弱模块强化、
+  连击挑战、模块覆盖率提升、薄弱模块标记等）
+- **训练明细列表**：每个训练模块一张卡片，显示答题数/会话数/最佳连击/
+  准确率进度条，准确率最高的模块用特殊高亮标识（tertiaryContainer）
+- **空状态处理**：未使用的模块显示「尚未开始」，淡色处理
+
+### 技术实现
+引擎层（`trainingsummary/`）— 纯 Kotlin，无 Android 依赖，完全可单元测试：
+- `TrainingSummaryEngine.kt`（329 行）— 聚合引擎核心
+  - `TrainerType` 枚举：7 种训练类型（NOTE_READING/INTERVAL/CHORD_READING/
+    KEY_SIGNATURE/RHYTHM_READING/EAR_TRAINING/RHYTHM），每种含 emoji 图标和
+    中文名称
+  - `TrainerSummary` 数据类：单个训练器的聚合数据（type, totalSessions,
+    totalAnswered, totalCorrect, bestStreak, bestAccuracy, accuracy 计算属性,
+    hasActivity 计算属性）
+  - `TrainingSummaryReport`：全局聚合结果（totalSessions, totalAnswered,
+    totalCorrect, overallAccuracy, activeTrainerCount, skillLevel,
+    accuracyLeader, trainers 排序列表, suggestions 建议列表）
+  - `SkillLevel` 枚举：5 级技能评定（emoji/displayName/description + 阈值）
+  - `summarize()` 聚合算法：按 activeTrainers 先排、再按 accuracy 降序排序；
+    accuracyLeader 取活跃中准确率最高者；建议生成覆盖「零数据/单一模块/
+    全覆盖/低准确率/高连击挑战」等场景
+  - `pct()` 百分比格式化工具
+
+Android 层（`ui/trainingsummary/`）：
+- `TrainingSummaryViewModel.kt`（195 行）— AndroidViewModel，
+  从 SharedPreferences 读取 7 个训练器各自的 PROGRESS_KEY，
+  调用各 Progress 类的 summary API 构建 TrainerSummary 列表，
+  通过 StateFlow\<UiState\> 暴露 Loading/Success/Error 三态
+- `TrainingSummaryScreen.kt`（564 行）— Compose Material 3 仪表盘：
+  TopAppBar + LazyColumn 布局；总览卡片（primaryContainer 大卡片 +
+    三列数据 Row + LinearProgressIndicator）；技能等级卡片（emoji + 等级名 +
+    描述 + 百分比）；智能建议卡片（secondaryContainer）；训练明细卡片列表
+    （每张含 emoji + 名称 + 统计数据 + 准确率进度条 + 空状态处理）；
+    animateFloatAsState 在 composable body 内调用（避免 progress lambda 限制）
+
+### 集成
+- `AppNavigation.kt` — Screen.TrainingSummary 路由（training_summary，
+  Icons.Filled.Insights 图标）+ NavHost composable 注册
+- `LibraryScreen.kt` — TrainingSummaryEntryCard 入口卡片（📊 图标，
+  位于 RhythmReading 之后），点击导航到训练汇总页
+
+### 测试
+- `TrainingSummaryEngineTest.kt`（481 行，40 个测试用例）— 全部通过
+  - 空输入/单一模块/多模块聚合数值验证
+  - 排序逻辑（活跃优先、accuracy 降序）
+  - accuracyLeader 选取（含并列/全空边界）
+  - 技能等级 5 级阈值边界
+  - 建议生成（零数据/单一模块/全覆盖/低准确率/连击挑战）
+  - pct() 百分比格式化
+  - hasActivity / accuracy 计算属性
+- Paparazzi 截图测试 `renderTrainingSummary` — 生成 training_summary.png 截图
+- 全项目总计 2744 个测试用例，0 失败
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2744 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.80.0 → **v2.81.0** (versionCode 93 → 94)
+
+### 下一步计划
+- 可考虑：综合练习模式（混合多种题型混合出题）、练习报告导出增强、
+  或转向路线图中其他待完善功能
