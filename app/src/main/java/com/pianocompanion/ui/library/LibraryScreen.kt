@@ -269,6 +269,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Training summary dashboard entry ===
+            item {
+                TrainingSummaryEntryCard(onClick = {
+                    navController.navigate(Screen.TrainingSummary.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1127,6 +1136,51 @@ private fun RhythmReadingTrainerEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "节奏视读训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 训练数据汇总统计入口卡片。
+ * 引导用户进入训练汇总仪表盘：汇总所有视唱练耳/听觉训练模块的进度，
+ * 展示综合统计、技能等级、改进建议和各模块明细。
+ */
+@Composable
+private fun TrainingSummaryEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("📊", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "训练汇总",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "汇总所有训练模块进度 · 技能等级 · 智能改进建议",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "训练汇总",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
