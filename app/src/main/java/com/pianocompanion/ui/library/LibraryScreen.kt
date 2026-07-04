@@ -278,6 +278,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Mixed practice entry ===
+            item {
+                MixedPracticeEntryCard(onClick = {
+                    navController.navigate(Screen.MixedPractice.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1181,6 +1190,51 @@ private fun TrainingSummaryEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "训练汇总",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 综合练习入口卡片。
+ *
+ * 引导用户进入综合练习：将 5 种视唱练耳训练混合在一起随机出题。
+ */
+@Composable
+private fun MixedPracticeEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎯", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "综合练习",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "识谱 · 音程 · 和弦 · 调号 · 节奏 混合随机出题",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "综合练习",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
