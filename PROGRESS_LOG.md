@@ -3090,3 +3090,70 @@ v2.80.0 → **v2.81.0** (versionCode 93 → 94)
 ### 下一步计划
 - 可考虑：综合练习模式（混合多种题型混合出题）、练习报告导出增强、
   或转向路线图中其他待完善功能
+
+---
+
+## 2026-07-05 综合练习模式 (v2.82.0)
+
+### 完成任务
+**综合练习模式 (Mixed Practice Mode)** — 将 5 个视唱练耳训练模块
+（识谱/音程/和弦/调号/节奏视读）随机交错混合，在一轮练习中不断切换题型，
+训练用户的综合视唱练耳能力。
+
+### 新增文件
+
+领域层（`mixedpractice/`，纯 Kotlin 无 Android 依赖）：
+- `MixedPracticeModels.kt`（136 行）— 数据模型
+  - `MixedQuestionType` 枚举（5 种题型 + emoji + 中文名 + 提问语）
+  - `MixedDifficulty` 枚举（初级/中级/高级，映射各子模块同名难度）
+  - `MixedQuestion` 密封接口（统一 type/prompt/choices/correctAnswer，
+    5 个子类型包装原始题目数据供 UI 渲染）
+  - `MixedAnswerRecord` 答题记录
+- `MixedPracticeEngine.kt`（154 行）— 出题引擎
+  - 题型轮转队列策略（打乱 + 避免连续重复）
+  - 委托 5 个子引擎生成题目
+  - `withSeed(seed)` 工厂方法支持确定性测试
+- `MixedPracticeSession.kt`（118 行）— 会话状态机
+  - start/submit/next/reset 生命周期
+  - 跟踪 answeredCount/correctCount/currentStreak/bestStreak
+  - 按题型分类统计 (typeAttempts/typeCorrect)
+  - history 完整答题历史记录
+- `MixedPracticeProgress.kt`（222 行）— 进度持久化
+  - 按难度和题型双重维度统计
+  - `MixedProgressEntry` 统计条目（总答题/总正确/会话数/最高连击/最佳准确率）
+  - 手动 JSON 序列化/反序列化（无外部依赖，向后兼容）
+
+Android 层：
+- `MixedPracticeViewModel.kt`（121 行）— AndroidViewModel +
+  SharedPreferences 进度持久化 + StateFlow UI 状态
+- `ui/mixedpractice/MixedPracticeScreen.kt`（约 800 行）— Compose Material 3 UI
+  - 配置面板（难度选择 + 各题型统计 + 开始按钮）
+  - 练习面板（题型标签 + 统计栏 + 可视化区域 + 答案选项 + 反馈）
+  - 5 种题型各自的可视化卡片：
+    - 识谱：Canvas 五线谱 + 单音符 + 加线
+    - 音程：Canvas 五线谱 + 双音符水平排列
+    - 和弦：Canvas 五线谱 + 和弦音符叠加
+    - 调号：Canvas 五线谱 + 升降号
+    - 节奏：emoji 符号 + 时值标签排列
+
+集成：
+- `AppNavigation.kt` — Screen.MixedPractice 路由 + composable 注册
+- `LibraryScreen.kt` — MixedPracticeEntryCard 入口卡片（🎯 emoji，tertiaryContainer）
+
+### 测试
+- `MixedPracticeEngineTest.kt`（9 个测试）— 出题/轮转/确定性/题型覆盖
+- `MixedPracticeSessionTest.kt`（16 个测试）— 会话生命周期/连击/统计/历史
+- `MixedPracticeProgressTest.kt`（12 个测试）— JSON 序列化往返/多维度统计/边界
+- 全项目总计 2781 个测试用例，全部通过
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2781 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.81.0 → **v2.82.0** (versionCode 94 → 95)
+
+### 下一步计划
+- 可考虑：五线谱增强（Phase 2 剩余项）、多页面乐谱、乐谱标签搜索、
+  或继续完善训练模块体系
