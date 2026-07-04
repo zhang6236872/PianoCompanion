@@ -2938,3 +2938,75 @@ v2.77.0 → **v2.79.0** (versionCode 91 → 92)
 - 视唱练耳训练套件继续扩充：可考虑音程听辨训练增强、节奏型识别训练、
   或为调号训练添加五度圈可视化学习模式
 
+---
+
+## v2.80.0 — 节奏视读训练 (Rhythm Pattern Reading Trainer)
+
+**日期**: 2026-07-04
+**分支**: feature/rhythm-reading-trainer → main
+**类型**: 新功能（视唱练耳训练模块）
+
+### 完成内容
+新增「节奏视读训练」模块 — 第 5 个视唱练耳训练器，补全视觉阅读套件
+（已有：音符阅读、音程识别、和弦识别、调号识别）。
+
+与已有的听觉节奏训练（rhythm 模块，「听节奏→敲击」）互补：
+本模块是「看节奏→辨认」，训练用户快速、准确地辨认音符时值组合，
+建立节奏视觉认知。
+
+**架构**（纯 Kotlin 领域层 + Android UI/音频层分离，与 ChordReading 一致）：
+
+领域层（`rhythmreading/` 包，7 个文件，纯 Kotlin 无 Android 依赖）：
+- `RhythmReadingModels.kt` — 数据模型：RhythmDuration 枚举（7 种时值：
+  全/二分/四分/八分/十六分音符 + 四分/八分休止符，含 beats/displayName/
+  isFilled/hasStem/flagCount 渲染属性）、RhythmItem、RhythmPatternOption
+  （含 fingerprint 指纹判等）、RhythmReadingQuestion、RhythmReadingAnswerRecord、
+  RhythmReadingDifficulty（BEGINNER/INTERMEDIATE/ADVANCED）
+- `RhythmReadingEngine.kt` — 出题引擎：确定性随机数（注入种子可测试）；
+  贪心填充算法生成总拍数恰好 4.0 的节奏型（4/4 拍号一小节）；
+  4 选项（1 正确 + 3 干扰）+ 指纹去重 + 确定性兜底干扰项（交换相邻/拆分四分→两八分）
+- `RhythmReadingSession.kt` — 会话状态机：start/submit/next/reset，
+  跟踪连击/最佳连击/准确率/答题历史
+- `RhythmReadingProgress.kt` — 跨会话进度：per difficulty 统计，
+  手动 JSON 序列化（无外部依赖），损坏 JSON 容错
+- `RhythmReadingAudioBuilder.kt` — PCM 节拍点击音轨渲染：
+  每个音符在起始时刻发出短促钢琴音（复用 PianoToneSynthesizer），
+  休止符不发声但推进时间游标；软限幅防削波
+- `RhythmReadingPlayer.kt` — AudioTrack (MODE_STATIC) 播放器：
+  prepare/play/stop/release，播放完成回调
+
+UI 层（`ui/rhythmreading/`）：
+- `RhythmReadingScreen.kt`（607 行）— Material 3 Compose：配置面板（难度选择 +
+  进度展示 + 节奏型知识说明）+ 练习面板（Canvas 自定义绘制节奏型：单线谱上
+  实心/空心符头 + 符干 + 横梁/符尾 + 休止符几何图形 + 4 选项答题卡片 +
+  节拍点击音轨播放 + 答题反馈 + 会话统计）
+
+**集成**：
+- `AppNavigation.kt` — Screen.RhythmReading 路由注册（rhythm_reading）
+- `LibraryScreen.kt` — RhythmReadingTrainerEntryCard 入口卡片（🥁 图标）
+
+**难度设计**：
+- 初级：四分音符 + 八分音符（避免全四分，保证至少一个八分）
+- 中级：加入二分音符 + 四分休止符
+- 高级：加入十六分音符 + 八分休止符（附点节奏由组合产生）
+
+**测试**（3 个测试文件，全部通过）：
+- `RhythmReadingEngineTest.kt` — 时值池/总拍数/指纹/选项数/确定性/
+  退化模式/难度隔离/兜底干扰项
+- `RhythmReadingSessionTest.kt`（22 用例）— 会话生命周期/答题判定/
+  连击机制/准确率/答题历史/重复提交/重置/边界情况
+- `RhythmReadingProgressTest.kt`（18 用例）— 累计统计/各难度隔离/
+  JSON 往返/损坏 JSON 容错/全局汇总
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.79.0 → **v2.80.0** (versionCode 92 → 93)
+
+### 下一步计划
+- 视唱练耳训练套件 5 个训练器已齐全（音符/音程/和弦/调号/节奏），
+  可考虑：综合练习模式（混合多种题型）、训练数据汇总统计页、
+  或转向 Phase 1/2/3 路线图中的其他任务
