@@ -100,4 +100,13 @@ class ScreenshotTest {
             }
         }
     }
+
+    @Test
+    fun renderTrainingSummary() {
+        paparazzi.snapshot("training_summary") {
+            MaterialTheme(colorScheme = LightColors, shapes = AppShapes) {
+                TrainingSummaryPreviewContent()
+            }
+        }
+    }
 }

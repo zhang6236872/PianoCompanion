@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,10 @@ import com.pianocompanion.circle.*
 import com.pianocompanion.notation.*
 import com.pianocompanion.interval.*
 import com.pianocompanion.chordreading.*
+import com.pianocompanion.trainingsummary.TrainerSummary
+import com.pianocompanion.trainingsummary.TrainerType
+import com.pianocompanion.trainingsummary.TrainingSummaryEngine
+import com.pianocompanion.trainingsummary.TrainingSummaryReport
 import kotlin.math.*
 
 // ════════════════════════════════════════════════════════════
@@ -937,6 +942,174 @@ private fun PreviewChordStaff(
                 end = Offset(stemX, stemEnd),
                 strokeWidth = 2f
             )
+        }
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  6. 训练汇总仪表盘 (Training Summary Dashboard)
+// ════════════════════════════════════════════════════════════
+
+@Composable
+fun TrainingSummaryPreviewContent() {
+    // 构造模拟训练数据
+    val mockTrainers = listOf(
+        TrainerSummary(TrainerType.NOTE_READING, totalSessions = 12, totalAnswered = 120, totalCorrect = 96, bestStreak = 15, bestAccuracy = 0.92),
+        TrainerSummary(TrainerType.INTERVAL, totalSessions = 8, totalAnswered = 80, totalCorrect = 56, bestStreak = 9, bestAccuracy = 0.85),
+        TrainerSummary(TrainerType.CHORD_READING, totalSessions = 5, totalAnswered = 50, totalCorrect = 35, bestStreak = 7, bestAccuracy = 0.80),
+        TrainerSummary(TrainerType.KEY_SIGNATURE, totalSessions = 3, totalAnswered = 30, totalCorrect = 18, bestStreak = 5, bestAccuracy = 0.70),
+        TrainerSummary(TrainerType.RHYTHM_READING, totalSessions = 2, totalAnswered = 0, totalCorrect = 0, bestStreak = 0, bestAccuracy = 0.0),
+    )
+    val report = TrainingSummaryEngine.summarize(mockTrainers)
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("📊 训练汇总", fontWeight = FontWeight.Bold) })
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            // 全局总览
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text("总览", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Spacer(Modifier.height(12.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${report.totalSessions}", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("总会话", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            }
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${report.totalAnswered}", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("总答题", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            }
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("${report.activeTrainerCount}", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("活跃模块", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text("综合准确率 ${TrainingSummaryEngine.pct(report.overallAccuracy)}",
+                            fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Spacer(Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = { report.overallAccuracy.toFloat() },
+                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                        )
+                    }
+                }
+            }
+
+            // 技能等级
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.size(72.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(report.skillLevel.emoji, fontSize = 28.sp)
+                            Text(TrainingSummaryEngine.pct(report.overallAccuracy), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Spacer(Modifier.width(20.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("${report.skillLevel.emoji} ${report.skillLevel.displayName}",
+                                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(4.dp))
+                            Text(report.skillLevel.description, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            // 改进建议
+            if (report.suggestions.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text("✨ 智能建议", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(Modifier.height(10.dp))
+                            report.suggestions.take(3).forEach { suggestion ->
+                                Text("• $suggestion", fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.9f),
+                                    modifier = Modifier.padding(vertical = 4.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 训练明细
+            item {
+                Text("训练明细", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp))
+            }
+            items(report.trainers) { trainer ->
+                val isLeader = report.accuracyLeader?.type == trainer.type
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (!trainer.hasActivity) MaterialTheme.colorScheme.surfaceVariant
+                        else if (isLeader) MaterialTheme.colorScheme.tertiaryContainer
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(trainer.type.emoji, fontSize = 22.sp)
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(trainer.type.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                if (trainer.hasActivity) {
+                                    Text("${trainer.totalAnswered} 题 · ${trainer.totalSessions} 次 · 连击 ${trainer.bestStreak}",
+                                        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                } else {
+                                    Text("尚未开始", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                                }
+                            }
+                        }
+                        if (trainer.hasActivity) {
+                            Spacer(Modifier.height(10.dp))
+                            LinearProgressIndicator(
+                                progress = { trainer.accuracy.toFloat() },
+                                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = if (trainer.accuracy >= 0.8f) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surface
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(TrainingSummaryEngine.pct(trainer.accuracy), fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                                color = if (trainer.accuracy >= 0.8f) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
         }
     }
 }
