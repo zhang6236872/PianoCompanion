@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.72.0** (全部路线图 Phase 1-4 完成 + 后续增强: 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OMR 透视变形校正(keystone) + OMR 多系统页面时间轴排序修复 + OMR 小节线检测 + OMR 反复记号/虚线小节线检测 + OMR 反复跳房子(volta)检测 + OMR 高大旗形休止符与四分休止符区分 + OMR 断奏点(staccato)检测 + OMR 保持音(tenuto)/重音(accent)检测 + OMR 短断奏(staccatissimo)检测 + OMR 强音(marcato)检测 + OMR 延音线(tie)检测 + OMR 连音(slur)检测 + OMR 力度记号(dynamic marking)检测 + OMR 反复次数标注(×N)检测 + OMR 渐强/渐弱符号(hairpin)检测 + OMR 扩展力度记号(sfz/rf/rfz/cresc./decresc.)检测 + OMR 延音记号/停留号(fermata)检测 + OMR 装饰音(grace note)检测 + OMR 颤音(trill)检测 + OMR 三连音/连音组(tuplet)检测 + OMR 八度记号(8va/8vb/15ma/15mb)检测 + OMR 临时记号(升号/降号/还原号)检测 + OMR 指法数字(fingering)检测 + OMR 速度记号(tempo marking)检测 + OMR 踏板记号(pedal marking)检测 + OMR 琶音(arpeggio / rolled chord)检测 + OMR 震音(tremolo)检测 + OMR 滑音(glissando)检测 + OMR 导航符号(Segno/Coda)检测 + OMR 导航指令文本(D.C./D.S./al Coda/al Fine/Fine)检测 + OMR 识别置信度评估(confidence scoring) + OMR 装饰音符号(波音mordent/回音turn)检测 + OMR 渐变速度文字(... [truncated]
+- 当前版本: **v2.84.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OM... [truncated]
 - 当前分支: main
-- 最新 tag: v2.72.0
+- 最新 tag: v2.84.0
 
-## 健康状态 (2026-07-05 核验)
+## 健康状态 (2026-07-06 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2744 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2864 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0
 - Kotlin 文件: 240 个 / 代码行数: 70000+ 行
 
 ## 开发历史
@@ -3160,7 +3160,88 @@ v2.81.0 → **v2.82.0** (versionCode 94 → 95)
 
 ---
 
-## 2026-07-05: v2.83.0 — 节拍器细分模式 (Metronome Subdivision Mode)
+## 2026-07-06: v2.84.0 — 节拍器预设管理 (Metronome Preset Management)
+
+### 概述
+为节拍器新增「预设管理」功能，允许用户将完整的节拍器配置（速度 + 拍号 + 细分模式）
+保存为命名的预设，一键召回常用练习设定，无需每次手动调整三个参数。这是专业节拍器
+App（Pro Metronome、Soundbrenner 等）的标准功能，紧接 v2.83.0 细分模式之后，构成
+完整的节拍器练习工具链。
+
+### 核心功能
+- **保存当前设置为预设**：一键将当前 BPM / 拍号 / 细分模式保存为命名预设
+- **一键加载预设**：点击预设卡片即恢复 BPM + 拍号 + 细分全部三个参数
+- **重命名预设**：长按编辑按钮可重命名已有预设
+- **删除预设**：删除前弹出确认对话框防误操作
+- **6 个内置默认预设**：哈农热身(80·4/4) / 音阶练习(100·4/4·八分) /
+  三连音特训(90·4/4·三连) / 十六分提速(120·4/4·十六分) / 华尔兹(150·3/4) /
+  慢板放松(60·4/4)——首次启动自动写入
+- **当前预设高亮**：当前配置与某个已保存预设完全匹配时，该预设卡片高亮
+  (tertiaryContainer 配色)并标记为 activePresetName
+- **操作消息提示**：保存/加载/删除/重命名后显示 2 秒自动消失的提示条
+- **SharedPreferences 持久化**：预设跨 App 会话保留
+
+### 技术实现
+领域层（`audio/MetronomePreset.kt`，纯 Kotlin 无 Android 依赖，完全可单元测试）：
+- `MetronomePreset` data class（name/bpm/beatsPerMeasure/subdivision）
+  - init 块强制不变式：名称非空、BPM 40–240、拍号 1–12
+  - `summary` 计算属性："120 · 4/4 · 八分音符" 一行可读摘要
+  - `defaults()` 工厂方法：6 个内置预设
+  - `MAX_NAME_LENGTH = 40` 防超长输入
+- `PresetValidationResult` 密封类：Ok / NameBlank / NameTooLong /
+  NameTaken(existingName) / BpmOutOfRange / BeatsOutOfRange——友好错误码
+- `MetronomePresetStore` 存储引擎核心：
+  - `save(preset)` / `delete(name)` / `find(name)` / `exists(name)` /
+    `rename(oldName, newName)` / `replaceAll(list)` / `clear()`
+  - `list()` 返回按名称字母序排序的不可变快照（跨会话稳定）
+  - `validate(name, bpm, beats, ignoreExisting)` 软验证（改名时允许保持自身名称）
+  - 手动 JSON 序列化 `toJson()` / `fromJson(json)`（无外部依赖，与项目其他
+    Progress 类的序列化策略一致）：
+    - 紧凑格式 `[{"n":"...","b":80,"m":4,"s":"QUARTER"}]`
+    - 手写括号匹配拆分 JSON 对象（处理字符串转义）
+    - 容错：空/null/非 JSON → 清空返回 0；单条字段缺失/Subdivision 名非法/
+      BPM 越界 → 跳过该条不崩溃；重复名称保留首个
+
+Android 层：
+- `MetronomeViewModel.kt` 扩展：UiState 新增 presets/activePresetName/presetMessage
+  字段；saveCurrentAsPreset/loadPreset/deletePreset/renamePreset/
+  consumePresetMessage 方法；SharedPreferences 持久化（首次启动写入默认预设）；
+  refreshActivePreset 自动检测当前配置匹配的预设
+- `MetronomeScreen.kt` 新增 MetronomePresetsSection（保存按钮 + 预设列表 +
+  3 个对话框：保存/重命名/删除确认）+ PresetCard 卡片组件
+  （tertiaryContainer 高亮 active 预设 + 编辑/删除图标按钮）+
+  消息提示条（LaunchedEffect 2 秒自动消失）
+
+### 测试
+- `MetronomePresetStoreTest.kt`（56 个测试用例）— 全部通过
+  - 基本增删改查：空存储/save/find/exists/delete/覆盖重名
+  - 排序：英文字母序 + 中文名称 Unicode 序
+  - 验证：空名/空格名/超长名/重复名/ignoreExisting/BPM 越界/拍号越界/边界值
+  - 重命名：改名保留配置/冲突失败/不存在返回 NameBlank/空名失败/同名 no-op
+  - 批量操作：clear/replaceAll
+  - summary 属性 + defaults 工厂（非空/有效/唯一名称）
+  - JSON 往返：空存储/全预设往返/6 种 Subdivision 全覆盖/替换语义/
+    null/空串/空数组/损坏 JSON/非法 Subdivision 名/缺字段/BPM 越界/重复名保留首个
+  - JSON 特殊字符：引号/反斜杠/换行/emoji+特殊符号
+  - data class 不变式：BPM/拍号/名称越界抛 IllegalArgumentException
+- 全项目总计 **2864** 个测试用例，0 失败
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2864 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.83.0 → **v2.84.0** (versionCode 96 → 97)
+
+### 下一步计划
+- 可考虑：节拍器与练习联动增强（自动同步练习曲目标 BPM）、
+  节拍器定时自动停止（练习时长控制）、
+  或转向乐谱管理类功能（收藏/多页面/标签搜索）
+
+---
+
+## v2.83.0 — 节拍器细分模式 (Metronome Subdivision Mode)
 
 ### 概述
 为节拍器新增「细分模式」，支持在每个主拍之间插入更细的子拍点点击，
