@@ -3157,3 +3157,72 @@ v2.81.0 → **v2.82.0** (versionCode 94 → 95)
 ### 下一步计划
 - 可考虑：五线谱增强（Phase 2 剩余项）、多页面乐谱、乐谱标签搜索、
   或继续完善训练模块体系
+
+---
+
+## 2026-07-05: v2.83.0 — 节拍器细分模式 (Metronome Subdivision Mode)
+
+### 概述
+为节拍器新增「细分模式」，支持在每个主拍之间插入更细的子拍点点击，
+让用户可以练习八分音符、三连音、十六分音符、六连音、三十二分音符等
+节奏的稳定性。这是钢琴练习中极其常用的功能（Pro Metronome、Soundbrenner
+等专业节拍器 App 均具备），此前 Piano Companion 的节拍器仅能在主拍上响。
+
+### 核心功能
+- **6 种细分模式**：四分音符（不分细分）、八分音符（每拍 2 次）、
+  三连音（每拍 3 次）、十六分音符（每拍 4 次）、六连音（每拍 6 次）、
+  三十二分音符（每拍 8 次）
+- **三态点击音色**：强拍(ACCENT, 1500Hz, 高音量) / 弱拍(BEAT, 1000Hz, 中音量) /
+  子拍点(SUB, 800Hz, 低音量, 更短促)，听感层次分明
+- **子拍点自适应时长**：快速细分时自动缩短子拍点击声，避免长拖尾叠加
+  产生嗡鸣；间隔过短时仍保证 >=10ms 可听
+- **实时间隔提示**：UI 显示「每次点击间隔 Nms · 每小节 M 次点击」
+
+### 技术实现
+引擎层（纯 Kotlin，无 Android 依赖，完全可单元测试）：
+- `audio/Subdivision.kt`（111 行）
+  - `Subdivision` 枚举：6 种细分，含 `clicksPerBeat`/`displayName`/`symbol`
+    及 `isQuarter` 计算属性；`totalClicks(beatsPerMeasure, subdivision)` 工厂方法
+  - `ClickType` 枚举：ACCENT/BEAT/SUB 三态
+  - `ClickPatternGenerator` 对象：
+    - `pattern(beatsPerMeasure, subdivision)` — 生成一小节内所有点击点的
+      ClickType 序列（首元素恒为 ACCENT，每 clicksPerBeat 个为一组，
+      组首为 BEAT/ACCENT，组内余为 SUB）
+    - `subClickIntervalMs(bpm, subdivision)` — 相邻子拍点间隔，
+      = (60_000/bpm) / clicksPerBeat，保证 >=1ms 防死循环
+    - `measureDurationMs(bpm, beatsPerMeasure)` — 小节总时长（与细分无关）
+    - `beatIndexOf(clickIndex, subdivision)` — 子拍点索引→主拍序号映射
+
+Android 层：
+- `audio/Metronome.kt` 重构 — 新增 `subdivision`/`clickIndex` 状态；
+  `clickRunnable` 改为按子拍点间隔调度；三态 `playClick` 按点击类型选择
+  频率/音量/时长；子拍点时长自适应 `(interval - 5ms).coerceAtLeast(10)`；
+  `onBeat` 回调仅在主拍触发（UI 节拍灯仍按主拍闪烁）
+- `ui/metronome/MetronomeViewModel.kt` — UiState 新增 `subdivision` 字段；
+  `setSubdivision()` 方法；播放中切换由 Metronome 在下一子拍点生效
+- `ui/metronome/MetronomeScreen.kt` — 新增「细分模式」选择器区（2 行
+  FilterChip 网格 + 子拍点间隔提示文本）；Column 改为 `verticalScroll`
+  以容纳新增内容；新增 `SubdivisionChip` 可复用组件
+
+### 测试
+- `SubdivisionTest.kt`（28 个用例）— 全部通过
+  - 枚举属性：clicksPerBeat/isQuarter/totalClicks（含 3 拍号变体）
+  - 模式生成：各细分的完整 ACCENT/BEAT/SUB 序列、首位恒 ACCENT、
+    恰好一个 ACCENT、主拍数 = beatsPerMeasure（参数化遍历 2/3/4/6 × 6 细分）
+  - 间隔计算：各细分精确毫秒值、快速细分永不为 0、bpm↑→间隔↓
+  - beatIndexOf：映射正确性、非 SUB 点击点对齐主拍边界（全枚举验证）
+  - 一致性：pattern accent 恒首位、唯一 accent、beat 数与拍号一致
+- 全项目总计 2809 个测试用例，0 失败
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2809 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.82.0 → **v2.83.0** (versionCode 95 → 96)
+
+### 下一步计划
+- 可考虑：节拍器节奏型预设（保存常用 BPM+拍号+细分组合）、
+  节拍器与练习联动增强（自动同步练习曲目标 BPM）、
+  或转向乐谱管理类功能（收藏/多页面/标签搜索）
