@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import com.pianocompanion.audio.Subdivision
 import com.pianocompanion.audio.ClickPatternGenerator
+import com.pianocompanion.audio.MetronomePreset
 import com.pianocompanion.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -202,6 +204,39 @@ fun MetronomeScreen(
                 TempoPreset("急板", 180, viewModel, uiState.bpm)
             }
 
+            // === Saved presets ===
+            MetronomePresetsSection(
+                presets = uiState.presets,
+                activePresetName = uiState.activePresetName,
+                currentBpm = uiState.bpm,
+                currentBeats = uiState.beatsPerMeasure,
+                currentSubdivision = uiState.subdivision,
+                onLoadPreset = { viewModel.loadPreset(it) },
+                onSaveCurrent = { name -> viewModel.saveCurrentAsPreset(name) },
+                onDeletePreset = { viewModel.deletePreset(it) },
+                onRenamePreset = { old, new -> viewModel.renamePreset(old, new) },
+            )
+
+            // 预设操作消息提示
+            uiState.presetMessage?.let { msg ->
+                LaunchedEffect(msg) {
+                    kotlinx.coroutines.delay(2000)
+                    viewModel.consumePresetMessage()
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = msg,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // === Play/Stop button ===
@@ -276,4 +311,225 @@ private fun tempoName(bpm: Int): String = when {
     bpm < 156 -> "快板 (Allegro)"
     bpm < 200 -> "很快板 (Vivace)"
     else -> "急板 (Presto)"
+}
+
+// ═══════════════════════ 节拍器预设 UI ═══════════════════════
+
+/**
+ * 节拍器预设管理区域：保存当前配置为预设 + 预设列表（点击加载 / 删除）。
+ */
+@Composable
+private fun MetronomePresetsSection(
+    presets: List<MetronomePreset>,
+    activePresetName: String?,
+    currentBpm: Int,
+    currentBeats: Int,
+    currentSubdivision: Subdivision,
+    onLoadPreset: (MetronomePreset) -> Unit,
+    onSaveCurrent: (String) -> Unit,
+    onDeletePreset: (String) -> Unit,
+    onRenamePreset: (String, String) -> Unit,
+) {
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
+    var renameTarget by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleteTarget by rememberSaveable { mutableStateOf<String?>(null) }
+
+    SectionHeader(title = "我的预设", icon = Icons.Filled.Bookmark)
+
+    // 保存当前设置按钮
+    OutlinedButton(
+        onClick = { showSaveDialog = true },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Icon(Icons.Filled.BookmarkAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("保存当前设置为预设  ($currentBpm · $currentBeats/4 · ${currentSubdivision.displayName})")
+    }
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    if (presets.isEmpty()) {
+        Text(
+            text = "暂无保存的预设，点击上方按钮创建",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            presets.forEach { preset ->
+                PresetCard(
+                    preset = preset,
+                    isActive = preset.name == activePresetName,
+                    onLoad = { onLoadPreset(preset) },
+                    onRename = { renameTarget = preset.name },
+                    onDelete = { deleteTarget = preset.name },
+                )
+            }
+        }
+    }
+
+    // ── 保存对话框 ──
+    if (showSaveDialog) {
+        var name by rememberSaveable { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = { Text("保存预设") },
+            text = {
+                Column {
+                    Text(
+                        "当前配置：$currentBpm BPM · $currentBeats/4 · ${currentSubdivision.displayName}",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("预设名称") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (name.isNotBlank()) {
+                            onSaveCurrent(name.trim())
+                        }
+                        showSaveDialog = false
+                    }
+                ) { Text("保存") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false }) { Text("取消") }
+            },
+        )
+    }
+
+    // ── 重命名对话框 ──
+    renameTarget?.let { target ->
+        var newName by rememberSaveable(target) { mutableStateOf(target) }
+        AlertDialog(
+            onDismissRequest = { renameTarget = null },
+            title = { Text("重命名预设") },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("新名称") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newName.isNotBlank() && newName.trim() != target) {
+                            onRenamePreset(target, newName.trim())
+                        }
+                        renameTarget = null
+                    }
+                ) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameTarget = null }) { Text("取消") }
+            },
+        )
+    }
+
+    // ── 删除确认对话框 ──
+    deleteTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text("删除预设") },
+            text = { Text("确定删除预设「$target」吗？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeletePreset(target)
+                        deleteTarget = null
+                    }
+                ) { Text("删除", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) { Text("取消") }
+            },
+        )
+    }
+}
+
+/**
+ * 单个预设卡片：点击加载，右侧操作按钮。
+ */
+@Composable
+private fun PresetCard(
+    preset: MetronomePreset,
+    isActive: Boolean,
+    onLoad: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive)
+                MaterialTheme.colorScheme.tertiaryContainer
+            else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 3.dp else 1.dp),
+        onClick = onLoad,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Filled.Bookmark,
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = if (isActive) MaterialTheme.colorScheme.onTertiaryContainer
+                       else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = preset.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isActive) MaterialTheme.colorScheme.onTertiaryContainer
+                            else MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = preset.summary,
+                    fontSize = 12.sp,
+                    color = if (isActive) MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // 重命名按钮
+            IconButton(onClick = onRename, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "重命名",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // 删除按钮
+            IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "删除",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
