@@ -4,8 +4,10 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -21,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
+import com.pianocompanion.audio.Subdivision
+import com.pianocompanion.audio.ClickPatternGenerator
 import com.pianocompanion.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +48,11 @@ fun MetronomeScreen(
         }
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -140,6 +148,47 @@ fun MetronomeScreen(
                 }
             }
 
+            // === Subdivision selector ===
+            SectionHeader(title = "细分模式", icon = Icons.Filled.GraphicEq)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Subdivision.entries.take(3).forEach { sub ->
+                        SubdivisionChip(
+                            subdivision = sub,
+                            isSelected = uiState.subdivision == sub,
+                            onClick = { viewModel.setSubdivision(sub) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Subdivision.entries.drop(3).forEach { sub ->
+                        SubdivisionChip(
+                            subdivision = sub,
+                            isSelected = uiState.subdivision == sub,
+                            onClick = { viewModel.setSubdivision(sub) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                // 子拍点间隔提示
+                val subMs = ClickPatternGenerator.subClickIntervalMs(uiState.bpm, uiState.subdivision)
+                Text(
+                    text = "每次点击间隔 ${subMs}ms · 每小节 ${Subdivision.totalClicks(uiState.beatsPerMeasure, uiState.subdivision)} 次点击",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             // === Tempo presets ===
             SectionHeader(title = "速度预设", icon = Icons.Filled.Speed)
             Row(
@@ -153,7 +202,7 @@ fun MetronomeScreen(
                 TempoPreset("急板", 180, viewModel, uiState.bpm)
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // === Play/Stop button ===
             Box(
@@ -196,6 +245,26 @@ private fun RowScope.TempoPreset(
         onClick = { viewModel.setBpm(bpm) },
         label = { Text(name, fontSize = 11.sp) },
         modifier = Modifier.weight(1f)
+    )
+}
+
+@Composable
+private fun SubdivisionChip(
+    subdivision: Subdivision,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FilterChip(
+        selected = isSelected,
+        onClick = onClick,
+        label = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(subdivision.displayName, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                Text(subdivision.symbol, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        modifier = modifier
     )
 }
 
