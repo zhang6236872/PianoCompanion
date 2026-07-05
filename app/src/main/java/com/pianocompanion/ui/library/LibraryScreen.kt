@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import com.pianocompanion.analytics.DifficultyEstimator
 import com.pianocompanion.analytics.DifficultyLevel
 import com.pianocompanion.data.DemoScores
+import com.pianocompanion.data.FavoriteStore
 import com.pianocompanion.data.model.Score
 import com.pianocompanion.ui.components.EmptyState
 import com.pianocompanion.ui.components.SectionHeader
@@ -78,18 +79,40 @@ fun LibraryScreen(
         pickFileLauncher.launch(arrayOf("application/xml", "text/xml", "audio/midi", "audio/x-midi", "*/*"))
     }
 
-    // Filter scores by search query
-    val filteredBuiltIn = remember(searchQuery) {
-        if (searchQuery.isBlank()) builtInScores
+    // Filter scores by search query, then apply favorites sorting / filter.
+    val favorites = uiState.favorites
+    val showFavoritesOnly = uiState.showFavoritesOnly
+
+    val filteredBuiltIn = remember(searchQuery, favorites, showFavoritesOnly) {
+        var result = if (searchQuery.isBlank()) builtInScores
         else builtInScores.filter {
             it.title.contains(searchQuery, true) || it.composer.contains(searchQuery, true)
         }
+        if (showFavoritesOnly) {
+            result = result.filter { favorites.contains(it.id) }
+        } else {
+            // 收藏置顶（稳定排序）
+            result = result.sortedWith(
+                compareBy<Score> { !favorites.contains(it.id) }.thenBy { builtInScores.indexOf(it) }
+            )
+        }
+        result
     }
-    val filteredImported = remember(searchQuery, uiState.importedScores) {
-        if (searchQuery.isBlank()) uiState.importedScores
+    val filteredImported = remember(searchQuery, uiState.importedScores, favorites, showFavoritesOnly) {
+        var result = if (searchQuery.isBlank()) uiState.importedScores
         else uiState.importedScores.filter {
             it.title.contains(searchQuery, true) || it.composer.contains(searchQuery, true)
         }
+        if (showFavoritesOnly) {
+            result = result.filter { favorites.contains(FavoriteStore.keyForImported(it.fileName)) }
+        } else {
+            result = result.sortedWith(
+                compareBy<ScoreItem> {
+                    !favorites.contains(FavoriteStore.keyForImported(it.fileName))
+                }.thenBy { uiState.importedScores.indexOf(it) }
+            )
+        }
+        result
     }
 
     Scaffold(
@@ -153,6 +176,15 @@ fun LibraryScreen(
                     },
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
+                )
+            }
+
+            // === Favorites filter chip ===
+            item {
+                FavoritesFilterRow(
+                    favoriteCount = favorites.size,
+                    showFavoritesOnly = showFavoritesOnly,
+                    onToggle = { viewModel.toggleFavoritesOnly() }
                 )
             }
 
@@ -297,6 +329,8 @@ fun LibraryScreen(
             items(filteredBuiltIn) { score ->
                 EnhancedScoreCard(
                     score = score,
+                    isFavorite = favorites.contains(score.id),
+                    onToggleFavorite = { viewModel.toggleBuiltInFavorite(score.id) },
                     onClick = {
                         ScoreSelectionHolder.set(score)
                         navController.navigate(Screen.Practice.route) {
@@ -307,7 +341,11 @@ fun LibraryScreen(
             }
 
             // === Imported scores ===
-            if (filteredImported.isNotEmpty() || searchQuery.isBlank()) {
+            // 在收藏筛选模式下，仅在确有收藏乐谱或无搜索时显示标题；
+            // 否则隐藏标题让空状态占满视觉焦点。
+            val showImportedHeader = filteredImported.isNotEmpty() ||
+                (searchQuery.isBlank() && !showFavoritesOnly)
+            if (showImportedHeader) {
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     SectionHeader(
@@ -317,7 +355,16 @@ fun LibraryScreen(
                 }
             }
 
-            if (filteredImported.isEmpty() && searchQuery.isBlank()) {
+            if (filteredBuiltIn.isEmpty() && filteredImported.isEmpty() && showFavoritesOnly) {
+                item {
+                    EmptyState(
+                        emoji = "⭐",
+                        title = "还没有收藏的乐谱",
+                        subtitle = "点击乐谱卡片上的 ☆ 星标即可收藏，收藏的乐谱会置顶显示",
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            } else if (filteredImported.isEmpty() && searchQuery.isBlank() && !showFavoritesOnly) {
                 item {
                     EmptyState(
                         emoji = "📁",
@@ -340,6 +387,8 @@ fun LibraryScreen(
                     var showDeleteDialog by remember { mutableStateOf(false) }
                     ImportedScoreCard(
                         item = item,
+                        isFavorite = favorites.contains(FavoriteStore.keyForImported(item.fileName)),
+                        onToggleFavorite = { viewModel.toggleImportedFavorite(item.fileName) },
                         onClick = {
                             // 加载导入的乐谱并传递到练习页（解析失败的乐谱提示用户）。
                             val result = viewModel.loadScore(item.fileName)
@@ -405,6 +454,8 @@ fun LibraryScreen(
 @Composable
 private fun EnhancedScoreCard(
     score: Score,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onClick: () -> Unit
 ) {
     val difficultyResult = remember(score) { DifficultyEstimator.estimate(score) }
@@ -416,7 +467,10 @@ private fun EnhancedScoreCard(
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFavorite) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            else MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -452,6 +506,10 @@ private fun EnhancedScoreCard(
                          color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
             }
+            FavoriteIconButton(
+                isFavorite = isFavorite,
+                onToggle = onToggleFavorite
+            )
             Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
         }
     }
@@ -473,6 +531,8 @@ private fun difficultyLevelVisual(level: DifficultyLevel): Triple<String, String
 @Composable
 private fun ImportedScoreCard(
     item: ScoreItem,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -486,7 +546,10 @@ private fun ImportedScoreCard(
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFavorite) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            else MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -552,6 +615,10 @@ private fun ImportedScoreCard(
                     }
                 }
             }
+            FavoriteIconButton(
+                isFavorite = isFavorite,
+                onToggle = onToggleFavorite
+            )
             Icon(Icons.Filled.ChevronRight, "练习", tint = MaterialTheme.colorScheme.primary)
         }
     }
@@ -1235,6 +1302,74 @@ private fun MixedPracticeEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "综合练习",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 收藏星标按钮。点击切换收藏状态。
+ *
+ * 已收藏时使用 [Icons.Filled.Star]（实心，amber 强调色），
+ * 未收藏时使用 [Icons.Filled.StarBorder]（描边，弱化色）。
+ * 点击区域足够大以保证可操作性（48dp 目标）。
+ */
+@Composable
+private fun FavoriteIconButton(
+    isFavorite: Boolean,
+    onToggle: () -> Unit
+) {
+    IconButton(onClick = onToggle) {
+        if (isFavorite) {
+            Icon(
+                Icons.Filled.Star,
+                contentDescription = "取消收藏",
+                tint = Color(0xFFFFC107) // amber
+            )
+        } else {
+            Icon(
+                Icons.Filled.StarBorder,
+                contentDescription = "添加收藏",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+/**
+ * 收藏筛选行：显示「只看收藏」FilterChip 与收藏计数。
+ *
+ * 当没有任何收藏时，筛选 chip 仍然可见但弱化（不可点击也无视觉效果，
+ * 因为 toggle 后列表只会变空），帮助引导用户先收藏乐谱。
+ */
+@Composable
+private fun FavoritesFilterRow(
+    favoriteCount: Int,
+    showFavoritesOnly: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilterChip(
+            selected = showFavoritesOnly,
+            onClick = onToggle,
+            label = { Text("只看收藏", fontSize = 12.sp) },
+            leadingIcon = {
+                Icon(
+                    if (showFavoritesOnly) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        )
+        if (favoriteCount > 0) {
+            Text(
+                "★ $favoriteCount 首已收藏",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
     }
