@@ -27,6 +27,8 @@ import androidx.lifecycle.viewmodel.initializer
 import com.pianocompanion.audio.Subdivision
 import com.pianocompanion.audio.ClickPatternGenerator
 import com.pianocompanion.audio.MetronomePreset
+import com.pianocompanion.audio.AutoStopPreset
+import com.pianocompanion.audio.AutoStopState
 import com.pianocompanion.ui.components.SectionHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -190,6 +192,17 @@ fun MetronomeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // === Auto-stop timer ===
+            MetronomeAutoStopSection(
+                preset = uiState.autoStopPreset,
+                autoStopState = uiState.autoStopState,
+                remaining = uiState.autoStopRemaining,
+                progress = uiState.autoStopProgress,
+                message = uiState.autoStopMessage,
+                onSelectPreset = { viewModel.setAutoStopPreset(it) },
+                onConsumeMessage = { viewModel.consumeAutoStopMessage() },
+            )
 
             // === Tempo presets ===
             SectionHeader(title = "速度预设", icon = Icons.Filled.Speed)
@@ -528,6 +541,130 @@ private fun PresetCard(
                     contentDescription = "删除",
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+// ═══════════════════════ 自动停止定时器 UI ═══════════════════════
+
+/**
+ * 自动停止定时器区域：预设时长选择 + 倒计时显示 + 到期提示。
+ */
+@Composable
+private fun MetronomeAutoStopSection(
+    preset: AutoStopPreset,
+    autoStopState: AutoStopState,
+    remaining: String,
+    progress: Float,
+    message: String?,
+    onSelectPreset: (AutoStopPreset) -> Unit,
+    onConsumeMessage: () -> Unit,
+) {
+    SectionHeader(title = "自动停止", icon = Icons.Filled.Timer)
+
+    // 预设时长选择（两行）
+    val chips = AutoStopPreset.entries.toList()
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            chips.take(4).forEach { p ->
+                FilterChip(
+                    selected = preset == p,
+                    onClick = { onSelectPreset(p) },
+                    label = { Text(p.displayLabel, fontSize = 11.sp) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            chips.drop(4).forEach { p ->
+                FilterChip(
+                    selected = preset == p,
+                    onClick = { onSelectPreset(p) },
+                    label = { Text(p.displayLabel, fontSize = 11.sp) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+
+    // 倒计时显示（仅 Running 时）
+    if (autoStopState is AutoStopState.Running) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Timer,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = remaining,
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    trackColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f),
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${preset.displayLabel}后自动停止",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                )
+            }
+        }
+    }
+
+    // 到期提示（3 秒后自动消失）
+    message?.let { msg ->
+        LaunchedEffect(msg) {
+            kotlinx.coroutines.delay(3000)
+            onConsumeMessage()
+        }
+        Surface(
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = msg,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
         }

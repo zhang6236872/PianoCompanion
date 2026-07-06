@@ -2,7 +2,12 @@ package com.pianocompanion.ui.metronome
 
 import android.app.Application
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
+import com.pianocompanion.audio.AutoStopEngine
+import com.pianocompanion.audio.AutoStopPreset
+import com.pianocompanion.audio.AutoStopState
 import com.pianocompanion.audio.Metronome
 import com.pianocompanion.audio.MetronomePreset
 import com.pianocompanion.audio.MetronomePresetStore
@@ -26,6 +31,16 @@ class MetronomeViewModel(application: Application) : AndroidViewModel(applicatio
         val presetMessage: String? = null,
         /** 当前配置是否与某个已保存预设完全匹配（用于高亮）。 */
         val activePresetName: String? = null,
+        /** 用户选择的自动停止预设时长（持久化）。 */
+        val autoStopPreset: AutoStopPreset = AutoStopPreset.OFF,
+        /** 自动停止倒计时运行时状态。 */
+        val autoStopState: AutoStopState = AutoStopState.Idle,
+        /** 自动停止剩余时间格式化字符串（如 "5:00"），仅播放且启用时有效。 */
+        val autoStopRemaining: String = "",
+        /** 自动停止倒计时进度 0..1（用于进度条）。 */
+        val autoStopProgress: Float = 0f,
+        /** 自动停止到期提示（"⏰ 时间到！节拍器已自动停止"），消费后置空。 */
+        val autoStopMessage: String? = null,
     )
 
     private val _uiState = MutableStateFlow(MetronomeUiState())
@@ -35,12 +50,36 @@ class MetronomeViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val presetStore = MetronomePresetStore()
 
+    /** 自动停止倒计时刷新 Handler（主线程，约每 250ms 刷新一次显示并检查到期）。 */
+    private val autoStopHandler = Handler(Looper.getMainLooper())
+    private val autoStopTicker = object : Runnable {
+        override fun run() {
+            val s = _uiState.value
+            val state = s.autoStopState
+            if (state is AutoStopState.Running) {
+                val now = System.currentTimeMillis()
+                if (AutoStopEngine.isExpired(state, now)) {
+                    onAutoStopExpired()
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            autoStopRemaining = AutoStopEngine.formatRemaining(state, now),
+                            autoStopProgress = AutoStopEngine.progress(state, now),
+                        )
+                    }
+                    autoStopHandler.postDelayed(this, AUTO_STOP_TICK_MS)
+                }
+            }
+        }
+    }
+
     init {
         metronome = Metronome()
         metronome?.onBeat = { beat ->
             _uiState.update { it.copy(currentBeat = beat) }
         }
         loadPresets()
+        loadAutoStopPreset()
     }
 
     // ───────────────── 播放控制 ─────────────────
@@ -51,13 +90,39 @@ class MetronomeViewModel(application: Application) : AndroidViewModel(applicatio
             m.setBeatsPerMeasure(_uiState.value.beatsPerMeasure)
             m.setSubdivision(_uiState.value.subdivision)
             m.start()
-            _uiState.update { it.copy(isPlaying = true, currentBeat = -1) }
+            val preset = _uiState.value.autoStopPreset
+            if (preset.isActive) {
+                val now = System.currentTimeMillis()
+                val state = AutoStopEngine.start(preset.durationMillis, now)
+                _uiState.update {
+                    it.copy(
+                        isPlaying = true,
+                        currentBeat = -1,
+                        autoStopState = state,
+                        autoStopRemaining = AutoStopEngine.formatRemaining(state, now),
+                        autoStopProgress = 0f,
+                        autoStopMessage = null,
+                    )
+                }
+                autoStopHandler.postDelayed(autoStopTicker, AUTO_STOP_TICK_MS)
+            } else {
+                _uiState.update { it.copy(isPlaying = true, currentBeat = -1) }
+            }
         }
     }
 
     fun stop() {
         metronome?.stop()
-        _uiState.update { it.copy(isPlaying = false, currentBeat = -1) }
+        autoStopHandler.removeCallbacks(autoStopTicker)
+        _uiState.update {
+            it.copy(
+                isPlaying = false,
+                currentBeat = -1,
+                autoStopState = AutoStopState.Idle,
+                autoStopRemaining = "",
+                autoStopProgress = 0f,
+            )
+        }
     }
 
     fun setBpm(bpm: Int) {
@@ -84,6 +149,89 @@ class MetronomeViewModel(application: Application) : AndroidViewModel(applicatio
         metronome?.setSubdivision(sub)
         _uiState.update { it.copy(subdivision = sub, currentBeat = -1) }
         refreshActivePreset()
+    }
+
+    // ───────────────── 自动停止定时器 ─────────────────
+
+    /**
+     * 设置自动停止预设时长（持久化）。播放中切换时立即重置当前倒计时为新时长。
+     */
+    fun setAutoStopPreset(preset: AutoStopPreset) {
+        val prefs = getApplication<Application>().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putInt(AUTO_STOP_KEY, preset.minutes).apply()
+
+        val playing = _uiState.value.isPlaying
+        if (preset.isActive && playing) {
+            // 播放中切换：用新时长重启倒计时
+            val now = System.currentTimeMillis()
+            val state = AutoStopEngine.start(preset.durationMillis, now)
+            _uiState.update {
+                it.copy(
+                    autoStopPreset = preset,
+                    autoStopState = state,
+                    autoStopRemaining = AutoStopEngine.formatRemaining(state, now),
+                    autoStopProgress = 0f,
+                )
+            }
+            autoStopHandler.removeCallbacks(autoStopTicker)
+            autoStopHandler.postDelayed(autoStopTicker, AUTO_STOP_TICK_MS)
+        } else if (!preset.isActive && playing) {
+            // 播放中关闭定时器：停止倒计时
+            autoStopHandler.removeCallbacks(autoStopTicker)
+            _uiState.update {
+                it.copy(
+                    autoStopPreset = preset,
+                    autoStopState = AutoStopState.Idle,
+                    autoStopRemaining = "",
+                    autoStopProgress = 0f,
+                )
+            }
+        } else {
+            // 未播放：仅记录预设，倒计时在 start() 时启动
+            _uiState.update {
+                it.copy(
+                    autoStopPreset = preset,
+                    autoStopState = AutoStopState.Idle,
+                    autoStopRemaining = "",
+                    autoStopProgress = 0f,
+                )
+            }
+        }
+    }
+
+    /**
+     * 消费（清除）自动停止到期提示。
+     */
+    fun consumeAutoStopMessage() {
+        _uiState.update { it.copy(autoStopMessage = null) }
+    }
+
+    /**
+     * 倒计时到期：停止节拍器，置 Finished 状态，通知用户。
+     */
+    private fun onAutoStopExpired() {
+        autoStopHandler.removeCallbacks(autoStopTicker)
+        metronome?.stop()
+        _uiState.update {
+            it.copy(
+                isPlaying = false,
+                currentBeat = -1,
+                autoStopState = AutoStopState.Finished,
+                autoStopRemaining = "0:00",
+                autoStopProgress = 1f,
+                autoStopMessage = "⏰ 时间到！节拍器已自动停止",
+            )
+        }
+    }
+
+    /**
+     * 从持久化恢复自动停止预设选择（默认 OFF）。
+     */
+    private fun loadAutoStopPreset() {
+        val prefs = getApplication<Application>().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val minutes = prefs.getInt(AUTO_STOP_KEY, 0)
+        val preset = AutoStopPreset.fromMinutes(minutes)
+        _uiState.update { it.copy(autoStopPreset = preset) }
     }
 
     // ───────────────── 预设管理 ─────────────────
@@ -222,11 +370,15 @@ class MetronomeViewModel(application: Application) : AndroidViewModel(applicatio
 
     override fun onCleared() {
         super.onCleared()
+        autoStopHandler.removeCallbacks(autoStopTicker)
         stop()
     }
 
     companion object {
         private const val PREFS_NAME = "metronome_presets"
         private const val PRESETS_KEY = "presets_json"
+        private const val AUTO_STOP_KEY = "auto_stop_minutes"
+        /** 自动停止倒计时刷新间隔（毫秒）。 */
+        private const val AUTO_STOP_TICK_MS = 250L
     }
 }
