@@ -3,16 +3,17 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.85.0** (全部路线图 Phase 1-4 完成 + 后续增强: 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成引擎，根据调号/难度/拍号生成无限练习材料，复用现有渲染/跟音/分析管线) + 视奏练习生成器 UI 集成(SightReadingGeneratorDialog: 调号/难度/小节数/拍号/速度/谱号选择器 → 生成 Score → ScoreSelectionHolder 跨页面传递 → 练习页自动加载，闭环视奏练习全流程) + 离线同步引擎 + 真实 OMR 识谱引擎 + OMR 节奏分析 + OMR 连梁组切分 + OMR 谱号/调号/拍号识别 + OMR 中音/次中音/女高音/女中音谱号(C clef 全家族)识别 + OMR 附点音符识别 + OMR 符尾精细层数识别 + OMR 休止符识别 + OMR 十六分/三十二分休止符识别 + OMR 倾斜校正(deskew) + OMR 自适应二值化(局部 Otsu/光照不均) + OMR 二值图像降噪 + OM... [truncated]
+- 当前版本: **v2.87.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
 - 当前分支: main
-- 最新 tag: v2.85.0
+- 最新 tag: v2.87.0
 
 ## 健康状态 (2026-07-06 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2908 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2935 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0
-- Kotlin 文件: 242 个 / 代码行数: 70000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0
+- Kotlin 文件: 244 个 / 代码行数: 71000+ 行
+
 
 ## 开发历史
 
@@ -3387,4 +3388,107 @@ v2.84.0 → **v2.85.0** (versionCode 97 → 98)
 - 可考虑：节拍器与练习联动增强（自动同步练习曲目标 BPM）、
   节拍器定时自动停止（练习时长控制）、
   乐谱多页面支持、乐谱排序/标签增强
+
+---
+
+## 2026-07-06: v2.86.0 — 乐谱展示放大 + 设置整合 (Big Score Display & Settings Sheet)
+
+> 注：此版本由前一次运行实现并推送/打 tag，但 PROGRESS_LOG 当时未记录，此处补记。
+
+### 概述
+重构练习页布局，让乐谱占据屏幕主要空间（此前固定 180dp 高度过小），
+并将练习模式/段落循环/渐速练习/节拍器等设置整合到底部 ModalBottomSheet 弹窗，
+平时只显示一行紧凑摘要条，点击展开完整设置面板。
+
+### 改动
+- `PracticeScreen.kt`：乐谱区域从固定 180dp 改为 `weight(1f)`，占据屏幕主要空间
+- 练习模式 / 段落循环 / 渐速练习 / 节拍器 整合到底部设置弹窗 (ModalBottomSheet)
+- 新增紧凑设置摘要条 `SettingsSummaryBar` 显示当前关键设置
+- 点击摘要条或 ⚙️ 图标打开完整设置面板
+- 练习中保留实时渐速进度显示
+
+### 版本号
+v2.85.0 → **v2.86.0** (versionCode 98 → 99)
+
+---
+
+## 2026-07-06: v2.87.0 — 节拍器定时自动停止 (Metronome Auto-Stop Timer)
+
+### 概述
+为节拍器新增「定时自动停止」功能，允许用户设置一个倒计时时长（1/2/5/10/15/20/30
+分钟），到时自动停止节拍器。这是专业节拍器 App（Pro Metronome、Soundbrenner 等）的
+标准功能，紧接 v2.83-2.84 细分模式与预设管理之后，构成完整的节拍器练习工具链。
+典型用途：定时练习（每天固定练 15 分钟基本功）、忘记关节拍器时避免持续耗电、
+配合分段练习计划。
+
+### 核心功能
+- **7 档预设时长**：关闭 / 1 / 2 / 5 / 10 / 15 / 20 / 30 分钟（关闭 = 不启用自动停止）
+- **自动停止**：倒计时归零时自动停止节拍器，并弹出「⏰ 时间到！节拍器已自动停止」提示
+- **实时倒计时卡片**：播放且启用时显示大号剩余时间（如 "5:00"）+ 进度条 + "N 分钟后自动停止"
+- **播放中可切换**：播放中切换预设立即用新时长重启倒计时；播放中关闭则取消倒计时
+- **未播放时仅记录**：未播放时选择预设只记录偏好，倒计时在下次开始播放时启动
+- **持久化**：预设选择通过 SharedPreferences 保存，跨 App 会话保留
+- **到期提示自动消失**：3 秒后自动清除到期提示
+
+### 技术实现
+领域层（`audio/MetronomeAutoStop.kt`，纯 Kotlin 无 Android 依赖，完全可单元测试）：
+- `AutoStopPreset` 枚举（OFF/MIN_1/MIN_2/MIN_5/MIN_10/MIN_15/MIN_20/MIN_30）
+  - `durationMillis`（分钟→毫秒）/ `isActive`（OFF 为 false）
+  - `fromMinutes(minutes)` 工厂方法（持久化恢复，无匹配回退 OFF）
+- `AutoStopState` 密封类：Idle / Running(startEpochMs, durationMs) / Finished
+- `AutoStopEngine` 无状态计算对象（核心设计：所有方法以注入的"当前时间戳"为输入，
+  完全确定性，可注入任意时间验证边界）：
+  - `start(durationMillis, nowEpochMs)` → Running（拒绝 <=0）
+  - `remainingMillis(state, nowEpochMs)` → 剩余毫秒（下限 0；时钟回拨按完整时长处理，
+    避免显示负数）
+  - `isExpired(state, nowEpochMs)` → 是否到期（仅 Running 且剩余 <=0）
+  - `progress(state, nowEpochMs)` → 0..1 进度（Idle 0 / Finished 1 / Running 钳位）
+  - `formatClock(millis)` → "M:SS"（<1h）或 "H:MM:SS"（>=1h），**向上取整到秒**
+    （0.9s 显示 "0:01" 而非 "0:00"，避免提前显示 0 让用户误以为已结束）
+  - `formatRemaining(state, nowEpochMs)` → 便捷格式化
+
+Android 层：
+- `MetronomeViewModel.kt` 扩展：
+  - UiState 新增 autoStopPreset / autoStopState / autoStopRemaining / autoStopProgress /
+    autoStopMessage 字段
+  - `autoStopHandler` + `autoStopTicker`（Handler 主线程，250ms 刷新）：刷新剩余时间显示，
+    到期调用 `onAutoStopExpired()` 停止节拍器 + 置 Finished + 通知用户
+  - `start()` / `stop()` 集成倒计时启停（OFF 时不启动 ticker）
+  - `setAutoStopPreset(preset)`：持久化 + 播放中切换立即重启倒计时 / 关闭则取消
+  - `loadAutoStopPreset()` 从 SharedPreferences（`auto_stop_minutes` 键）恢复
+  - `onCleared()` 清理 Handler 回调避免泄漏
+- `MetronomeScreen.kt` 新增 `MetronomeAutoStopSection`：
+  - 两行 FilterChip 预设选择（4 + 4）
+  - Running 时 `errorContainer` 配色倒计时卡片：Timer 图标 + 大号剩余时间 + 
+    LinearProgressIndicator 进度条 + "N 分钟后自动停止"提示
+  - 到期提示 Surface（tertiaryContainer，3 秒自动消失）
+
+### 测试
+- `MetronomeAutoStopTest.kt`（27 个测试用例）— 全部通过
+  - AutoStopPreset：durationMillis 换算、isActive 仅 OFF 为 false、displayLabel 非空、
+    fromMinutes 往返、未知分钟回退 OFF
+  - start：正确字段、拒绝 0/负时长
+  - remainingMillis：Idle/Finished 返回 0、起始满额、随时间递减、到期后钳位 0、
+    时钟回拨按完整时长处理
+  - isExpired：到期前 false、到期及之后 true、Idle/Finished 非 Running
+  - progress：Idle 0 / Finished 1、Running 0→1 单调、超时钳位 1、时钟回拨 0
+  - formatClock：0/负数 → "0:00"、向上取整到秒（1ms→"0:01"）、分钟边界、
+    小时格式 "1:02:03"、30 分钟
+  - formatRemaining：与 remainingMillis 一致、Idle/Finished → "0:00"
+  - 端到端：1 分钟倒计时完整时间线（起始 1:00 → 30s 0:30 进度 0.5 → 到期）
+- 全项目总计 **2935** 个测试用例，0 失败
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2935 用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.86.0 → **v2.87.0** (versionCode 99 → 100)
+
+### 下一步计划
+- 可考虑：节拍器与练习联动增强（自动同步练习曲目标 BPM）、
+  乐谱多页面支持、乐谱排序/标签增强、
+  或继续完善练习/训练模块体系
+
 
