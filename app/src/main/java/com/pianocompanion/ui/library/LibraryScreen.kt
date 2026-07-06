@@ -28,6 +28,7 @@ import com.pianocompanion.analytics.DifficultyLevel
 import com.pianocompanion.data.DemoScores
 import com.pianocompanion.data.FavoriteStore
 import com.pianocompanion.data.model.Score
+import com.pianocompanion.musicalterms.MusicalTermsLibrary
 import com.pianocompanion.ui.components.EmptyState
 import com.pianocompanion.ui.components.SectionHeader
 import com.pianocompanion.ui.navigation.Screen
@@ -314,6 +315,15 @@ fun LibraryScreen(
             item {
                 MixedPracticeEntryCard(onClick = {
                     navController.navigate(Screen.MixedPractice.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
+            // === Musical terms trainer entry ===
+            item {
+                MusicalTermsEntryCard(onClick = {
+                    navController.navigate(Screen.MusicalTerms.route) {
                         launchSingleTop = true
                     }
                 })
@@ -1302,6 +1312,51 @@ private fun MixedPracticeEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "综合练习",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 音乐表情术语训练入口卡片。
+ *
+ * 引导用户进入音乐术语训练：学习乐谱中常见的速度、力度、演奏法、表情等术语。
+ */
+@Composable
+private fun MusicalTermsEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("📖", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "音乐术语训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "速度 · 力度 · 演奏法 · 表情 ${MusicalTermsLibrary.size}+ 术语",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "音乐术语训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }

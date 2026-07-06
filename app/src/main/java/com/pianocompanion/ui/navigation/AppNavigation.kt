@@ -41,6 +41,7 @@ import com.pianocompanion.ui.keysig.KeySigScreen
 import com.pianocompanion.ui.rhythmreading.RhythmReadingScreen
 import com.pianocompanion.ui.trainingsummary.TrainingSummaryScreen
 import com.pianocompanion.ui.mixedpractice.MixedPracticeScreen
+import com.pianocompanion.ui.musicalterms.MusicalTermsScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -63,6 +64,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object RhythmReading : Screen("rhythm_reading", "节奏视读", Icons.Filled.ViewAgenda)
     data object TrainingSummary : Screen("training_summary", "训练汇总", Icons.Filled.Insights)
     data object MixedPractice : Screen("mixed_practice", "综合练习", Icons.Filled.School)
+    data object MusicalTerms : Screen("musical_terms", "音乐术语", Icons.Filled.MenuBook)
 }
 
 private val screens = listOf(
@@ -219,6 +221,9 @@ fun AppScaffold() {
             }
             composable(Screen.MixedPractice.route) {
                 MixedPracticeScreen()
+            }
+            composable(Screen.MusicalTerms.route) {
+                MusicalTermsScreen()
             }
         }
     }
