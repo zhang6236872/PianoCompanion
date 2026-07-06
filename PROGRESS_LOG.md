@@ -3579,3 +3579,106 @@ v2.87.0 → **v2.88.0** (versionCode 100 → 101)
 ### 下一步计划
 - 继续完善训练模块体系：可考虑调式识别训练、节奏型听辨训练
 - 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
+
+---
+
+### 2026-07-07 (自主开发)
+- **v2.89.0: 调式识别训练（听辨模式）— ✅ 完成**
+
+新增完整的调式听辨训练模块，通过播放调式音阶让用户凭听觉识别调式类型。
+
+#### 功能详情
+- 支持 **8 种调式**：大调（伊奥尼亚）、自然小调（爱奥利亚）、和声小调、多利亚、
+  弗利吉亚、利底亚、混合利底亚、洛克利亚
+- **3 个难度级别**：
+  - 初级：大调 vs 自然小调（2 选项）
+  - 中级：+ 多利亚/混合利底亚/和声小调（5 选项）
+  - 高级：全部 8 种调式（8 选项）
+- **2 种播放方向**：上行、上下行
+- 跨会话进度跟踪（JSON 持久化，容错解析）
+- 12 个主音可选，五度圈升降号偏好
+
+#### 架构（遵循 IntervalTrainer 模式，纯 Kotlin 领域层 + Android 音频层 + ViewModel + Compose UI）
+
+1. **ModeRecognitionModels.kt** — 领域模型
+   - `ModeType` 枚举（8 种调式 × 半音偏移列表 × 听感描述 × 调性亮度）
+   - `ModeDifficulty`（3 级 × forDifficulty 子集选择）
+   - `PlayMode`（ASCENDING / ASCENDING_DESCENDING）
+   - `Tonic`（12 音级类 × 升降号记法偏好）
+   - `ModeQuestion`（完整题目 × 上行/下行 MIDI 序列 × 选项 × 正确答案）
+   - `ModeAnswerRecord`（答题记录）
+
+2. **ModeRecognitionEngine.kt** — 出题引擎（纯 Kotlin，确定性随机数）
+   - `generate()`：难度+播放方向 → ModeQuestion
+   - `buildAscendingMidi()` / `buildDescendingMidi()`：MIDI 音阶构建
+   - 钢琴范围钳制 [21, 108]
+   - `withSeed()` 工厂方法（测试确定性复现）
+
+3. **ModeRecognitionSession.kt** — 会话状态机（纯 Kotlin）
+   - start/submit/next/reset 完整生命周期
+   - 答题数/正确数/当前连击/最长连击/历史记录
+   - 边界安全（未开始/重复提交）
+
+4. **ModeRecognitionProgress.kt** — 跨会话进度跟踪（纯 Kotlin）
+   - 按难度+播放方向分键统计（键格式 `BEGINNER_ASCENDING`）
+   - 手动 JSON 序列化/反序列化（无外部依赖）
+   - 容错解析：损坏 JSON 返回空进度
+   - bestStreak / bestAccuracy 追踪
+
+5. **ModeRecognitionAudioBuilder.kt** — 音频构建器（纯 Kotlin）
+   - 复用 `PianoToneSynthesizer`（44100Hz）合成钢琴音色
+   - 上行/上下行模式渲染
+   - 前导/尾部静音 + 软限幅
+   - 预估时长 API
+
+6. **ModeRecognitionPlayer.kt** — AudioTrack MODE_STATIC 播放器
+   - 轮询 playbackHeadPosition 判断播放完成
+
+7. **ModeRecognitionViewModel.kt** — AndroidViewModel
+   - MutableStateFlow/StateFlow 状态管理
+   - SharedPreferences 持久化进度
+   - 配置管理：难度/播放方向选择
+
+8. **ModeRecognitionScreen.kt** — Material 3 Compose UI
+   - 配置界面：难度选择 / 播放方向选择 / 进度统计卡片
+   - 训练界面：播放按钮 + 调式选项卡片 + 答题反馈
+   - 答题后展示调式详情（中英文名/半音偏移/听感描述）
+
+#### 集成
+- `AppNavigation.kt`：新增 `Screen.ModeRecognition` 路由 + Composable 目标
+- `LibraryScreen.kt`：新增 `ModeRecognitionEntryCard` 入口卡片
+
+#### 单元测试（4 个测试类，92 个测试用例全部通过）
+- **ModeRecognitionEngineTest.kt**（38 用例）：
+  上行/下行 MIDI 序列构建（8 种调式全验证）× 各调式半音偏移正确性 ×
+  单调性（上行递增/下行递减）× MIDI 范围钳制 × 难度对应可用调式数 ×
+  出题确定性（固定种子）× 选项正确性（含答案/唯一/数量匹配）×
+  播放方向影响 × fullName 含调式名 × noteCount=8 × 调式特征验证
+  （弗利吉亚降二/利底亚增四/洛克利亚减五/多利亚升六/和声小调导音）
+- **ModeRecognitionSessionTest.kt**（22 用例）：
+  start/submit/next/reset 生命周期 × 正确/错误判定 × 连击递增归零 ×
+  最长连击追踪 × 边界安全（未开始提交/重复提交返回 null）×
+  isAnswered 标志 × accuracy 计算 × history 记录 × 难度/方向访问器 ×
+  全生命周期（中级/高级 × 10 题）
+- **ModeRecognitionProgressTest.kt**（18 用例）：
+  空进度 × 单次/多次会话累计 × bestStreak/bestAccuracy 追踪 ×
+  不同难度/播放方向分开统计 × 全局汇总统计 ×
+  JSON 往返一致性 × 容错解析（空/损坏/无stats/空stats）×
+  cumulativeAccuracy × 键格式
+- **ModeRecognitionAudioBuilderTest.kt**（14 用例）：
+  空序列渲染 × 采样率 44100 × 采样值不削波 × 上行/上下行渲染长度 ×
+  8 种调式渲染非空 × 预估时长 × 前导/尾部静音 ×
+  不同音符波形不同 × 非零音频信号
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 4 个 deprecation 警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 92 个 moderecognition 测试全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.88.0 → **v2.89.0** (versionCode 101 → 102)
+
+### 下一步计划
+- 继续完善训练模块体系：节奏型听辨训练、和弦听辨训练
+- 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
+- 可考虑给调式训练添加音色选择（钢琴/其他音色）或速度调节
