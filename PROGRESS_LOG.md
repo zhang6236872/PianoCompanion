@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.87.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
+- 当前版本: **v2.88.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
 - 当前分支: main
-- 最新 tag: v2.87.0
+- 最新 tag: v2.88.0
 
-## 健康状态 (2026-07-06 核验)
+## 健康状态 (2026-07-07 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 2935 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3020 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0
 - Kotlin 文件: 244 个 / 代码行数: 71000+ 行
 
 
@@ -3492,3 +3492,90 @@ v2.86.0 → **v2.87.0** (versionCode 99 → 100)
   或继续完善练习/训练模块体系
 
 
+---
+
+### 2026-07-07 (自主开发)
+- **v2.88.0 / versionCode 101：音乐表情术语训练模块（Musical Terms Trainer）**
+
+#### 新增模块
+全新训练模块：音乐表情术语训练。系统教授钢琴学习者认识乐谱中常见的
+意大利语/德语/法语表情标记，覆盖速度、力度、演奏法、表情、修饰词五大类别。
+
+#### 架构设计（7 层，遵循现有训练模块架构）
+1. **MusicalTermsModels.kt** — 纯 Kotlin 数据模型
+   - `TermCategory` 枚举：TEMPO(速度) / DYNAMICS(力度) / ARTICULATION(演奏法) /
+     EXPRESSION(表情) / MODIFIER(修饰词)，每个类别含中文显示名和描述
+   - `TermDifficulty` 枚举：BEGINNER(初级) / INTERMEDIATE(中级) / ADVANCED(高级)
+   - `QuizDirection` 枚举：TERM_TO_MEANING(术语→含义) / MEANING_TO_TERM(含义→术语)
+   - `MusicalTerm` 数据类：术语原文/中文含义/类别/BPM范围/难度/缩写/示例场景
+   - `TermQuestion` 数据类：题面/标签/正确答案/选项列表/完整术语对象/方向
+   - `TermAnswerRecord` 数据类：题目/用户答案/是否正确 + correctAnswerText 派生属性
+
+2. **MusicalTermsLibrary.kt** — 80+ 条精选术语库
+   - 速度术语（20+）：Largo/Adagio/Andante/Moderato/Allegro/Presto/Prestissimo 等，
+     含 BPM 范围标注
+   - 力度术语（15+）：pp/p/mp/mf/f/ff/sf/cresc./decresc. 等，含缩写
+   - 演奏法（15+）：legato/staccato/tenuto/marcato/portato/spiccato 等
+   - 表情术语（20+）：dolce/cantabile/maestoso/espressivo/tranquillo 等
+   - 修饰词（10+）：molto/poco/più/meno/assai/quasi/non troppo 等
+   - 支持按类别筛选 `filter()`、按难度筛选 `upToDifficulty()`
+   - 每条术语标注最低难度等级，支持渐进式学习
+
+3. **MusicalTermsEngine.kt** — 纯 Kotlin 出题引擎
+   - 注入 `Random` 种子，确定性出题便于测试复现
+   - 选项数随难度递增：初级 3 个 / 中级 4 个 / 高级 5 个
+   - 干扰项策略：优先同类别选取，不足时从全局补充
+   - 支持类别筛选、方向指定或随机切换
+   - 选项已打乱顺序
+
+4. **MusicalTermsSession.kt** — 会话状态机（纯 Kotlin）
+   - 完整生命周期：start → submit → next → reset
+   - 跟踪当前题目、已答题数、正确数、当前 streak、最长 streak
+   - 维护答题历史列表
+   - accuracy 实时计算
+   - 状态安全：已答题返回 null、未开始返回 null
+
+5. **MusicalTermsProgress.kt** — 跨会话进度跟踪（纯 Kotlin）
+   - 按难度+类别组合记录统计（如 "ADVANCED_TEMPO"）
+   - `TermProgressEntry`：累计答题数/正确数/会话数/最长streak/最佳准确率
+   - 手动 JSON 序列化/反序列化（无外部依赖）
+   - 容错解析：损坏 JSON 返回空进度
+   - 总体统计汇总：totalSessions/totalAnswered/totalCorrect/overallAccuracy/overallBestStreak
+
+6. **MusicalTermsViewModel.kt** — AndroidViewModel
+   - MutableStateFlow/StateFlow 状态管理
+   - SharedPreferences 持久化进度
+   - 配置管理：难度/类别/方向选择
+
+7. **MusicalTermsScreen.kt** — Material 3 Compose UI
+   - 配置界面：难度选择 / 类别筛选 / 出题方向
+   - 测验界面：大号题面 + 选项卡片 + 答题反馈（正确/错误高亮）
+   - 答题后展示术语详情（含义/BPM范围/示例）
+   - 结果界面：准确率/答题数/streak 统计
+
+#### 集成
+- `AppNavigation.kt`：新增 `Screen.MusicalTerms` 路由 + Composable 目标
+- `LibraryScreen.kt`：新增音乐术语入口卡片，显示术语总数
+
+#### 单元测试（4 个测试类，85 个测试用例）
+- **MusicalTermsLibraryTest.kt**（16 用例）：术语库非空/无重复/全类别覆盖/
+  难度子集关系/byCategory 正确/size 一致/filter 结果验证/upToDifficulty 层级
+- **MusicalTermsEngineTest.kt**（12 用例）：正确答案在选项中/选项数按难度/
+  类别过滤/方向指定/确定性复现(固定种子)/选项去重
+- **MusicalTermsSessionTest.kt**（20 用例）：start生成题目/submit正确错误/
+  streak递增归零/reset清空/accuracy计算/history顺序/配置参数返回/边界状态安全
+- **MusicalTermsProgressTest.kt**（17 用例）：累加统计/不同难度类别分开统计/
+  bestAccuracy更新/bestStreak只增不减/JSON往返/空进度/损坏JSON容错/
+  key生成/复杂多键往返
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 4 个 deprecation 警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3020 用例全部通过（新增 85 个）
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.87.0 → **v2.88.0** (versionCode 100 → 101)
+
+### 下一步计划
+- 继续完善训练模块体系：可考虑调式识别训练、节奏型听辨训练
+- 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
