@@ -44,6 +44,7 @@ fun PracticeScreen(
     val context = LocalContext.current
     var showScorePicker by remember { mutableStateOf(false) }
     var showTransposeDialog by remember { mutableStateOf(false) }
+    var showSettingsSheet by remember { mutableStateOf(false) }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -181,62 +182,16 @@ fun PracticeScreen(
                 }
             }
 
-            // === Practice mode selector ===
-            if (!uiState.isPracticing) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PracticeMode.entries.forEach { mode ->
-                        FilterChip(
-                            selected = uiState.practiceMode == mode,
-                            onClick = { viewModel.setPracticeMode(mode) },
-                            label = { Text(mode.displayName, fontSize = 12.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            // === Mode description ===
-            if (!uiState.isPracticing) {
-                Text(
-                    uiState.practiceMode.description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // === Section loop control ===
-            uiState.score?.let { score ->
-                if (!uiState.isPracticing && uiState.maxMeasure > 0) {
-                    SectionLoopControl(
-                        enabled = uiState.loopEnabled,
-                        startMeasure = uiState.loopStartMeasure,
-                        endMeasure = uiState.loopEndMeasure,
-                        maxMeasure = uiState.maxMeasure,
-                        onToggle = { viewModel.setLoopEnabled(it) },
-                        onRangeChange = { s, e -> viewModel.setLoopRange(s, e) }
-                    )
-                }
-            }
-
-            // === Tempo ramp-up control (渐速练习) ===
+            // === Settings summary bar (compact, tap to open settings) ===
             uiState.score?.let {
-                if (!uiState.isPracticing && uiState.loopEnabled) {
-                    TempoRampUpControl(
-                        enabled = uiState.tempoRampEnabled,
-                        startBpm = uiState.tempoRampStartBpm,
-                        targetBpm = uiState.tempoRampTargetBpm,
-                        increment = uiState.tempoRampIncrement,
-                        loopsPerStep = uiState.tempoRampLoopsPerStep,
-                        onToggle = { viewModel.setTempoRampEnabled(it) },
-                        onConfigChange = { s, t, i, l ->
-                            viewModel.setTempoRampConfig(s, t, i, l)
-                        }
-                    )
-                }
+                SettingsSummaryBar(
+                    practiceMode = uiState.practiceMode,
+                    metronomeEnabled = uiState.metronomeEnabled,
+                    metronomeBpm = uiState.metronomeBpm,
+                    loopEnabled = uiState.loopEnabled,
+                    tempoRampEnabled = uiState.tempoRampEnabled,
+                    onOpenSettings = { showSettingsSheet = true }
+                )
             }
 
             // === Tempo ramp-up live progress (练习中显示) ===
@@ -252,28 +207,12 @@ fun PracticeScreen(
                 )
             }
 
-            // === Tempo progress history summary (渐速进度历史) ===
-            uiState.tempoProgressSummary?.let { summary ->
-                if (uiState.loopEnabled) {
-                    TempoProgressSummaryCard(summary = summary)
-                }
-            }
-
-            // === Metronome control ===
-            MetronomeControlBar(
-                enabled = uiState.metronomeEnabled,
-                bpm = uiState.metronomeBpm,
-                currentBeat = uiState.metronomeBeat,
-                onToggle = { viewModel.toggleMetronome() },
-                onBpmChange = { viewModel.setMetronomeBpm(it) }
-            )
-
-            // === Staff notation ===
+            // === Staff notation — 大尺寸，占据屏幕主要空间 ===
             uiState.score?.let { score ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp),
+                        .weight(1f),
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -418,6 +357,111 @@ fun PracticeScreen(
 
             uiState.errorMessage?.let { msg ->
                 Text(msg, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            }
+        }
+    }
+
+    // === Practice settings bottom sheet ===
+    if (showSettingsSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showSettingsSheet = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("⚙️ 练习设置", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+
+                // --- Practice mode ---
+                Text("练习模式", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PracticeMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = uiState.practiceMode == mode,
+                            onClick = { viewModel.setPracticeMode(mode) },
+                            label = { Text(mode.displayName, fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Text(uiState.practiceMode.description, fontSize = 12.sp,
+                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+
+                HorizontalDivider()
+
+                // --- Section loop ---
+                uiState.score?.let {
+                    if (uiState.maxMeasure > 0) {
+                        SectionLoopControl(
+                            enabled = uiState.loopEnabled,
+                            startMeasure = uiState.loopStartMeasure,
+                            endMeasure = uiState.loopEndMeasure,
+                            maxMeasure = uiState.maxMeasure,
+                            onToggle = { viewModel.setLoopEnabled(it) },
+                            onRangeChange = { s, e -> viewModel.setLoopRange(s, e) }
+                        )
+                    }
+                }
+
+                // --- Tempo ramp (only if loop enabled) ---
+                uiState.score?.let {
+                    if (uiState.loopEnabled) {
+                        TempoRampUpControl(
+                            enabled = uiState.tempoRampEnabled,
+                            startBpm = uiState.tempoRampStartBpm,
+                            targetBpm = uiState.tempoRampTargetBpm,
+                            increment = uiState.tempoRampIncrement,
+                            loopsPerStep = uiState.tempoRampLoopsPerStep,
+                            onToggle = { viewModel.setTempoRampEnabled(it) },
+                            onConfigChange = { s, t, i, l ->
+                                viewModel.setTempoRampConfig(s, t, i, l)
+                            }
+                        )
+                    }
+                }
+
+                // --- Tempo progress history ---
+                uiState.tempoProgressSummary?.let { summary ->
+                    if (uiState.loopEnabled) {
+                        TempoProgressSummaryCard(summary = summary)
+                    }
+                }
+
+                HorizontalDivider()
+
+                // --- Metronome ---
+                MetronomeControlBar(
+                    enabled = uiState.metronomeEnabled,
+                    bpm = uiState.metronomeBpm,
+                    currentBeat = uiState.metronomeBeat,
+                    onToggle = { viewModel.toggleMetronome() },
+                    onBpmChange = { viewModel.setMetronomeBpm(it) }
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Done button
+                FilledTonalButton(
+                    onClick = { showSettingsSheet = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("完成", fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
@@ -985,5 +1029,71 @@ private fun TempoProgressSummaryCard(summary: String) {
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
+    }
+}
+
+/**
+ * 紧凑的设置摘要条 — 展示当前关键设置状态，点击打开完整设置面板。
+ */
+@Composable
+private fun SettingsSummaryBar(
+    practiceMode: PracticeMode,
+    metronomeEnabled: Boolean,
+    metronomeBpm: Int,
+    loopEnabled: Boolean,
+    tempoRampEnabled: Boolean,
+    onOpenSettings: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        onClick = onOpenSettings
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            SettingsMiniChip(icon = "🎹", label = practiceMode.displayName)
+            if (metronomeEnabled) {
+                SettingsMiniChip(icon = "🎵", label = "$metronomeBpm BPM")
+            }
+            if (loopEnabled) {
+                SettingsMiniChip(icon = "🔁", label = "循环")
+            }
+            if (tempoRampEnabled) {
+                SettingsMiniChip(icon = "⚡", label = "渐速")
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                Icons.Filled.Settings,
+                contentDescription = "练习设置",
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsMiniChip(icon: String, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(icon, fontSize = 12.sp)
+        Spacer(modifier = Modifier.width(3.dp))
+        Text(
+            label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
