@@ -3769,6 +3769,88 @@ v2.88.0 → **v2.89.0** (versionCode 101 → 102)
 v2.89.0 → **v2.90.0** (versionCode 102 → 103)
 
 ### 下一步计划
-- 继续完善训练模块体系：节奏型听辨训练
+- 继续完善训练模块体系：调式音阶听辨训练 / 旋律记忆训练
 - 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
 - 可考虑给和弦听辨训练添加根音提示模式（帮助初学者）或音色选择
+
+---
+
+### 2026-07-08 (自主开发)
+- v2.91.0: 节奏型听辨训练模块 (versionCode 103 → 104)
+
+#### 完成内容：节奏型听辨训练 (Rhythm Pattern Ear Training)
+
+**核心设计理念**：与和弦/调式听辨不同，节奏听辨的核心是**时间间距**而非音高色彩。所有 click 使用相同音高和音量的等高「哒」声，唯一区分依据是 onset 间距。
+
+**纯 Kotlin 领域层 (无 Android 依赖, 完全可单元测试)**
+
+1. **RhythmPatternModels.kt** — 数据模型
+   - `RhythmPatternType` 枚举（8种）：QUARTERS（四分音符）/ HALVES（二分音符）/ EIGHTHS（八分音符）/ SIXTEENTHS（十六分音符）/ DOTTED（附点节奏）/ SCOTCH_SNAP（后附点）/ SYNCOPATION（切分节奏）/ TRIPLETS（三连音）
+   - 每种节奏型定义 durations（以拍为单位的音符时值列表）、displayName、symbol、description
+   - `RhythmDifficulty`（初级4选项/中级6选项/高级8选项）
+   - `RhythmTempo`（慢速80BPM/快速140BPM，含 beatMs 属性）
+   - `RhythmPatternQuestion`（含 type/tempo/repeatCount/options/correctAnswer）
+   - `RhythmPatternAnswerRecord`
+
+2. **RhythmPatternEngine.kt** — 出题引擎
+   - `withSeed()` 固定种子可复现出题
+   - `generate()` 根据难度从节奏型集合中随机选取正确答案 + 生成干扰选项
+   - 选项唯一性保证
+   - `computeOnsetTimes()` onset 时间计算（与 AudioBuilder 一致）
+
+3. **RhythmPatternSession.kt** — 会话状态机
+   - Idle → Asking → Playing → Answering → Feedback 生命周期
+   - 连击 (streak) 追踪、最长连击记录
+   - 答题记录历史 (history)
+   - accuracy 计算
+   - 边界安全处理（未开始提交/重复提交返回 null）
+
+4. **RhythmPatternProgress.kt** — 跨会话进度跟踪
+   - 按难度 + 速度分维度统计（totalAttempts/correctAttempts/bestStreak/bestAccuracy）
+   - 全局汇总统计
+   - 手动 JSON 序列化/反序列化（容错解析）
+   - Entry 独立序列化
+
+**音频层**
+
+5. **RhythmPatternAudioBuilder.kt** — 等高 click 声合成（纯 Kotlin）
+   - 880Hz 正弦波 + 指数衰减包络（10ms 衰减时间常数），模拟木鱼/节拍器短促脉冲
+   - CLICK_DURATION_MS=100ms, LEAD_SILENCE_MS=300ms, TAIL_SILENCE_MS=400ms
+   - 所有 click 相同音高音量，叠加后软限幅
+
+6. **RhythmPatternPlayer.kt** — AudioTrack MODE_STATIC 播放器
+
+**Android 层**
+
+7. **RhythmPatternViewModel.kt** — AndroidViewModel + StateFlow + SharedPreferences 持久化
+
+**UI 层**
+
+8. **RhythmPatternScreen.kt** — Material 3 Compose UI
+   - 配置界面：难度选择 / 速度选择 / 练习说明卡片 + 听辨技巧
+   - 训练界面：播放按钮 + 节奏型类型选项卡片 + 答题反馈
+   - 答题后展示节奏型详情（中文名/符号/描述）
+   - 进度统计卡片
+
+#### 集成
+- `AppNavigation.kt`：新增 `Screen.RhythmPattern` 路由 `rhythm_pattern`（图标 `Icons.Filled.Drum` — 未找到改用 QueueMusic）
+- `LibraryScreen.kt`：新增 `RhythmPatternEntryCard` 入口卡片
+
+#### 单元测试（4 个测试类，共 90 个测试用例全部通过）
+- **RhythmPatternEngineTest.kt**：确定性出题、选项唯一性、难度选项数匹配、onset 时间计算
+- **RhythmPatternSessionTest.kt**：状态机生命周期、连击追踪、答题记录、accuracy 计算、边界安全
+- **RhythmPatternProgressTest.kt**：进度累计、分维度统计、JSON 往返、容错解析
+- **RhythmPatternAudioBuilderTest.kt**：渲染范围、时长合理、onset 峰值、静默区间、不同节奏型差异、预估时长匹配
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 全部通过 (含 3275 个用例)
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.90.0 → **v2.91.0** (versionCode 103 → 104)
+
+### 下一步计划
+- 继续完善训练模块体系：调式听辨训练 / 旋律记忆训练
+- 或增强现有模块：乐谱多页面、标签搜索
+- 可考虑给节奏型听辨添加节拍器视觉辅助
