@@ -3679,6 +3679,96 @@ v2.87.0 → **v2.88.0** (versionCode 100 → 101)
 v2.88.0 → **v2.89.0** (versionCode 101 → 102)
 
 ### 下一步计划
-- 继续完善训练模块体系：节奏型听辨训练、和弦听辨训练
+- 继续完善训练模块体系：节奏型听辨训练
 - 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
 - 可考虑给调式训练添加音色选择（钢琴/其他音色）或速度调节
+
+---
+
+### v2.89.0 → v2.90.0 — 和弦听辨训练 (Chord Ear Training) 新模块 (2026-07-07)
+
+**目标**：为训练模块体系新增「和弦听辨训练」——通过聆听和弦音频判断和弦类型
+（大三、小三、增三、减三、属七、大七、小七、减七），补齐已有视觉「和弦识谱」
+(chordreading) 和「调式听辨」(moderecognition) 之后的听觉训练拼图。
+
+#### 架构分层（完全复制 ModeRecognition 模块模式）
+
+**纯 Kotlin 领域层（无 Android 依赖，完全可单元测试）**
+
+1. **ChordTrainingModels.kt** — 数据模型
+   - `ChordEarType`（8 种）：大三/小三/减三/增三/大七/属七/小七/减七
+     每种含半音音程列表、显示名、符号、听感描述
+   - `ChordEarDifficulty`（3 级）：初级(大三vs小三/2选项)、中级(四种三和弦/4选项)、
+     高级(三和弦+七和弦/8选项)
+   - `ChordPlayStyle`（2 种）：柱式(BLOCK, 同时弹奏)、琶音(ARPEGGIO, 依次弹奏)
+   - `ChordRoot`：12 音级类根音，支持升号/降号记法（五度圈惯例）
+   - `ChordEarQuestion` / `ChordEarAnswerRecord`
+
+2. **ChordTrainingEngine.kt** — 出题引擎
+   - 确定性随机出题（固定种子复现，便于测试）
+   - 随机选和弦类型 + 根音 → 构建 MIDI 音符列表（钳制钢琴范围 [21,108]）
+   - 选项 = 该难度所有可用和弦类型（已打乱）
+
+3. **ChordTrainingSession.kt** — 会话状态机
+   - 生命周期：start → submit → next → reset
+   - 连击机制（答对递增、答错归零、bestStreak 不降）
+   - 边界安全：未开始提交返回 null、重复提交返回 null
+
+4. **ChordTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度+播放方式分键统计（键格式 `BEGINNER_BLOCK`）
+   - 手动 JSON 序列化/反序列化（无外部依赖，容错解析）
+   - bestStreak / bestAccuracy 追踪
+
+5. **ChordTrainingAudioBuilder.kt** — 音频构建器
+   - 复用 `PianoToneSynthesizer`（44100Hz）合成钢琴音色
+   - 柱式和弦（同时发声）+ 琶音（依次发声）两种渲染
+   - 前导/尾部静音 + 软限幅
+
+**Android 层**
+
+6. **ChordTrainingPlayer.kt** — AudioTrack MODE_STATIC 播放器（轮询播放完成）
+7. **ChordTrainingViewModel.kt** — AndroidViewModel + StateFlow + SharedPreferences 持久化
+
+**UI 层**
+
+8. **ChordTrainingScreen.kt** — Material 3 Compose UI
+   - 配置界面：难度选择 / 播放方式选择 / 进度统计卡片
+   - 训练界面：播放按钮 + 和弦类型选项卡片 + 答题反馈
+   - 答题后展示和弦详情（中文名/符号/听感描述/音程度数）
+
+#### 集成
+- `AppNavigation.kt`：新增 `Screen.ChordTraining` 路由（图标 `Icons.Filled.Piano`）
+- `LibraryScreen.kt`：新增 `ChordTrainingEntryCard` 入口卡片（tertiaryContainer 配色）
+
+#### 单元测试（3 个测试类，73 个测试用例全部通过）
+- **ChordTrainingEngineTest.kt**（21 用例）：
+  正确答案在选项中 × 选项数匹配难度(2/4/8) × 选项唯一 ×
+  难度对应和弦类型集合正确 × 播放方式/难度传递 × 确定性出题 ×
+  MIDI 音符构建正确性（C大三/D小七/G属七/减七）× 钢琴范围钳制 ×
+  三和弦3音/七和弦4音 × 音程结构验证 × allIntervals含根音 ×
+  大小三差三度/增减三差五度 × 根音名升降记法 × preferFlats
+- **ChordTrainingSessionTest.kt**（31 用例）：
+  start/submit/next/reset 生命周期 × 正确/错误判定 × 连击递增归零 ×
+  最长连击追踪 × 边界安全（未开始提交/重复提交返回 null）×
+  isAnswered 标志 × accuracy 计算 × history 记录顺序 × lastAnswer ×
+  难度/播放方式访问器 × 全生命周期（初级/中级/高级 × 10~20 题）
+- **ChordTrainingProgressTest.kt**（21 用例）：
+  空进度 × 单次/多次会话累计 × bestStreak/bestAccuracy 追踪 ×
+  bestStreak不降 × 累计准确率vs最佳准确率 ×
+  不同难度/播放方式分开统计 × 全局汇总统计 ×
+  JSON 往返一致性 × 容错解析（空/损坏/无stats/空stats）×
+  键格式 × 6键完整往返 × Entry 独立序列化
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 deprecation 警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 73 个 chordtraining 测试全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+- 全项目单元测试总数: **3185** 全部通过
+
+### 版本号
+v2.89.0 → **v2.90.0** (versionCode 102 → 103)
+
+### 下一步计划
+- 继续完善训练模块体系：节奏型听辨训练
+- 或增强现有模块：乐谱多页面、标签搜索、练习报告导出
+- 可考虑给和弦听辨训练添加根音提示模式（帮助初学者）或音色选择
