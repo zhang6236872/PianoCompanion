@@ -356,6 +356,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Melody memory training entry ===
+            item {
+                MelodyMemoryEntryCard(onClick = {
+                    navController.navigate(Screen.MelodyMemory.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1522,6 +1531,52 @@ private fun RhythmPatternEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "节奏型听辨训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 旋律记忆训练入口卡片。
+ *
+ * 引导用户进入旋律记忆训练：通过聆听短旋律判断旋律走向
+ * （上行 ↑ / 下行 ↓ / 同音 →），训练旋律轮廓听觉识别能力。
+ */
+@Composable
+private fun MelodyMemoryEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎵", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "旋律记忆训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听辨旋律走向 · 判断上行/下行/同音 · 3 难度 × 2 速度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "旋律记忆训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
