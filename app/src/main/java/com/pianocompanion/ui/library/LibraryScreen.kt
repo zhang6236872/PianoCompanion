@@ -338,6 +338,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Chord ear training entry ===
+            item {
+                ChordTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.ChordTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1412,6 +1421,52 @@ private fun ModeRecognitionEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "调式识别训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 和弦听辨训练入口卡片。
+ *
+ * 引导用户进入和弦听辨训练：通过聆听和弦判断和弦类型
+ * （大三/小三/减三/增三/七和弦…）。
+ */
+@Composable
+private fun ChordTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎹", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "和弦听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "听辨和弦 · 判断大三/小三/增减/七和弦 · 8 种类型",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "和弦听辨训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }

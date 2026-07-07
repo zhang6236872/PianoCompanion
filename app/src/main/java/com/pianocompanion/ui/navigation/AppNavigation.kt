@@ -43,6 +43,7 @@ import com.pianocompanion.ui.trainingsummary.TrainingSummaryScreen
 import com.pianocompanion.ui.mixedpractice.MixedPracticeScreen
 import com.pianocompanion.ui.musicalterms.MusicalTermsScreen
 import com.pianocompanion.ui.moderecognition.ModeRecognitionScreen
+import com.pianocompanion.ui.chordtraining.ChordTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -67,6 +68,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object MixedPractice : Screen("mixed_practice", "综合练习", Icons.Filled.School)
     data object MusicalTerms : Screen("musical_terms", "音乐术语", Icons.Filled.MenuBook)
     data object ModeRecognition : Screen("mode_recognition", "调式听辨", Icons.Filled.GraphicEq)
+    data object ChordTraining : Screen("chord_training", "和弦听辨", Icons.Filled.Piano)
 }
 
 private val screens = listOf(
@@ -229,6 +231,9 @@ fun AppScaffold() {
             }
             composable(Screen.ModeRecognition.route) {
                 ModeRecognitionScreen()
+            }
+            composable(Screen.ChordTraining.route) {
+                ChordTrainingScreen()
             }
         }
     }
