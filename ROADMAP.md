@@ -1,6 +1,6 @@
 # 🎹 Piano Companion — 开发路线图
 
-> 最后更新: 全部路线图 Phase 1-4 完成 + 后续增强 离线同步引擎 (v2.2.0) + 真实 OMR 识谱引擎 (v2.3.0) + OMR 节奏分析 (v2.4.0) + OMR 连梁组切分 (v2.5.0) + OMR 谱号/调号/拍号识别 (v2.6.0) + OMR 中音/次中音谱号识别 (v2.7.0) + OMR 附点音符识别 (v2.8.0) + OMR 符尾精细层数识别 (v2.9.0) + OMR 休止符识别 (v2.10.0) + OMR 倾斜校正 (v2.12.0) + OMR 自适应二值化 (v2.13.0) + OMR 二值图像降噪 (v2.14.0) + OMR 透视变形校正 (v2.15.0) + OMR 多系统页面时间轴排序修复 (v2.16.0) + OMR 高大旗形休止符与四分休止符区分 (v2.20.0) + OMR 延音线(tie)检测 (v2.25.0) + OMR 琶音(arpeggio)检测 (v2.41.0) + 成就徽章系统 (v2.56.0) + 练习目标追踪系统 GoalTracker (v2.57.0) + 成就解锁持久化与通知 AchievementStore (v2.59.0) + 乐谱难度评估引擎 DifficultyEstimator (v2.60.0) + 导入乐谱难度评估接入 ImportedScoreInfo.from 工厂 (v2.61.0) + 练习日历热力图 PracticeCalendarHeatmap (v2.62.0) + 调号识别训练 KeySigTrainer (v2.79.0) + 节奏视读训练 RhythmReading (v2.80.0) + 训练数据汇总仪表盘 TrainingSummary (v2.81.0) + 综合练习模式 MixedPractice (v2.82.0) + 节拍器细分模式 Subdivision (v2.83.0) + 节拍器预设管理 MetronomePresetStore (v2.84.0) + 乐谱收藏 FavoriteStore (v2.85.0) + 乐谱展示放大+设置整合 (v2.86.0) + 节拍器定时自动停止 AutoStopEngine (v2.87.0) + OMR 高级流程总结 (v2.88.0) + 音乐术语词典 MusicalTerms (v2.89.0) + 和弦听辨训练 ChordTraining (v2.90.0) + 节奏型听辨训练 RhythmPatternEarTraining (v2.91.0)
+> 最后更新: 全部路线图 Phase 1-4 完成 + 后续增强 离线同步引擎 (v2.2.0) + 真实 OMR 识谱引擎 (v2.3.0) + OMR 节奏分析 (v2.4.0) + OMR 连梁组切分 (v2.5.0) + OMR 谱号/调号/拍号识别 (v2.6.0) + OMR 中音/次中音谱号识别 (v2.7.0) + OMR 附点音符识别 (v2.8.0) + OMR 符尾精细层数识别 (v2.9.0) + OMR 休止符识别 (v2.10.0) + OMR 倾斜校正 (v2.12.0) + OMR 自适应二值化 (v2.13.0) + OMR 二值图像降噪 (v2.14.0) + OMR 透视变形校正 (v2.15.0) + OMR 多系统页面时间轴排序修复 (v2.16.0) + OMR 高大旗形休止符与四分休止符区分 (v2.20.0) + OMR 延音线(tie)检测 (v2.25.0) + OMR 琶音(arpeggio)检测 (v2.41.0) + 成就徽章系统 (v2.56.0) + 练习目标追踪系统 GoalTracker (v2.57.0) + 成就解锁持久化与通知 AchievementStore (v2.59.0) + 乐谱难度评估引擎 DifficultyEstimator (v2.60.0) + 导入乐谱难度评估接入 ImportedScoreInfo.from 工厂 (v2.61.0) + 练习日历热力图 PracticeCalendarHeatmap (v2.62.0) + 调号识别训练 KeySigTrainer (v2.79.0) + 节奏视读训练 RhythmReading (v2.80.0) + 训练数据汇总仪表盘 TrainingSummary (v2.81.0) + 综合练习模式 MixedPractice (v2.82.0) + 节拍器细分模式 Subdivision (v2.83.0) + 节拍器预设管理 MetronomePresetStore (v2.84.0) + 乐谱收藏 FavoriteStore (v2.85.0) + 乐谱展示放大+设置整合 (v2.86.0) + 节拍器定时自动停止 AutoStopEngine (v2.87.0) + OMR 高级流程总结 (v2.88.0) + 音乐术语词典 MusicalTerms (v2.89.0) + 和弦听辨训练 ChordTraining (v2.90.0) + 节奏型听辨训练 RhythmPatternEarTraining (v2.91.0) + 旋律记忆训练 MelodyMemoryTraining (v2.92.0)
 > GitHub: https://github.com/zhang6236872/PianoCompanion
 
 ---
@@ -65,6 +65,7 @@
 | 2q | **OMR 高大旗形休止符与四分休止符区分** | 🟡 P1 | tallFlaggedRest: 在四分休止符前拦截高度≥1.5间距的旗形休止符 + countStrongFlags 强对比旗钩计数(中位数基线+高对比阈值)区分旗形结构与锯齿笔画 ✅ (v2.20.0) |
 | 2r | **OMR 延音线(tie)检测** | 🟡 P1 | TieDetector: 列投影覆盖率法(≥75%)检测同音高符头间连续弧线 + 音高判别(Y差异≤0.5间距排除slur) + 延音线链(A→B→C)支持；OmrPipeline 被 tie 的第二个音符时值合并到第一个 ✅ (v2.25.0) |
 | 2s | **调号识别训练 (KeySigTrainer)** | 🟡 P1 | keysig/: 五度圈调号出题引擎(KeySigEngine 30 种调性) + 纯 Kotlin 会话/进度(JSON) + AudioTrack 音阶试听 + Compose 五线谱 Canvas 渲染(高低音谱号升降号) + 3 难度(初级0-3/中级0-5/高级大调+小调) + 4 选项选择题 + LibraryScreen 入口卡片；53 单元测试通过 ✅ (v2.79.0) |
+| 2t | **旋律记忆训练 (MelodyMemory)** | 🟡 P1 | melodymemory/: 确定性出题引擎(MelodyMemoryEngine withSeed) — 随机起始音C4-G4 + 按难度音程步进(初级二度/中级三度/高级四五度) + 旋律走向(上行↑/下行↓/同音→)生成 + 4选项含干扰项 + 穷举回退保证选项数; MelodyMemorySession 状态机(出题→听辨→答题→判定→下一题 + 连击追踪); MelodyMemoryProgress 手动JSON序列化容错持久化; MelodyMemoryAudioBuilder 复用PianoToneSynthesizer依次渲染旋律PCM + SLOW/NORMAL速度控制; MelodyMemoryPlayer AudioTrack播放; MelodyMemoryViewModel 协程管理; Material 3 Compose UI(难度/速度选择→播放→箭头答题→反馈→下一题); 3难度(BEGINNER 3音/INTERMEDIATE 4音/ADVANCED 5音) + 2速度; AppNavigation路由 + LibraryScreen入口卡片；81 单元测试通过 ✅ (v2.92.0) |
 | 3 | **云端同步传输层** | 🟢 P2 | 接入 Firebase/Google Drive, 复用已就绪的 SyncEngine |
 | 4 | **真机端到端测试** | 🔴 P0 | 需物理设备验证音频全链路 |
 
@@ -127,10 +128,10 @@
 ```
 
 ## 📊 代码统计
-- Kotlin 文件: 256 个
-- 代码行数: 74000+ 行
-- 单元测试: 3275 个 (100% 通过)
-- 版本标签: v1.0.0 → v2.91.0 (全部完成)
+- Kotlin 文件: 392 个
+- 代码行数: 108000+ 行
+- 单元测试: 3356 个 (100% 通过)
+- 版本标签: v1.0.0 → v2.92.0 (全部完成)
 
 ## 🔀 分支策略
 ```

@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.88.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
+- 当前版本: **v2.92.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
 - 当前分支: main
-- 最新 tag: v2.88.0
+- 最新 tag: v2.92.0
 
-## 健康状态 (2026-07-07 核验)
+## 健康状态 (2026-07-08 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3020 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3356 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0
-- Kotlin 文件: 244 个 / 代码行数: 71000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0
+- Kotlin 文件: 392 个 / 代码行数: 108000+ 行
 
 
 ## 开发历史
@@ -3851,6 +3851,99 @@ v2.89.0 → **v2.90.0** (versionCode 102 → 103)
 v2.90.0 → **v2.91.0** (versionCode 103 → 104)
 
 ### 下一步计划
-- 继续完善训练模块体系：调式听辨训练 / 旋律记忆训练
+- 继续完善训练模块体系：旋律记忆训练
 - 或增强现有模块：乐谱多页面、标签搜索
 - 可考虑给节奏型听辨添加节拍器视觉辅助
+
+---
+
+## 2026-07-08 — v2.92.0: 旋律记忆训练模块 (Melody Memory Training)
+
+### 概述
+新增**旋律记忆训练**（Melody Memory Training）模块——用户聆听短旋律后判断旋律走向（上行↑/下行↓/同音→），训练旋律轮廓听觉识别能力。延续培训模块系列（ModeRecognition 调式听辨 → ChordTraining 和弦听辨 → RhythmPattern 节奏型听辨 → MelodyMemory 旋律记忆），完整复制既有模块架构模式。
+
+### 架构
+模块位于 `com.pianocompanion.melodymemory` 包，遵循领域层纯 Kotlin、UI 层 Compose 的分层：
+
+1. **MelodyMemoryModels.kt** — 数据模型
+   - `MelodyDifficulty`：BEGINNER(3音)/INTERMEDIATE(4音)/ADVANCED(5音)，按音程范围梯度
+   - `MelodyTempo`：SLOW(慢速)/NORMAL(正常)
+   - `MelodyContour`：UP(上行)/DOWN(下行)/REPEAT(同音)
+   - `MelodyQuestion`：起始音+MIDI音符列表+正确走向+4选项
+
+2. **MelodyMemoryEngine.kt** — 确定性出题引擎
+   - `withSeed()` 工厂方法支持确定性测试
+   - 随机起始音 C4-G4 范围
+   - 按难度选择音程步进（初级仅二度，中级含三度，高级含四五度）
+   - 生成走向选项（含穷举回退保证4选项）
+   - 确保旋律音符在钢琴范围内
+
+3. **MelodyMemorySession.kt** — 会话状态机
+   - 出题→听辨→答题→判定→下一题 生命周期
+   - 跟踪连击（streak）、答题历史
+   - 完整正确率统计
+
+4. **MelodyMemoryProgress.kt** — 跨会话进度跟踪
+   - 手动 JSON 序列化/反序列化（无外部依赖）
+   - 容错解析（字段缺失/类型不匹配安全）
+   - SharedPreferences 持久化
+
+5. **MelodyMemoryAudioBuilder.kt** — PCM 音频渲染
+   - 复用 `PianoToneSynthesizer` 依次渲染旋律各音
+   - 按速度（SLOW/NORMAL）控制每音时长
+   - 拼接为连续 PCM 缓冲
+
+6. **MelodyMemoryPlayer.kt** — AudioTrack 播放器
+   - 后台线程播放，防止阻塞主线程
+   - 播放/停止控制
+
+7. **MelodyMemoryViewModel.kt** — AndroidViewModel
+   - 协程管理播放生命周期
+   - 状态暴露（StateFlow）
+
+8. **MelodyMemoryScreen.kt** — Material 3 Compose UI
+   - 难度/速度选择界面
+   - 播放按钮（支持重听）
+   - 箭头选项答题（↑/↓/→ + 干扰项）
+   - 对错反馈 + 旋律详情展示
+   - 下一题流转
+
+### 测试（81 个用例）
+- **MelodyMemoryEngineTest.kt**（25 tests）：确定性出题、选项唯一性、走向正确性、难度梯度、范围钳位
+- **MelodyMemorySessionTest.kt**（23 tests）：状态机生命周期、连击追踪、答题记录、accuracy 计算、边界安全
+- **MelodyMemoryProgressTest.kt**（20 tests）：进度累计、分维度统计、JSON 往返、容错解析
+- **MelodyMemoryAudioBuilderTest.kt**（13 tests）：渲染范围、时长合理、不同速度差异、预估时长匹配
+
+### 集成
+- `AppNavigation.kt`：添加 `Screen.MelodyMemory` route + composable 注册
+- `LibraryScreen.kt`：添加 `MelodyMemoryEntryCard` 入口卡片 + LazyColumn item
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3356 个用例全部通过 (含 81 个新增), 0 失败, 0 错误
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### Git
+- 分支: feature/melody-memory-training → merge main
+- Commit: 734ede5
+- Tag: v2.92.0
+- Push: origin/main
+
+### 版本号
+v2.91.0 → **v2.92.0** (versionCode 104 → 105)
+
+### 代码统计
+- Kotlin 文件: 392 个
+- 代码行数: 108,811 行
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑音程距离听辨 / 节拍位置感知
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加进度统计汇总页面
+- 弃用警告待处理：Icons.Filled.NavigateNext / QueueMusic / MenuBook 应迁移到 Icons.AutoMirrored
