@@ -3,15 +3,15 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.92.0** (全部路线图 Phase 1-4 完成 + 后续增强: 节拍器定时自动停止(AutoStopPreset: 关闭/1/2/5/10/15/20/30分钟预设枚举×durationMillis/isActive/fromMinutes × AutoStopState密封类Idle/Running/Finished × AutoStopEngine纯Kotlin无状态引擎—start/remainingMillis/isExpired/progress/formatClock(向上取整秒,MM:SS或H:MM:SS)/formatRemaining,以注入时间戳为输入确定性可测试,时钟回拨安全处理 × MetronomeViewModel Handler倒计时刷新250ms到期自动停止节拍器+通知用户×播放中切换预设立即重启倒计时×SharedPreferences持久化 × Material 3两行FilterChip预设选择+errorContainer倒计时卡片大号剩余时间+LinearProgressIndicator进度条+到期提示3秒自动消失) + 乐谱展示放大+设置整合(PracticeScreen乐谱区域weight(1f)占据主空间+练习模式/段落循环/渐速练习/节拍器整合到底部ModalBottomSheet+紧凑设置摘要条SettingsSummaryBar+完整设置面板) + 乐谱收藏(FavoriteStore: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯例/钢琴范围钳位/越界检测/音名更新/保留非音高属性; TransposeDialog: Material 3移调对话框，检测当前调性+半音步进器+八度快捷+常用调FilterChip; PracticeScreen集成移调入口) + 节奏训练模块(RhythmTraining: 听节奏→敲击模仿→评分，确定性节奏型生成+贪心匹配算法+Perfect/Good/Miss三级判定+会话状态机+进度持久化+Material 3 UI，复用PianoToneSynthesizer合成音色+预备拍嗒声) + 听音训练模块(EarTraining: 音程/和弦/音阶识别训练，复用 PianoToneSynthesizer 合成音色，确定性出题引擎+会话状态机+进度持久化+Material 3 UI) + 参考音频回放引擎(PianoToneSynthesizer: 纯Kotlin加法合成钢琴音色，基频+7次谐波+指数衰减包络+力度映射+演奏法感知; ScorePlaybackEngine: 乐谱→PCM渲染，时间轴混合/和弦叠加/速度缩放/软限幅防削波; ScorePlayer: Android AudioTrack播放器，预渲染+播放/暂停/停止/跳转+进度回调) + 视奏练习生成器(SightReadingGenerator: 确定性伪随机旋律生成... [truncated]
+- 当前版本: **v2.94.0** (绝对音高训练 PitchTraining: PitchClass 12音级类枚举(semi tonesFromC/sharpName/flatName/isWhiteKey/solfegeName/fromMidi/fromSemitones/ALL/WHITE_KEYS) × PitchTrainingDifficulty 3级难度(初级7白键单八度C4-B4/中级12音单八度C4-B4/高级12音3八度C3-B5, pitchClasses/octaveLowest/octaveHighest/optionCount/ALL) × PitchQuestion(pitchClass/midiNote/difficulty/options/correctAnswer/noteName/octave/pitchClassDetail/frequency, MIDI范围校验[21,108]) × PitchAnswerRecord(question/userAnswer/isCorrect/correctAnswerOrNull) × PitchTrainingEngine确定性种子出题引擎(withSeed工厂/音级类随机选→八度范围内对应MIDI候选随机选→选项打乱) × PitchTrainingSession会话状态机(start/submit/next/reset, currentStreak/bestStreak, history, accuracy, isStarted/isAnswered/lastAnswer) × PitchTrainingProgress跨会话进度跟踪(按难度分维度recordSession/totalSessions/totalAnswered/totalCorrect/overallAccuracy/overallBestStreak + 手动JSON序列化容错解析+escape/unescape/extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace + PitchTrainingProgressEntry totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy/cumulativeAccuracy + fromJson容错) × PitchTrainingAudioBuilder单音PCM渲染(renderNote(midiNote,velocity)/render(question)/estimateDurationMs, NOTE_DURATION_MS=1500/LEAD_SILENCE_MS=200/TAIL_SILENCE_MS=500/DEFAULT_VELOCITY=70/SOFTCLIP_K=0.7, softClip软限幅tanh近似, 复用PianoToneSynthesizer) × PitchTrainingPlayer AudioTrack协程播放 × PitchTrainingViewModel AndroidViewModel StateFlow状态暴露 × PitchTrainingScreen Material 3 Compose UI(难度选择器初级/中级/高级+播放按钮重听+12音级类选项网格答题+对错反馈+唱名/频率教学信息+会话统计准确率连击+进度卡片) × AppNavigation路由pitch_training+LibraryScreen入口卡片🎯secondaryContainer) — v2.93.0音程听辨训练(IntervalTraining: IntervalType 13种音程枚举(纯一度→纯八度,半音数/协和性/中文名/缩写/听感描述) × IntervalDifficulty 3级(初级4/中级6/高级8音程) × PlayDirection 上行旋律/下行旋律/和声 × IntervalQuestion × IntervalAnswerRecord × IntervalTrainingEngine确定性种子出题 × IntervalTrainingSession会话状态机 × IntervalTrainingProgress跨会话进度JSON × IntervalTrainingAudioBuilder旋律/和声双模式PCM渲染+软限幅 × IntervalTrainingPlayer × IntervalTrainingViewModel × IntervalTrainingScreen Material 3 UI+AppNavigation+LibraryScreen集成) + 乐谱收藏(FAVORITE_STORE: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯用偏好; LibraryScreen集成入口+AppNavigation路由) + [truncated for brevity — see full description in v2.92.0 entry]
 - 当前分支: main
-- 最新 tag: v2.92.0
+- 最新 tag: v2.94.0
 
-## 健康状态 (2026-07-08 核验)
+## 健康状态 (2026-07-09 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3356 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3539 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0
 - Kotlin 文件: 392 个 / 代码行数: 108000+ 行
 
 
@@ -4030,9 +4030,95 @@ v2.92.0 → **v2.93.0** (versionCode 105 → 106)
 3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
 4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
 5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
 
 ### 下一步计划
-- 继续扩展培训模块系列：可考虑绝对音高感知 / 节拍位置感知
+- 继续扩展培训模块系列：可考虑节拍位置感知 / 调号识别训练
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook 应迁移到 Icons.AutoMirrored
+
+---
+
+## v2.94.0 — 绝对音高训练 (Absolute Pitch Training)
+
+**时间**: 2026-07-09
+**分支**: feature/pitch-training
+
+### 任务概述
+新增绝对音高训练模块。播放**单个**音符，用户从选项中选择正确的音名（C / C# / D …）。与音程训练（判断两音之间的**距离**）不同，绝对音高训练要求大脑建立「频率 → 音名」的绝对映射——这是最高级的听觉训练技能之一。
+
+### 实现内容
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **PitchTrainingModels.kt** — 数据模型
+   - `PitchClass` 枚举（12 个音级类，0-11 半音）：C/C#/D/.../B，含升号名、降号名、是否白键、唱名
+   - `fromMidi()` / `fromSemitones()` 工厂方法，`ALL` / `WHITE_KEYS` 集合
+   - `PitchTrainingDifficulty`（初级 7 白键单八度 C4-B4 / 中级 12 音单八度 C4-B4 / 高级 12 音 3 八度 C3-B5）
+   - `PitchQuestion`（含音级类、MIDI 音符、难度、选项列表、音名/八度/频率/唱名详情）
+   - `PitchAnswerRecord`（答题结果记录）
+   - `PitchTrainingConstants`（钢琴 MIDI 范围 [21, 108]）
+
+2. **PitchTrainingEngine.kt** — 出题引擎
+   - 确定性随机数生成器（`withSeed()` 工厂方法）
+   - 音级类随机选 → 八度范围内对应 MIDI 候选随机选 → 选项打乱
+
+3. **PitchTrainingSession.kt** — 会话状态机
+   - 完整生命周期：start → submit → next
+   - 连击追踪（currentStreak / bestStreak）
+   - 答题历史、准确率计算
+
+4. **PitchTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计
+   - 手动 JSON 序列化（容错解析：escape/unescape/extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace）
+   - 累计准确率、最佳连击、最佳会话准确率
+   - `PitchTrainingProgressEntry` 独立序列化
+
+5. **PitchTrainingAudioBuilder.kt** — 单音 PCM 音频构建器
+   - 单音 1500ms（较长以便用户辨识绝对音高）
+   - 前导静音 200ms + 尾部静音 500ms
+   - 软限幅防止削波（tanh 近似）
+   - 复用 PianoToneSynthesizer 合成钢琴音色
+
+6. **PitchTrainingPlayer.kt** — AudioTrack 播放器
+   - 协程管理播放生命周期
+
+7. **PitchTrainingViewModel.kt** — AndroidViewModel
+   - StateFlow 状态暴露
+   - 难度选择、播放控制、答题提交
+
+#### UI 层
+
+8. **PitchTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器（初级/中级/高级）
+   - 播放按钮（支持重听）
+   - 12 音级类选项网格答题（升号/降号切换）
+   - 对错反馈 + 唱名/频率教学信息展示
+   - 会话统计（准确率、连击）
+   - 跨会话进度卡片
+
+#### 集成
+- `AppNavigation.kt`：添加 `Screen.PitchTraining` route（`pitch_training`，显示名「绝对音高」，`Icons.Filled.GraphicEq`）+ composable 注册
+- `LibraryScreen.kt`：添加 `PitchTrainingEntryCard` 入口卡片（🎯 图标，secondaryContainer 配色）
+
+### 测试（97 个用例）
+- **PitchTrainingEngineTest.kt**（25 tests）：确定性出题、音级类在难度范围内、MIDI 范围正确性、选项唯一性/完整性、难度配置验证、PitchClass 枚举完整性
+- **PitchTrainingSessionTest.kt**（24 tests）：状态机生命周期、连击追踪/重置/不递减、准确率计算、答题历史记录、边界安全（未启动提交/重复提交/未启动 next）、reset 清空、全难度多题完整生命周期
+- **PitchTrainingProgressTest.kt**（24 tests）：分难度统计、全局汇总、JSON 往返、容错解析（损坏/空/缺失字段）、Entry 独立序列化、bestAccuracy 更新逻辑
+- **PitchTrainingAudioBuilderTest.kt**（24 tests）：渲染非空、采样率 44100、不削波 [-1,1]、不同音符差异、相邻半音差异、前导/尾部静音、时长预估匹配、全难度渲染、极端钢琴范围 A0-C8
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 97 个新用例全部通过, 0 失败 (总计 3539 用例)
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.93.0 → **v2.94.0** (versionCode 106 → 107)
+
+### 架构说明
+绝对音高训练与音程训练的关键区别：
+- **音程训练**：播放**两个**音 → 识别二者之间的**距离**（相对音高）
+- **绝对音高训练**：播放**一个**音 → 识别音的**名称**（绝对音高）
+- 高级难度横跨 3 个八度（C3-B5），同一音名出现在不同八度，真正考验绝对音高识别能力
+- 单音播放时长 1500ms（比音程训练更长），给用户充足时间辨识音色和频率
