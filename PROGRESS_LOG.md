@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.94.0** (绝对音高训练 PitchTraining: PitchClass 12音级类枚举(semi tonesFromC/sharpName/flatName/isWhiteKey/solfegeName/fromMidi/fromSemitones/ALL/WHITE_KEYS) × PitchTrainingDifficulty 3级难度(初级7白键单八度C4-B4/中级12音单八度C4-B4/高级12音3八度C3-B5, pitchClasses/octaveLowest/octaveHighest/optionCount/ALL) × PitchQuestion(pitchClass/midiNote/difficulty/options/correctAnswer/noteName/octave/pitchClassDetail/frequency, MIDI范围校验[21,108]) × PitchAnswerRecord(question/userAnswer/isCorrect/correctAnswerOrNull) × PitchTrainingEngine确定性种子出题引擎(withSeed工厂/音级类随机选→八度范围内对应MIDI候选随机选→选项打乱) × PitchTrainingSession会话状态机(start/submit/next/reset, currentStreak/bestStreak, history, accuracy, isStarted/isAnswered/lastAnswer) × PitchTrainingProgress跨会话进度跟踪(按难度分维度recordSession/totalSessions/totalAnswered/totalCorrect/overallAccuracy/overallBestStreak + 手动JSON序列化容错解析+escape/unescape/extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace + PitchTrainingProgressEntry totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy/cumulativeAccuracy + fromJson容错) × PitchTrainingAudioBuilder单音PCM渲染(renderNote(midiNote,velocity)/render(question)/estimateDurationMs, NOTE_DURATION_MS=1500/LEAD_SILENCE_MS=200/TAIL_SILENCE_MS=500/DEFAULT_VELOCITY=70/SOFTCLIP_K=0.7, softClip软限幅tanh近似, 复用PianoToneSynthesizer) × PitchTrainingPlayer AudioTrack协程播放 × PitchTrainingViewModel AndroidViewModel StateFlow状态暴露 × PitchTrainingScreen Material 3 Compose UI(难度选择器初级/中级/高级+播放按钮重听+12音级类选项网格答题+对错反馈+唱名/频率教学信息+会话统计准确率连击+进度卡片) × AppNavigation路由pitch_training+LibraryScreen入口卡片🎯secondaryContainer) — v2.93.0音程听辨训练(IntervalTraining: IntervalType 13种音程枚举(纯一度→纯八度,半音数/协和性/中文名/缩写/听感描述) × IntervalDifficulty 3级(初级4/中级6/高级8音程) × PlayDirection 上行旋律/下行旋律/和声 × IntervalQuestion × IntervalAnswerRecord × IntervalTrainingEngine确定性种子出题 × IntervalTrainingSession会话状态机 × IntervalTrainingProgress跨会话进度JSON × IntervalTrainingAudioBuilder旋律/和声双模式PCM渲染+软限幅 × IntervalTrainingPlayer × IntervalTrainingViewModel × IntervalTrainingScreen Material 3 UI+AppNavigation+LibraryScreen集成) + 乐谱收藏(FAVORITE_STORE: 纯Kotlin收藏存储引擎×收藏置顶稳定排序×只看收藏筛选×手动JSON序列化容错×跨内置/导入统一键管理×SharedPreferences持久化×删除乐谱自动清理收藏×Material 3星标按钮+FilterChip筛选+收藏计数+空状态引导) + 节拍器预设管理(MetronomePresetStore: 命名预设保存/加载/重命名/删除 BPM+拍号+细分模式配置 × 6 内置默认预设 × SharedPreferences 持久化 × 手动JSON序列化容错 × 当前预设自动高亮 × Material 3 UI卡片+对话框) + 节拍器细分模式(Subdivision: 四分/八分/三连音/十六分/六连音/三十二分 × 三态点击音色 × ClickPatternGenerator模式生成 × 子拍点自适应时长) + 和弦进行词典(ChordProgressionLibrary: 14种常见和弦进行模板(流行万能I-V-vi-IV/爵士ii-V-I/卡农/蓝调12小节/安达卢西亚等)×12调性移调+罗马数字分析+ProgressionEngine三层优先级和弦类型推断(explicitType>调内七和弦表>大小写推断)+连续PCM试听+Material 3 UI键盘高亮) + 音阶词典(ScaleLibrary: 17种音阶类型×12根音; ScaleEngine纯Kotlin音阶构建引擎—根音+音程→上行/下行MIDI音符列表; 旋律小调上行下行不同音程; 钢琴范围钳位; 关系大小调互逆; 级数名称; 指法建议; 音程步进; ScaleAudioBuilder复用PianoToneSynthesizer上行/下行/上下行渲染+软限幅; ScalePlayer AudioTrack播放; ScaleLibraryScreen Material 3 UI—根音/音阶类型/方向选择器+可视化2八度钢琴键盘高亮+音名/级数/步进/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 和弦词典(ChordDictionary: 18种和弦类型×12根音×4转位; ChordEngine纯Kotlin和弦构建引擎—根音+类型+转位→MIDI音符列表; 五度圈升降号偏好; 音程名称映射; 指法建议; 钢琴范围钳位; ChordAudioBuilder复用PianoToneSynthesizer柱式/琶音双模式渲染+时间轴混合+软限幅; ChordPlayer AudioTrack播放; ChordDictionaryScreen Material 3 UI—根音/和弦类型/转位选择器+可视化2八度钢琴键盘高亮+音程/指法信息卡; LibraryScreen集成入口+AppNavigation路由) + 移调引擎(KeyDetector: Krumhansl-Schmuckler调性判定算法，12维音级类直方图+大小调轮廓皮尔逊相关+24候选调旋转对齐+置信度评估; Transposer: 乐谱半音移调，transposeBySemitones/transposeToKey/computeSemitoneOffset五度圈惯用偏好; LibraryScreen集成入口+AppNavigation路由) + [truncated for brevity — see full description in v2.92.0 entry]
+- 当前版本: **v2.95.0** (终止式听辨训练 CadenceTraining: ChordFunction 调内和弦功能枚举(I/ii/IV/V/V7/vi, romanNumeral/intervalsFromTonic/displayName/noteCount/buildMidiNotes实例方法) × CadenceType 4种终止式枚举(PAC完全正格V→I/PC变格IV→I/HC半终止→V/DC伪终止V→vi, displayName/abbreviation/progression/resolutionLabel/description/chordCount/progressionLabel) × CadenceDifficulty 3级(初级PAC+PC2选项/中级+HC3选项/高级全4种) × CadenceQuestion(type/tonicMidi/tonicName/difficulty/chordProgression/answerChoices/correctAnswer) × CadenceAnswerRecord × CadenceTrainingEngine确定性种子出题(类型随机选→调性C3-G3随机选→function.buildMidiNotes构建和弦MIDI) × CadenceTrainingSession会话状态机 × CadenceTrainingProgress跨会话进度JSON容错 × CadenceTrainingAudioBuilder和弦进行PCM渲染(柱式和弦+时间轴混合+软限幅+CHORD_DURATION_MS=1200) × CadenceTrainingPlayer × CadenceTrainingViewModel × CadenceTrainingScreen Material 3(难度选择+大号播放+选项答题+终止式听感描述教学) × AppNavigation路由cadence_training+LibraryScreen入口卡片🎼tertiaryContainer) — 继承自 v2.94.0 绝对音高训练 PitchTraining: PitchClass 12音级类枚举(semi tonesFromC/sharpName/flatName/isWhiteKey/solfegeName/fromMidi/fromSemitones/ALL/WHITE_KEYS) × PitchTrainingDifficulty 3级难度(初级7白键单八度C4-B4/中级12音单八度C4-B4/高级12音3八度C3-B5, pitchClasses/octaveLowest/octaveHighest/optionCount/ALL) × PitchQuestion(pitchClass/midiNote/difficulty/options/correctAnswer/noteName/octave/pitchClassDetail/frequency, MIDI范围校验[21,108]) × PitchAnswerRecord(question/userAnswer/isCorrect/correctAnswerOrNull) × PitchTrainingEngine确定性种子出题引擎(withSeed工厂/音级类随机选→八度范围内对应MIDI候选随机选→选项打乱) × PitchTrainingSession会话状态机(start/submit/next/reset, currentStreak/bestStreak, history, accuracy, isStarted/isAnswered/lastAnswer) × PitchTrainingProgress跨会话进度跟踪(按难度分维度recordSession/totalSessions/totalAnswered/totalCorrect/overallAccuracy/overallBestStreak + 手动JSON序列化容错解析+escape/unescape/extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace + PitchTrainingProgressEntry totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy/cumulativeAccuracy + fromJson容错) × PitchTrainingAudioBuilder单音PCM渲染(renderNote(midiNote,velocity)/render(question)/estimateDurationMs, NOTE_DURATION_MS=1500/LEAD_SILENCE_MS=200/TAIL_SILENCE_MS=500/DEFAULT_VELOCITY=70/SOFTCLIP_K=0.7, softClip软限幅tanh近似, 复用PianoToneSynthesizer) × PitchTrainingPlayer AudioTrack协程播放 × PitchTrainingViewModel AndroidViewModel StateFlow状态暴露 × PitchTrainingScreen Material 3 Compose UI(难度选择器初级/中级/高级+播放按钮重听+12音级类选项网格答题+对错反馈+唱名/频率教学信息+会话统计准确率连击+进度卡片) × AppNavigation路由pitch_training+LibraryScreen入口卡片🎯secondaryContainer) — v2.93.0音程听辨训练(IntervalTraining: IntervalType 13种音程枚举(纯一度→纯八度,半音数/协和性/中文名/缩写/听感描述) × IntervalDifficulty 3级(初级4/中级6/高级8音程) × PlayDirection 上行旋律/下行旋律/和声 × IntervalQuestion × IntervalAnswerRecord × IntervalTrainingEngine确定性种子出题 × IntervalTrainingSession会话状态机 × IntervalTrainingProgress跨会话进度JSON × IntervalTrainingAudioBuilder旋律/和声双模式PCM渲染+软限幅 × IntervalTrainingPlayer × IntervalTrainingViewModel × IntervalTrainingScreen Material 3 UI+AppNav... [truncated]
 - 当前分支: main
-- 最新 tag: v2.94.0
+- 最新 tag: v2.95.0
 
 ## 健康状态 (2026-07-09 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3539 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3631 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0
-- Kotlin 文件: 392 个 / 代码行数: 108000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0
+- Kotlin 文件: 428 个 / 代码行数: 116000+ 行
 
 
 ## 开发历史
@@ -4122,3 +4122,142 @@ v2.93.0 → **v2.94.0** (versionCode 106 → 107)
 - **绝对音高训练**：播放**一个**音 → 识别音的**名称**（绝对音高）
 - 高级难度横跨 3 个八度（C3-B5），同一音名出现在不同八度，真正考验绝对音高识别能力
 - 单音播放时长 1500ms（比音程训练更长），给用户充足时间辨识音色和频率
+
+---
+
+## v2.95.0 — 终止式听辨训练 (Cadence Ear Training)
+
+**时间**: 2026-07-09
+**分支**: feature/cadence-training
+
+### 任务概述
+新增**终止式听辨训练**（Cadence Ear Training）模块——用户依次聆听两个和弦（和弦进行），
+凭听觉判断这段进行属于哪种终止式（完全正格/变格/半终止/伪终止）。终止式是音乐语法的
+「标点符号」，标志着乐句的停顿或结束，不同的终止式产生不同的「结束感」——从完全解决到
+悬念悬挂。延续培训模块系列（ModeRecognition → ChordTraining → RhythmPattern →
+MelodyMemory → IntervalTraining → PitchTraining → **CadenceTraining**）。
+
+> 本任务接续前序会话遗留的半成品（domain 层 + UI 已生成但未编译通过、未写测试），
+> 完成关键 bug 修复 + 94 个单元测试 + 完整验证流水线。
+
+### 关键 bug 修复（前序半成品遗留）
+
+1. **`ChordFunction.buildMidiNotes` 编译错误**：原实现将其放在 `companion object` 内，
+   但函数体引用了实例属性 `intervalsFromTonic`——Kotlin companion object 无法访问实例
+   成员，导致 `Unresolved reference` 编译失败。**修复**：移为实例方法（`fun buildMidiNotes`），
+   删除空的 companion object。
+
+2. **引擎和弦构建逻辑错误**：`type.progression.map { function -> ChordFunction.buildMidiNotes(tonicMidi) }`
+   中 lambda 参数 `function` 被完全忽略，调用的是（无法编译的）companion 静态方法——
+   即使能编译，进行中的所有和弦也会使用同一组音程，产生完全相同的 MIDI 音符。
+   **修复**：改为 `function.buildMidiNotes(tonicMidi)`，每个和弦功能使用各自的音程。
+   关键回归测试 `each chord uses its own function intervals - V and I differ for PAC` 锁定此修复。
+
+3. **`estimateDurationMs` 公式硬编码**：原公式硬编码 `+ CHORD_DURATION_MS + ... + CHORD_DURATION_MS`
+   （固定 2 个和弦），忽略实际 `chordCount`。**修复**：改为 `chordCount * CHORD_DURATION_MS`。
+
+4. **弃用警告**：新增的 `Icons.Filled.NavigateNext` 改为 `Icons.AutoMirrored.Filled.NavigateNext`
+   （PROGRESS_LOG 此前标记为待处理项，本模块不引入新弃用）。
+
+### 实现内容
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **CadenceTrainingModels.kt** — 数据模型
+   - `ChordFunction` 枚举（6 种调内和弦功能：I/ii/IV/V/V7/vi），含罗马数字、相对主音半音偏移、
+     中文名、`buildMidiNotes(tonicMidi)` 实例方法（构建和弦 MIDI 音符，钳制到钢琴范围 [21,108]）
+   - `CadenceType` 枚举（4 种终止式）：
+     - **完全正格终止 (PAC)**：V→I，最强烈的「句号」感
+     - **变格终止 (PC)**：IV→I，即「阿门终止」，温和庄重
+     - **半终止 (HC)**：→V，悬而未决的「逗号」感
+     - **伪终止 (DC)**：V→vi，意外转折
+   - `CadenceDifficulty`（初级 PAC+PC 2 选项 / 中级 +HC 3 选项 / 高级全 4 种）
+   - `CadenceQuestion`（含终止式类型、主音 MIDI/名、和弦进行 MIDI、选项）
+   - `CadenceAnswerRecord`（答题结果记录）
+
+2. **CadenceTrainingEngine.kt** — 确定性出题引擎
+   - `withSeed()` 工厂方法支持确定性测试
+   - 随机选终止式类型 → 随机选调性（C3-G3）→ `function.buildMidiNotes` 构建和弦 MIDI
+   - 选项 = 该难度全部终止式类型显示名（打乱）
+
+3. **CadenceTrainingSession.kt** — 会话状态机
+   - 完整生命周期：start → submit → next
+   - 连击追踪（currentStreak / bestStreak）
+   - 答题历史、准确率计算
+
+4. **CadenceTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计
+   - 手动 JSON 序列化（容错解析：extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace）
+   - 累计准确率、最佳连击、最佳会话准确率
+
+5. **CadenceTrainingAudioBuilder.kt** — 和弦进行音频构建器
+   - 柱式和弦渲染（所有音同时发声）
+   - 多和弦时间轴混合（前导静音 + 和弦间隔 + 尾部静音）
+   - 软限幅防止叠加削波（tanh 近似）
+   - 复用 PianoToneSynthesizer 合成钢琴音色
+   - `estimateDurationMs` 公式：`LEAD + chordCount * CHORD_DURATION + gaps + TAIL`
+
+6. **CadenceTrainingPlayer.kt** — AudioTrack 播放器
+   - 协程管理播放生命周期
+
+7. **CadenceTrainingViewModel.kt** — AndroidViewModel
+   - StateFlow 状态暴露
+   - 难度选择、播放控制、答题提交、进度持久化（SharedPreferences）
+
+#### UI 层
+
+8. **CadenceTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器（初级/中级/高级 FilterChip）
+   - 大号播放按钮（支持重听、停止）
+   - 终止式选项答题（OutlinedButton 列表）
+   - 对错反馈 + 终止式听感描述教学（PAC/PC/HC/DC 各自的听觉特征）
+   - 会话统计（准确率、连击）+ 跨会话进度卡片
+   - 听辨技巧说明卡片
+
+#### 集成
+- `AppNavigation.kt`：添加 `Screen.CadenceTraining` route（`cadence_training`，显示名「终止式听辨」）+ composable 注册
+- `LibraryScreen.kt`：添加 `CadenceTrainingEntryCard` 入口卡片（🎼 图标，tertiaryContainer 配色）
+
+### 测试（94 个用例，全部通过）
+- **CadenceTrainingEngineTest.kt**（34 tests）：确定性出题、选项完整性/唯一性/等于难度集合、
+  和弦 MIDI 正确性、**关键回归（各和弦功能使用各自音程，V≠I）**、难度配置嵌套子集、
+  4 种终止式类型定义、ChordFunction.buildMidiNotes 实例方法、钢琴范围钳制
+- **CadenceTrainingSessionTest.kt**（21 tests）：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全（未启动提交/重复提交/未启动 next）、reset 清空、全难度完整生命周期
+- **CadenceTrainingProgressTest.kt**（24 tests）：分难度累计、全局汇总、bestAccuracy 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）、Entry 独立序列化、key 一致性
+- **CadenceTrainingAudioBuilderTest.kt**（15 tests）：渲染非空、不削波 [-1,1]、不同终止式/主音差异、
+  双和弦长于单和弦、estimateDurationMs 公式正确性、随和弦数缩放
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 94 个新用例全部通过 (总计 3631 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk (18M)
+
+### Git
+- 分支: feature/cadence-training → merge main
+- Commit: d19704d
+- Tag: v2.95.0
+- Push: origin/main
+
+### 版本号
+v2.94.0 → **v2.95.0** (versionCode 107 → 108)
+
+### 代码统计
+- Kotlin 文件: 428 个 (main + test)
+- 代码行数: 116000+ 行 (main + test)
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑音阶听辨 / 节拍位置感知 / 调号识别进阶
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面（TrainingSummary 已有，可扩展接入新模块）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
