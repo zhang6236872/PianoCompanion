@@ -383,6 +383,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Cadence training entry ===
+            item {
+                CadenceTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.CadenceTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1687,6 +1696,52 @@ private fun PitchTrainingEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "绝对音高训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 终止式听辨训练入口卡片。
+ *
+ * 引导用户进入终止式听辨训练：聆听两个和弦的进行后判断终止式类型
+ * （完全正格/变格/半终止/伪终止），训练对音乐「标点符号」的感知能力。
+ */
+@Composable
+private fun CadenceTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎼", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "终止式听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "听和弦进行辨终止式 · 正格/变格/半终止/伪终止 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "终止式听辨训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
