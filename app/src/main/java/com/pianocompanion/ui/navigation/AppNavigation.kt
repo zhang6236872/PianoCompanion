@@ -49,6 +49,7 @@ import com.pianocompanion.ui.melodymemory.MelodyMemoryScreen
 import com.pianocompanion.ui.intervaltraining.IntervalTrainingScreen
 import com.pianocompanion.ui.pitchtraining.PitchTrainingScreen
 import com.pianocompanion.ui.cadencetraining.CadenceTrainingScreen
+import com.pianocompanion.ui.scaletraining.ScaleTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -79,6 +80,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object IntervalTraining : Screen("interval_training", "音程听辨", Icons.Filled.Tune)
     data object PitchTraining : Screen("pitch_training", "绝对音高", Icons.Filled.GraphicEq)
     data object CadenceTraining : Screen("cadence_training", "终止式听辨", Icons.Filled.AccountTree)
+    data object ScaleTraining : Screen("scale_training", "音阶听辨", Icons.Filled.Stairs)
 }
 
 private val screens = listOf(
@@ -259,6 +261,9 @@ fun AppScaffold() {
             }
             composable(Screen.CadenceTraining.route) {
                 CadenceTrainingScreen()
+            }
+            composable(Screen.ScaleTraining.route) {
+                ScaleTrainingScreen()
             }
         }
     }
