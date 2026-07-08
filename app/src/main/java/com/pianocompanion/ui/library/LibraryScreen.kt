@@ -374,6 +374,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Pitch (absolute) training entry ===
+            item {
+                PitchTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.PitchTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1632,6 +1641,52 @@ private fun IntervalTrainingEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "音程听辨训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 绝对音高训练入口卡片。
+ *
+ * 引导用户进入绝对音高训练：聆听一个音符后判断其音名（C/C#/D…B），
+ * 训练「频率→音名」的绝对映射能力（perfect pitch）。
+ */
+@Composable
+private fun PitchTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎯", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "绝对音高训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "听单音辨音名 · 白键/全音/跨八度 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "绝对音高训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }
