@@ -3947,3 +3947,92 @@ v2.91.0 → **v2.92.0** (versionCode 104 → 105)
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加进度统计汇总页面
 - 弃用警告待处理：Icons.Filled.NavigateNext / QueueMusic / MenuBook 应迁移到 Icons.AutoMirrored
+
+---
+
+## v2.93.0 — 音程听辨训练 (Interval Ear Training)
+
+**时间**: 2026-07-08
+**分支**: feature/interval-ear-training
+
+### 任务概述
+新增音程听辨训练模块。用户听两个音（旋律或和声），从选项中选择正确的音程类型（如大三度、纯五度等）。这是听觉训练最基础的技能——和弦听辨、旋律听写、即兴演奏的前提。
+
+### 实现内容
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **IntervalTrainingModels.kt** — 数据模型
+   - `IntervalType` 枚举（13 种音程，0-12 半音）：纯一度→纯八度，含协和/不协和标记、中文名、缩写、听感描述
+   - `IntervalDifficulty`（初级 4 音程 / 中级 6 音程 / 高级 8 音程）
+   - `PlayDirection`（上行旋律 / 下行旋律 / 和声）
+   - `IntervalQuestion`（含 MIDI 音符、播放顺序、选项列表）
+   - `IntervalAnswerRecord`（答题结果记录）
+
+2. **IntervalTrainingEngine.kt** — 出题引擎
+   - 确定性随机数生成器（`withSeed()` 工厂方法）
+   - 根音范围 C4-E5 (MIDI 60-76)，钳制到钢琴范围 [21, 108]
+   - 选项 = 难度的全部音程集合（打乱，含正确答案）
+
+3. **IntervalTrainingSession.kt** — 会话状态机
+   - 完整生命周期：start → submit → next
+   - 连击追踪（currentStreak / bestStreak）
+   - 答题历史、准确率计算
+
+4. **IntervalTrainingProgress.kt** — 跨会话进度跟踪
+   - 按 难度+播放方向 分维度统计
+   - 手动 JSON 序列化（容错解析）
+   - 累计准确率、最佳连击、最佳会话准确率
+
+5. **IntervalTrainingAudioBuilder.kt** — 音频构建器
+   - 旋律模式：两音依次弹奏（每个 700ms）
+   - 和声模式：两音同时弹奏（1500ms，更长以便听辨色彩）
+   - 软限幅防止叠加时削波
+
+6. **IntervalTrainingPlayer.kt** — AudioTrack 播放器
+   - 协程管理播放生命周期
+
+7. **IntervalTrainingViewModel.kt** — AndroidViewModel
+   - StateFlow 状态暴露
+   - 难度/方向选择、播放控制、答题提交
+
+#### UI 层
+
+8. **IntervalTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器（初级/中级/高级）
+   - 播放方向选择器（上行/下行/和声）
+   - 播放按钮（支持重听）
+   - 音程选项网格答题
+   - 对错反馈 + 音程详情/听感描述展示
+   - 会话统计（准确率、连击）
+
+#### 集成
+- `AppNavigation.kt`：添加 `Screen.IntervalTraining` route + composable 注册
+- `LibraryScreen.kt`：添加 `IntervalTrainingEntryCard` 入口卡片（tertiaryContainer 配色，区分于旋律记忆模块）
+
+### 测试（89 个用例）
+- **IntervalTrainingEngineTest.kt**（23 tests）：确定性出题、选项唯一性、半音距离正确性、播放顺序验证、难度音程集合验证、音程类型映射
+- **IntervalTrainingSessionTest.kt**（18 tests）：状态机生命周期、连击追踪/重置、准确率计算、答题历史记录、边界安全
+- **IntervalTrainingProgressTest.kt**（28 tests）：分维度统计、全局汇总、JSON 往返、容错解析（损坏/空/缺失字段）、Entry 独立序列化
+- **IntervalTrainingAudioBuilderTest.kt**（20 tests）：渲染范围、不削波、旋律/和声模式长度差异、前导/尾部静音、时长预估匹配、全难度/方向渲染
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 89 个用例全部通过, 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug`
+
+### 版本号
+v2.92.0 → **v2.93.0** (versionCode 105 → 106)
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑绝对音高感知 / 节拍位置感知
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook 应迁移到 Icons.AutoMirrored

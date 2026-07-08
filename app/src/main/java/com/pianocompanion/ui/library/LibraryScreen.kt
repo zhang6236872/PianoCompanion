@@ -365,6 +365,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Interval ear training entry ===
+            item {
+                IntervalTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.IntervalTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -1577,6 +1586,52 @@ private fun MelodyMemoryEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "旋律记忆训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 音程听辨训练入口卡片。
+ *
+ * 引导用户进入音程听辨训练：通过聆听两个音判断音程名称
+ * （小二度/大二度/小三度/大三度/纯四度/纯五度等），训练音程距离听觉识别能力。
+ */
+@Composable
+private fun IntervalTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎼", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "音程听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "听辨两音距离 · 上行/下行/和声 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "音程听辨训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
