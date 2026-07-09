@@ -4370,7 +4370,113 @@ v2.95.0 → **v2.96.0** (versionCode 108 → 109)
 8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
 
 ### 下一步计划
-- 继续扩展培训模块系列：可考虑和弦转位听辨 / 节拍位置感知 / 调性中心辨识
+- 继续扩展培训模块系列：可考虑节拍位置感知 / 调性中心辨识 / 和弦进行听辨
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## v2.97.0 — 和弦转位听辨训练 (Chord Inversion Ear Training) (2026-07-09)
+
+### 概述
+新增**和弦转位听辨训练**模块。用户聆听一个三和弦（柱式和弦/块状和弦）的音频，
+凭听觉判断该和弦属于原位(root position)、第一转位(first inversion) 还是第二转位
+(second inversion)。这是培训模块系列的第九个模块。
+
+### 功能设计
+- **训练方式**：播放一个柱式和弦（所有音同时发声），用户判断转位类型
+- **3 个选项**：原位（根音在最低）、第一转位（三音在最低）、第二转位（五音在最低）
+- **3 个难度**：
+  - 初级 BEGINNER：仅大/小三和弦
+  - 中级 INTERMEDIATE：+减/增三和弦
+  - 高级 ADVANCED：+属七/大七/小七（七和弦的转位由三和弦部分决定）
+- **教学反馈**：答题后显示正确答案 + 和弦音名 + 低音说明
+
+### 架构（遵循 ScaleTraining 模式：Models → Engine → Session → AudioBuilder → Progress → Player → ViewModel → Screen）
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **InversionTrainingModels.kt** — 数据模型
+   - `InversionDifficulty`(BEGINNER/INTERMEDIATE/ADVANCED)
+   - `ChordQuality`(MAJOR/MINOR/DIMINISHED/AUGMENTED/DOMINANT_7/MAJOR_7/MINOR_7)
+   - `ChordInversion`(ROOT/FIRST/SECOND)
+   - `InversionQuestion(rootMidi, quality, inversion, options)`
+
+2. **InversionTrainingEngine.kt** — 确定性出题引擎（withSeed）
+   - 按难度选择和弦品质集合
+   - 随机根音（C3–B4 音域）、随机转位
+   - 确定性种子保证可复现
+   - `midiNotes()` 根据品质计算音程偏移 + 转位排列
+
+3. **InversionTrainingSession.kt** — 会话状态机
+   - 生命周期：出题→听辨→答题→判定→下一题
+   - 连击追踪(streak/bestStreak)、准确率、答题历史
+
+4. **InversionTrainingAudioBuilder.kt** — 柱式和弦 PCM 渲染
+   - 所有音符同时发声（block chord）
+   - 复用 PianoToneSynthesizer + 软限幅
+   - NOTE_DURATION_MS=1200ms, LEAD/TAIL 静音
+   - `estimateDurationMs` 公式
+
+5. **InversionTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计，手动 JSON 序列化（容错解析）
+
+6. **InversionTrainingPlayer.kt** — AudioTrack 播放器
+
+7. **InversionTrainingViewModel.kt** — AndroidViewModel StateFlow
+
+#### UI 层
+
+8. **InversionTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器 + 大号播放按钮 + 3 选项答题
+   - 答题反馈 + 和弦音名 + 低音说明教学
+   - 会话统计 + 跨会话进度卡片
+
+#### 集成
+- `AppNavigation.kt`：添加 `Screen.InversionTraining` route（`inversion_training`，显示名「和弦转位听辨」，Icons.Filled.Layers）
+- `LibraryScreen.kt`：添加 `InversionTrainingEntryCard` 入口卡片
+
+### 测试（94 个用例，全部通过）
+- **InversionTrainingEngineTest.kt**（35 tests）：确定性出题、选项完整性/唯一性、
+  MIDI 音符正确性（转位排列验证）、音域范围、难度配置嵌套子集
+- **InversionTrainingSessionTest.kt**（21 tests）：状态机生命周期、连击追踪/不递减、
+  准确率计算、答题历史、边界安全
+- **InversionTrainingAudioBuilderTest.kt**（16 tests）：渲染非空、不削波 [-1,1]、
+  不同和弦差异、estimateDurationMs 公式正确性、常量合理性
+- **InversionTrainingProgressTest.kt**（22 tests）：分难度累计、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段）、多次 roundtrip 稳定性
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 94 个新用例全部通过 (总计 3843 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/inversion-ear-training → merge main
+- Tag: v2.97.0
+- Push: origin/main
+
+### 版本号
+v2.96.0 → **v2.97.0** (versionCode 109 → 110)
+
+### 代码统计
+- Kotlin 文件: 452 个 (main 296 + test 156)
+- 代码行数: 122000+ 行
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑节拍位置感知 / 调性中心辨识 / 和弦进行听辨
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
