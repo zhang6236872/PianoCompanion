@@ -52,6 +52,7 @@ import com.pianocompanion.ui.cadencetraining.CadenceTrainingScreen
 import com.pianocompanion.ui.scaletraining.ScaleTrainingScreen
 import com.pianocompanion.ui.inversiontraining.InversionTrainingScreen
 import com.pianocompanion.ui.progressiontraining.ProgressionTrainingScreen
+import com.pianocompanion.ui.keyidentificationtraining.KeyIdentificationTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -85,6 +86,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ScaleTraining : Screen("scale_training", "音阶听辨", Icons.Filled.Stairs)
     data object InversionTraining : Screen("inversion_training", "和弦转位听辨", Icons.Filled.Layers)
     data object ProgressionTraining : Screen("progression_training", "和弦进行听辨", Icons.Filled.AutoAwesome)
+    data object KeyIdentificationTraining : Screen("key_identification_training", "调性辨识", Icons.Filled.MusicNote)
 }
 
 private val screens = listOf(
@@ -274,6 +276,9 @@ fun AppScaffold() {
             }
             composable(Screen.ProgressionTraining.route) {
                 ProgressionTrainingScreen()
+            }
+            composable(Screen.KeyIdentificationTraining.route) {
+                KeyIdentificationTrainingScreen()
             }
         }
     }
