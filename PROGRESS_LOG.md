@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.96.0** (音阶听辨训练 ScaleTraining: ScaleType 6种音阶枚举(MAJOR大调[0,2,4,5,7,9,11,12]/NATURAL_MINOR自然小调[0,2,3,5,7,8,10,12]/HARMONIC_MINOR和声小调[0,2,3,5,7,8,11,12]/MELODIC_MINOR旋律小调[0,2,3,5,7,9,11,12]/MAJOR_PENTATONIC五声大调[0,2,4,7,9,12]/MINOR_PENTATONIC五声小调[0,3,5,7,10,12], displayName/englishName/intervals/intervalPattern/colorDescription/noteCount) × ScaleDirection(ASCENDING上行/DESCENDING下行) × ScaleDifficulty 3级(初级MAJOR+NATURAL_MINOR 2选项/中级+HARMONIC_MINOR+MAJOR_PENTATONIC 4选项/高级全6种 6选项) × ScaleQuestion(type/tonicMidi/tonicName/difficulty/direction/midiNotes/answerChoices/correctAnswer/fullDescription/intervalPattern, MIDI范围校验[21,108]) × ScaleAnswerRecord × ScaleTrainingEngine确定性种子出题(类型随机→调性C3-G3→方向随机→buildScaleMidiNotes) × ScaleTrainingSession会话状态机 × ScaleTrainingProgress跨会话进度JSON容错 × ScaleTrainingAudioBuilder旋律式PCM渲染(NOTE_DURATION_MS=600依次播放+NOTE_GAP_MS=80+软限幅) × ScaleTrainingPlayer × ScaleTrainingViewModel × ScaleTrainingScreen Material 3(难度选择+播放+选项答题+色彩描述教学+音程模式) × AppNavigation路由scale_training+LibraryScreen入口卡片) — 继承自 v2.95.0 终止式听辨训练 CadenceTraining: PitchClass 12音级类枚举(semi tonesFromC/sharpName/flatName/isWhiteKey/solfegeName/fromMidi/fromSemitones/ALL/WHITE_KEYS) × PitchTrainingDifficulty 3级难度(初级7白键单八度C4-B4/中级12音单八度C4-B4/高级12音3八度C3-B5, pitchClasses/octaveLowest/octaveHighest/optionCount/ALL) × PitchQuestion(pitchClass/midiNote/difficulty/options/correctAnswer/noteName/octave/pitchClassDetail/frequency, MIDI范围校验[21,108]) × PitchAnswerRecord(question/userAnswer/isCorrect/correctAnswerOrNull) × PitchTrainingEngine确定性种子出题引擎(withSeed工厂/音级类随机选→八度范围内对应MIDI候选随机选→选项打乱) × PitchTrainingSession会话状态机(start/submit/next/reset, currentStreak/bestStreak, history, accuracy, isStarted/isAnswered/lastAnswer) × PitchTrainingProgress跨会话进度跟踪(按难度分维度recordSession/totalSessions/totalAnswered/totalCorrect/overallAccuracy/overallBestStreak + 手动JSON序列化容错解析+escape/unescape/extractObject/splitKeyValuePairs/findClosingQuote/findMatchingBrace + PitchTrainingProgressEntry totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy/cumulativeAccuracy + fromJson容错) × PitchTrainingAudioBuilder单音PCM渲染(renderNote(midiNote,velocity)/render(question)/estimateDurationMs, NOTE_DURATION_MS=1500/LEAD_SILENCE_MS=200/TAIL_SILENCE_MS=500/DEFAULT_VELOCITY=70/SOFTCLIP_K=0.7, softClip软限幅tanh近似, 复用PianoToneSynthesizer) × PitchTrainingPlayer AudioTrack协程播放 × PitchTrainingViewModel AndroidViewModel StateFlow状态暴露 × PitchTrainingScreen Material 3 Compose UI(难度选择器初级/中级/高级+播放按钮重听+12音级类选项网格答题+对错反馈+唱名/频率教学信息+会话统计准确率连击+进度卡片) × AppNavigation路由pitch_training+LibraryScreen入口卡片🎯secondaryContainer) — v2.93.0音程听辨训练(IntervalTraining: IntervalType 13种音程枚举(纯一度→纯八度,半音数/协和性/中文名/缩写/听感描述) × IntervalDifficulty 3级(初级4/中级6/高级8音程) × PlayDirection 上行旋律/下行旋律/和声 × IntervalQuestion × IntervalAnswerRecord × IntervalTrainingEngine确定性种子出题 × IntervalTrainingSession会话状态机 × IntervalTrainingProgress跨会话进度JSON × IntervalTrainingAudioBuilder旋律/和声双模式PCM渲染+软限幅 × IntervalTrainingPlayer × IntervalTrainingViewModel × IntervalTrainingScreen Material 3 UI+AppNav... [truncated]
+- 当前版本: **v2.98.0** (和弦进行听辨训练 ProgressionTraining: DiatonicDegree 7调内音级枚举(I/ii/iii/IV/V/vi/vii°, romanNumeral/semitoneFromTonic/isMajor/isDiminished/chordIntervals) × ProgressionType 5种进行(CLASSIC I-IV-V-I/POP_ANTHEM I-V-vi-IV/DOO_WOP I-vi-IV-V/POP_LOOP vi-IV-I-V/JAZZ_TURNAROUND ii-V-I, displayName/englishName/romanNumerals/degrees/description/style) × ProgressionDifficulty 3级(初级3选项经典+流行万能+Doo-Wop/中级4选项+流行循环/高级5选项+爵士回转) × ProgressionQuestion(type/tonicMidi/tonicName/difficulty/chordProgression/answerChoices/correctAnswer, MIDI校验[21,108]每和弦3音) × ProgressionAnswerRecord × ProgressionTrainingEngine确定性种子出题(进行类型随机→主音C3-G3→buildProgressionMidiNotes根音+音程叠加) × ProgressionTrainingSession会话状态机(start/listen/answer/judge/next) × ProgressionTrainingProgress跨会话进度JSON容错 × ProgressionTrainingAudioBuilder柱式和弦PCM渲染(CHORD_DURATION_MS=700+CHORD_GAP_MS=150+软限幅) × ProgressionTrainingPlayer × ProgressionTrainingViewModel × ProgressionTrainingScreen Material 3(难度选择+播放+选项答题+进行描述教学+风格标签) × AppNavigation路由progression_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v2.96.0
+- 最新 tag: v2.98.0
 
-## 健康状态 (2026-07-09 核验)
+## 健康状态 (2026-07-10 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3749 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3937 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0
-- Kotlin 文件: 440 个 / 代码行数: 119000+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0
+- Kotlin 文件: 464 个 / 代码行数: 124800+ 行
 
 
 ## 开发历史
@@ -4479,4 +4479,124 @@ v2.96.0 → **v2.97.0** (versionCode 109 → 110)
 - 继续扩展培训模块系列：可考虑节拍位置感知 / 调性中心辨识 / 和弦进行听辨
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## v2.98.0 — 和弦进行听辨训练 (Chord Progression Ear Training) (2026-07-10)
+
+### 概述
+新增**和弦进行听辨训练**模块——这是培训模块系列的第十个模块。用户聆听一段和弦进行
+（多个柱式三和弦依次播放），凭听觉判断属于哪种和弦进行类型。不同进行拥有截然不同的
+情感色彩和风格——流行万能进行明亮昂扬、爵士 ii-V-I 圆润典雅、Doo-Wop 进行怀旧浪漫。
+
+### 功能设计
+- **训练方式**：依次播放一段和弦进行（每个和弦 700ms，间隔 150ms），用户判断进行类型
+- **5 种和弦进行**：I-IV-V-I 经典 / I-V-vi-IV 流行万能 / I-vi-IV-V Doo-Wop / vi-IV-I-V 流行循环 / ii-V-I 爵士回转
+- **3 个难度**：
+  - 初级 BEGINNER：3 种进行（3 选项）——经典/流行万能/Doo-Wop
+  - 中级 INTERMEDIATE：4 种进行（4 选项）——+流行循环
+  - 高级 ADVANCED：5 种进行（5 选项）——+爵士回转
+- **教学反馈**：答题后显示正确答案 + 和弦进行的详细音乐学描述（情感色彩、代表曲目、风格标签）
+- **音乐理论**：基于大调音阶的调内音级体系（I/ii/iii/IV/V/vi/vii°），自动生成各调性的三和弦
+
+### 架构（遵循 InversionTraining 模式）
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **ProgressionTrainingModels.kt** — 数据模型
+   - `DiatonicDegree` 枚举（7 个调内音级：I/ii/iii/IV/V/vi/vii°，含 romanNumeral/semitoneFromTonic/isMajor/isDiminished/chordIntervals()）
+   - `ProgressionType` 枚举（5 种进行，每种含 displayName/englishName/romanNumerals/degrees/description/style）
+   - `ProgressionDifficulty`（BEGINNER 3选项 / INTERMEDIATE 4选项 / ADVANCED 5选项）
+   - `ProgressionQuestion`（含 type/tonicMidi/tonicName/difficulty/chordProgression/answerChoices/correctAnswer，MIDI 范围校验 [21,108]，每和弦必须 3 音）
+   - `ProgressionAnswerRecord`
+
+2. **ProgressionTrainingEngine.kt** — 确定性出题引擎
+   - `withSeed()` 固定种子可复现出题
+   - 随机选进行类型 → 随机选主音（C3-G3）→ `buildProgressionMidiNotes` 构建各和弦 MIDI 音符
+   - 选项 = 该难度所有可用进行类型名（已打乱）
+   - 和弦构建：根音 = tonicMidi + degree.semitoneFromTonic，再叠加三和弦音程 [0,4,7]/[0,3,7]/[0,3,6]
+
+3. **ProgressionTrainingSession.kt** — 会话状态机
+   - 完整生命周期：start → listen → answer → judge → next
+   - 连击追踪（currentStreak / bestStreak）、答题历史、准确率
+   - 边界安全（未开始提交/重复提交返回 null）
+
+4. **ProgressionTrainingAudioBuilder.kt** — 和弦进行 PCM 渲染
+   - 每个和弦是柱式三和弦（3 音同时发声），多个和弦按时间轴依次排列
+   - CHORD_DURATION_MS=700ms, CHORD_GAP_MS=150ms, LEAD/TAIL 静音
+   - 复用 PianoToneSynthesizer + 软限幅（多音叠加防削波）
+   - `estimateDurationMs` 公式：`LEAD + chordCount * CHORD_DURATION + gaps + TAIL`
+
+5. **ProgressionTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计，手动 JSON 序列化（容错解析）
+
+6. **ProgressionTrainingPlayer.kt** — AudioTrack 播放器
+
+7. **ProgressionTrainingViewModel.kt** — AndroidViewModel StateFlow
+
+#### UI 层
+
+8. **ProgressionTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器 + 大号播放按钮 + 选项答题
+   - 答题反馈 + 进行详细描述（情感色彩、代表曲目）+ 风格标签
+   - 会话统计 + 跨会话进度卡片 + 听辨技巧说明
+   - 🎸 图标，tertiaryContainer 配色（与 InversionTraining 的 secondaryContainer 区分）
+
+#### 集成
+- `AppNavigation.kt`：添加 `Screen.ProgressionTraining` route（`progression_training`，显示名「和弦进行听辨」，Icons.Filled.AutoAwesome）
+- `LibraryScreen.kt`：添加 `ProgressionTrainingEntryCard` 入口卡片
+
+### 5 种和弦进行类型
+| 进行 | 罗马数字 | 和弦数 | 风格 | 听感 |
+|------|---------|--------|------|------|
+| 经典进行 | I-IV-V-I | 4 | 古典/流行 | 层层推进，出发-冒险-回家 |
+| 流行万能 | I-V-vi-IV | 4 | 流行 | 明亮昂扬，Adele/Bon Jovi |
+| Doo-Wop | I-vi-IV-V | 4 | 怀旧 | 浪漫温柔，Stand By Me |
+| 流行循环 | vi-IV-I-V | 4 | 流行 | 循环不分首尾，忧郁深沉 |
+| 爵士回转 | ii-V-I | 3 | 爵士 | 圆润典雅，微妙忧郁 |
+
+### 测试（94 个用例，全部通过）
+- **ProgressionTrainingEngineTest.kt**（38 tests）：确定性出题、选项完整性/唯一性/等于难度集合、
+  各进行类型 MIDI 正确性、音域范围 [21,108]、难度配置嵌套子集、ProgressionType/DiatonicDegree 属性
+- **ProgressionTrainingSessionTest.kt**（18 tests）：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全（未启动提交/重复提交/未启动 next）、reset 清空
+- **ProgressionTrainingAudioBuilderTest.kt**（15 tests）：渲染非空、不削波 [-1,1]、不同进行差异、
+  4 和弦长于 3 和弦、estimateDurationMs 公式正确性、常量合理性
+- **ProgressionTrainingProgressTest.kt**（23 tests）：分难度累计、全局汇总、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）、多次 roundtrip 稳定性
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 94 个新用例全部通过 (总计 3937 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/chord-progression-ear-training → merge main
+- Tag: v2.98.0
+- Push: origin/main
+
+### 版本号
+v2.97.0 → **v2.98.0** (versionCode 110 → 111)
+
+### 代码统计
+- Kotlin 文件: 464 个 (main 304 + test 160)
+- 代码行数: 124800+ 行
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑调性中心辨识（Key Identification）/ 和弦品质听辨扩展（七和弦/挂留和弦）/ 旋律终止方式听辨
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
