@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.98.0** (和弦进行听辨训练 ProgressionTraining: DiatonicDegree 7调内音级枚举(I/ii/iii/IV/V/vi/vii°, romanNumeral/semitoneFromTonic/isMajor/isDiminished/chordIntervals) × ProgressionType 5种进行(CLASSIC I-IV-V-I/POP_ANTHEM I-V-vi-IV/DOO_WOP I-vi-IV-V/POP_LOOP vi-IV-I-V/JAZZ_TURNAROUND ii-V-I, displayName/englishName/romanNumerals/degrees/description/style) × ProgressionDifficulty 3级(初级3选项经典+流行万能+Doo-Wop/中级4选项+流行循环/高级5选项+爵士回转) × ProgressionQuestion(type/tonicMidi/tonicName/difficulty/chordProgression/answerChoices/correctAnswer, MIDI校验[21,108]每和弦3音) × ProgressionAnswerRecord × ProgressionTrainingEngine确定性种子出题(进行类型随机→主音C3-G3→buildProgressionMidiNotes根音+音程叠加) × ProgressionTrainingSession会话状态机(start/listen/answer/judge/next) × ProgressionTrainingProgress跨会话进度JSON容错 × ProgressionTrainingAudioBuilder柱式和弦PCM渲染(CHORD_DURATION_MS=700+CHORD_GAP_MS=150+软限幅) × ProgressionTrainingPlayer × ProgressionTrainingViewModel × ProgressionTrainingScreen Material 3(难度选择+播放+选项答题+进行描述教学+风格标签) × AppNavigation路由progression_training+LibraryScreen入口卡片)
+- 当前版本: **v2.99.0** (调性中心辨识训练 KeyIdentificationTraining: MusicKey 6调(C/G/F/D大调+B♭大调+A小调, tonicPitchClass/category/keySignature/description × scaleIntervals大调[0,2,4,5,7,9,11]+12/小调[0,2,3,5,7,8,10]+12) × KeyDifficulty 3级(初级3选项C/G/F大调/中级5选项+D/B♭大调/高级6选项+A小调关系调) × MelodyPattern 4种(ASCENDING_SCALE 9音上行+回归/FIFTH_PATTERN 9音五度往返/ARPEGGIO 7音琶音/SCALE_UP_DOWN 15音完整上下行, 全部起止于主音degree0) × KeyQuestion(key/tonicMidi/tonicName/melodyPattern/midiNotes/difficulty/answerChoices/correctAnswer, MIDI校验[21,108]) × KeyAnswerRecord × KeyIdentificationTrainingEngine确定性种子出题(随机调+随机模式→buildMelodyMidiNotes主音+扩展音阶半音偏移) × KeyIdentificationTrainingSession会话状态机(start/listen/answer/judge/next) × KeyIdentificationTrainingProgress跨会话进度JSON容错 × KeyIdentificationTrainingAudioBuilder顺序音符PCM渲染(NOTE_DURATION_MS=400+NOTE_GAP_MS=80+软限幅) × KeyIdentificationTrainingPlayer × KeyIdentificationTrainingViewModel × KeyIdentificationTrainingScreen Material 3(难度选择+播放+选项答题+调性色彩/调号教学反馈+进度统计) × AppNavigation路由key_identification_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v2.98.0
+- 最新 tag: v2.99.0
 
 ## 健康状态 (2026-07-10 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -4594,9 +4594,63 @@ v2.97.0 → **v2.98.0** (versionCode 110 → 111)
 8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
 9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
 10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
 
 ### 下一步计划
-- 继续扩展培训模块系列：可考虑调性中心辨识（Key Identification）/ 和弦品质听辨扩展（七和弦/挂留和弦）/ 旋律终止方式听辨
+- 继续扩展培训模块系列：可考虑和弦品质听辨扩展（七和弦/挂留和弦）/ 旋律终止方式听辨 / 节奏听写训练
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## 2026-07-10: 调性中心辨识训练（Key Identification Ear Training）— v2.99.0
+
+### 任务
+新增第 11 个听辨训练模块：调性中心辨识训练。用户听一段明确建立调性的旋律，凭听觉判断它属于哪个调（大调/小调、主音）。
+
+### 核心设计
+- **调性（MusicKey）**：6 个可辨识调性 — C/G/F/D 大调 + B♭ 大调 + A 小调
+  - 每个调含 tonicPitchClass、category(大调/小调)、keySignature（调号描述）、description（色彩描述）
+  - scaleIntervals() 返回音阶半音结构（大调 [0,2,4,5,7,9,11]+12，小调 [0,2,3,5,7,8,10]+12）
+- **难度递进（KeyDifficulty）**：
+  - 初级：3 选项（C/G/F 大调）— 最基础白键调与单升降号
+  - 中级：5 选项（+ D/B♭ 大调）— 增加双升降号
+  - 高级：6 选项（+ A 小调）— 加入关系小调（同音不同主音）
+- **旋律模式（MelodyPattern）**：4 种模式，全部起止于主音（degree 0），最大程度建立调性感
+  - ASCENDING_SCALE（9 音）：do-re-mi-fa-sol-la-ti-do'-do
+  - FIFTH_PATTERN（9 音）：do-re-mi-fa-sol-fa-mi-re-do
+  - ARPEGGIO（7 音）：do-mi-sol-do'-sol-mi-do
+  - SCALE_UP_DOWN（15 音）：完整音阶上下行
+- **出题引擎**：种子确定性，随机选择调+模式 → buildMelodyMidiNotes（主音+扩展音阶半音偏移，钳制 [21,108]）
+- **音频渲染**：顺序音符 PCM 44100Hz，NOTE_DURATION_MS=400 + NOTE_GAP_MS=80，软限幅防爆音
+- **进度跟踪**：分难度累计，手动 JSON 序列化（容错解析）
+
+### 测试（107 个新用例，全部通过）
+- **KeyIdentificationTrainingEngineTest.kt**（39 tests）：确定性出题、选项完整性/打乱/含正确答案、
+  各调各模式 MIDI 精确验证、主音起止、音阶级数有效性、音域范围 [21,108]、大调/小调音程差异、
+  关系调同音不同主音、难度配置嵌套子集、KeyQuestion 参数校验
+- **KeyIdentificationTrainingSessionTest.kt**（17 tests）：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全（未启动提交/重复提交/未启动 next）、reset 清空
+- **KeyIdentificationTrainingAudioBuilderTest.kt**（21 tests）：渲染非空、不削波 [-1,1]、不同调差异、
+  不同模式差异/长度差、estimateDurationMs 正确性、常量合理性
+- **KeyIdentificationTrainingProgressTest.kt**（23 tests）：分难度累计、全局汇总、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）、多次 roundtrip 稳定性
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 107 个新用例全部通过 (总计 4044 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/key-identification-ear-training → merge main
+- Tag: v2.99.0
+- Push: origin/main
+
+### 版本号
+v2.98.0 → **v2.99.0** (versionCode 111 → 112)
+
+### 代码统计
+- Kotlin 文件: 478 个 (main 312 + test 166)
+- 代码行数: 127700+ 行
+- 新增: 8 个源文件 + 4 个测试文件 = 2873 行
