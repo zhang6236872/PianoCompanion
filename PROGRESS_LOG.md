@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.0.0** (七和弦品质听辨训练 SeventhChordQualityEarTraining: 5种品质(MAJOR_7大七[0,4,7,11]/DOMINANT_7属七[0,4,7,10]/MINOR_7小七[0,3,7,10]/HALF_DIMINISHED_7半减七[0,3,6,10]/DIMINISHED_7减七[0,3,6,9] × tensionLevel紧张度排序0-4 × 3难度(初级3选项大七属七小七/中级4选项+半减七/高级5选项+减七) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildSeventhChordMidiNotes) × 柱式和弦PCM渲染(4音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+紧张度指示条+进度统计) × AppNavigation路由seventh_chord_training+LibraryScreen入口卡片)
+- 当前版本: **v3.1.0** (挂留和弦品质听辨训练 SuspendedChordQualityEarTraining: 5种品质(MAJOR_TRIAD大三[0,4,7]/MINOR_TRIAD小三[0,3,7]/SUS2挂二[0,2,7]/SUS4挂四[0,5,7]/SUS2_SUS4双挂[0,2,5,7] × opennessLevel开放度排序0-4 × 3难度(初级3选项大三挂二挂四/中级4选项+小三/高级5选项+双挂) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildSuspendedChordMidiNotes) × 柱式和弦PCM渲染(3-4音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+开放度指示条+进度统计) × AppNavigation路由suspended_chord_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.0.0
+- 最新 tag: v3.1.0
 
-## 健康状态 (2026-07-10 核验)
+## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4145 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4252 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0 → v2.99.0 → v3.0.0
-- Kotlin 文件: 480 个 / 代码行数: 130500+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0 → v2.99.0 → v3.0.0 → v3.1.0
+- Kotlin 文件: 488 个 / 代码行数: 133200+ 行
 
 
 ## 开发历史
@@ -4709,6 +4709,123 @@ v2.99.0 → **v3.0.0** (versionCode 112 → 113)
 
 ### 下一步计划
 - 继续扩展培训模块系列：可考虑挂留和弦听辨 / 节奏听写训练 / 旋律终止方式听辨
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## 2026-07-11: 挂留和弦听辨训练（Suspended Chord Quality Ear Training）— v3.1.0
+
+### 任务
+新增第 13 个听辨训练模块：挂留和弦品质听辨训练。用户听柱式和弦（3-4 音同时发声），
+判断属于哪种和弦类型。核心训练目标：区分有明确色彩的和弦（大三/小三）与
+「悬而未决」的挂留和弦（sus2/sus4/sus2sus4）。
+
+### 核心设计
+- **挂留和弦品质（SuspendedChordQuality）**：5 种品质，按 opennessLevel(开放度 0-4) 排序
+  - MAJOR_TRIAD 大三和弦 [0,4,7] — 明亮稳定，大调色彩基石
+  - MINOR_TRIAD 小三和弦 [0,3,7] — 暗淡忧郁，小调色彩代表
+  - SUS2 挂二和弦 [0,2,7] — 空灵开放，大二度替代三音，既不明也不暗
+  - SUS4 挂四和弦 [0,5,7] — 紧张悬置，纯四度替代三音，渴望解决
+  - SUS2_SUS4 双挂和弦 [0,2,5,7] — 4 音极度模糊，同时含二度和四度
+- **难度递进（SuspendedChordDifficulty）**：
+  - 初级：3 选项（大三/挂二/挂四）— 核心对比：有色彩 vs 无色彩
+  - 中级：4 选项（+ 小三）— 四种三和弦全面对比
+  - 高级：5 选项（+ 双挂）— 全部 5 种，四音双挂最难辨识
+- **出题引擎**：种子确定性，随机品质 + 随机根音(C3-G3) → buildSuspendedChordMidiNotes
+- **音频渲染**：柱式和弦 PCM 44100Hz，3-4 音同时发声 + 软限幅防爆音
+- **会话状态机**：start/listen/answer/judge/next + 连击追踪
+- **进度跟踪**：分难度累计，手动 JSON 序列化（容错解析）
+- **UI**：Material 3 Compose，难度选择 + 播放按钮 + 选项答题 + 开放度指示条 + 进度统计
+
+### 架构（遵循 SeventhChordTraining 模式）
+
+#### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+
+1. **SuspendedChordTrainingModels.kt** — 数据模型
+   - `SuspendedChordQuality`（5 种品质，含 intervals/opennessLevel）
+   - `SuspendedChordDifficulty`（BEGINNER/INTERMEDIATE/ADVANCED）
+   - `SuspendedChordQuestion`（MIDI 范围校验 [21,108]，3-4 音校验）
+   - `SuspendedChordAnswerRecord`
+
+2. **SuspendedChordTrainingEngine.kt** — 确定性出题引擎（withSeed）
+   - 按难度选择品质集合，随机根音 C3-G3
+   - `buildSuspendedChordMidiNotes` 构建和弦 MIDI 音符
+
+3. **SuspendedChordTrainingSession.kt** — 会话状态机
+   - 生命周期：出题→听辨→答题→判定→下一题
+   - 连击追踪(streak/bestStreak)、准确率、答题历史
+
+4. **SuspendedChordTrainingAudioBuilder.kt** — 柱式和弦 PCM 渲染
+   - 3-4 音同时发声（block chord）
+   - 复用 PianoToneSynthesizer + 软限幅
+   - CHORD_DURATION_MS=2000ms, LEAD/TAIL 静音
+
+5. **SuspendedChordTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计，手动 JSON 序列化（容错解析）
+
+6. **SuspendedChordTrainingPlayer.kt** — AudioTrack 播放器
+
+7. **SuspendedChordTrainingViewModel.kt** — AndroidViewModel StateFlow
+
+#### UI 层
+
+8. **SuspendedChordTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器 + 大号播放按钮 + 选项答题
+   - 答题反馈 + 和弦色彩描述 + 开放度指示条
+   - 会话统计 + 跨会话进度卡片
+   - 🌊 图标， Waves 配色
+
+#### 集成
+- `AppNavigation.kt`：`Screen.SuspendedChordTraining` route（`suspended_chord_training`，Icons.Filled.Waves）
+- `LibraryScreen.kt`：`SuspendedChordTrainingEntryCard` 入口卡片
+
+### 测试（107 个新用例，全部通过）
+- **SuspendedChordTrainingEngineTest.kt**：确定性出题、选项完整性/唯一性、
+  各品质 MIDI 精确验证、根音范围 [48,67]、难度配置嵌套子集、opennessLevel 排序
+- **SuspendedChordTrainingSessionTest.kt**：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全、reset 清空
+- **SuspendedChordTrainingAudioBuilderTest.kt**：渲染非空、不削波 [-1,1]、不同品质差异、
+  estimateDurationMs 正确性、常量合理性
+- **SuspendedChordTrainingProgressTest.kt**：分难度累计、全局汇总、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 107 个新用例全部通过 (总计 4252 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/suspended-chord-ear-training → merge main
+- Tag: v3.1.0
+- Push: origin/main
+
+### 版本号
+v3.0.0 → **v3.1.0** (versionCode 113 → 114)
+
+### 代码统计
+- Kotlin 文件: 488 个 (main 322 + test 170)
+- 代码行数: 133200+ 行
+- 新增: 8 个源文件 + 4 个测试文件 = 2712 行
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑节奏听写训练 / 旋律终止方式听辨 / 和弦扩展音听辨
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
