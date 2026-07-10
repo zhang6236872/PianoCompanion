@@ -437,10 +437,19 @@ fun LibraryScreen(
                 })
             }
 
-            // === Suspended chord training entry ===
+            //=== Suspended chord training entry ===
             item {
                 SuspendedChordTrainingEntryCard(onClick = {
                     navController.navigate(Screen.SuspendedChordTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
+            // === Ninth chord training entry ===
+            item {
+                NinthChordTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.NinthChordTraining.route) {
                         launchSingleTop = true
                     }
                 })
@@ -2041,6 +2050,49 @@ private fun SuspendedChordTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "挂留和弦品质听辨训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 九和弦色彩听辨训练入口卡片 / Ninth chord quality ear training entry card.
+ */
+@Composable
+private fun NinthChordTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎺", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "九和弦色彩听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听和弦辨品质 · 大九/小九/属九/属七降九/小七降九/减七降九 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "九和弦色彩听辨训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
