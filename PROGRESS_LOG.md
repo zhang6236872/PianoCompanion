@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.1.0** (挂留和弦品质听辨训练 SuspendedChordQualityEarTraining: 5种品质(MAJOR_TRIAD大三[0,4,7]/MINOR_TRIAD小三[0,3,7]/SUS2挂二[0,2,7]/SUS4挂四[0,5,7]/SUS2_SUS4双挂[0,2,5,7] × opennessLevel开放度排序0-4 × 3难度(初级3选项大三挂二挂四/中级4选项+小三/高级5选项+双挂) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildSuspendedChordMidiNotes) × 柱式和弦PCM渲染(3-4音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+开放度指示条+进度统计) × AppNavigation路由suspended_chord_training+LibraryScreen入口卡片)
+- 当前版本: **v3.2.0** (九和弦色彩听辨训练 NinthChordQualityEarTraining: 9种品质(MAJOR_9大九[0,4,7,11,14]/MINOR_9小九[0,3,7,10,14]/DOMINANT_9属九[0,4,7,10,14]/DOMINANT_7_FLAT_9属七降九[0,4,7,10,13]/MINOR_7_FLAT_9小七降九[0,3,7,10,13]/DIMINISHED_7_FLAT_9减七降九[0,3,6,9,13]/HALF_DIMINISHED_FLAT_9半减降九[0,3,6,10,13]/AUGMENTED_9增九[0,4,8,11,14]) × 3难度(初级3选项maj9/min9/dom9/中级5选项+dom7♭9/min7♭9/高级7选项+dim7♭9/half-dim♭9/aug9) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildNinthChordMidiNotes) × 柱式九和弦PCM渲染(5音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+和弦色彩描述+进度统计) × AppNavigation路由ninth_chord_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.1.0
+- 最新 tag: v3.2.0
 
 ## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4252 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4349 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0 → v2.99.0 → v3.0.0 → v3.1.0
-- Kotlin 文件: 488 个 / 代码行数: 133200+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0 → v2.99.0 → v3.0.0 → v3.1.0 → v3.2.0
+- Kotlin 文件: 496 个 / 代码行数: 136000+ 行
 
 
 ## 开发历史
@@ -4823,9 +4823,107 @@ v3.0.0 → **v3.1.0** (versionCode 113 → 114)
 11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
 12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
 13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+
+---
+
+## 2026-07-11 (自主开发)
+
+### v3.2.0: 九和弦色彩听辨训练 NinthChordQualityEarTraining — ✅ 完成
+
+**第 14 个训练模块。** 将和弦训练系列扩展至爵士和声的九和弦领域，
+涵盖 8 种九和弦品质，从传统三和弦 + 七和弦延伸至扩展和弦听辨。
+
+#### 和弦品质体系（8 种 × 3 难度）
+- **BEGINNER（3 品质）**: 大九(maj9)、小九(min9)、属九(dom9)
+- **INTERMEDIATE（5 品质）**: + 属七降九(dom7♭9)、小七降九(min7♭9)
+- **ADVANCED（7 品质）**: + 减七降九(dim7♭9)、半减降九(half-dim♭9)、增九(aug9)
+
+每种品质的 MIDI 音程：
+- maj9: [0,4,7,11,14] — 大七九和弦，爵士标准
+- min9: [0,3,7,10,14] — 小七九和弦，温柔色彩
+- dom9: [0,4,7,10,14] — 属七九和弦，布鲁斯/放克
+- dom7♭9: [0,4,7,10,13] — 属七降九，西班牙/弗拉明戈
+- min7♭9: [0,3,7,10,13] — 小七降九，暗淡紧张
+- dim7♭9: [0,3,6,9,13] — 减七降九，极度紧张
+- half-dim♭9: [0,3,6,10,13] — 半减降九（m7♭5♭9），复杂
+- aug9: [0,4,8,11,14] — 增九和弦，全音阶色彩
+
+#### 架构（8 个源文件 + 4 个测试文件）
+
+##### 领域层（纯 Kotlin，无 Android 依赖）
+
+1. **NinthChordTrainingModels.kt** — 数据模型
+   - `NinthChordQuality`: 8 种品质枚举 + displayName/intervals/description/color
+   - `NinthChordDifficulty`: BEGINNER/INTERMEDIATE/ADVANCED + 品质子集
+   - `NinthChordQuestion`: midiNotes/correctAnswer/answerChoices/quality/rootNote
+   - `NinthChordAnswerRecord`: 答题记录
+
+2. **NinthChordTrainingEngine.kt** — 确定性出题引擎
+   - `withSeed(seed)`: 可复现 RNG
+   - `generate(difficulty)`: 随机品质 + 随机根音(C3-G3) + 选项生成
+   - `buildNinthChordMidiNotes(quality, rootNote)`: 根音 + 音程偏移 → MIDI 列表
+
+3. **NinthChordTrainingSession.kt** — 会话状态机
+   - start/submit/next/reset 生命周期
+   - 连击追踪(currentStreak/bestStreak)、准确率、答题历史
+
+4. **NinthChordTrainingAudioBuilder.kt** — 柱式九和弦 PCM 渲染
+   - 5 音同时发声（block chord）+ 软限幅（tanh 近似）
+   - 复用 PianoToneSynthesizer
+   - CHORD_DURATION_MS=2000ms（九和弦需更长让用户辨识色彩与丰富感）
+   - estimateDurationMs 考虑 Articulation.NONE 的 0.90 时长因子
+
+5. **NinthChordTrainingProgress.kt** — 跨会话进度跟踪
+   - 按难度分维度统计，手动 JSON 序列化（容错解析）
+   - bestAccuracy/bestStreak 不降级保证
+
+6. **NinthChordTrainingPlayer.kt** — AudioTrack MODE_STATIC 播放器
+
+7. **NinthChordTrainingViewModel.kt** — AndroidViewModel StateFlow
+
+##### UI 层
+
+8. **NinthChordTrainingScreen.kt** — Material 3 Compose UI
+   - 难度选择器 + 大号播放按钮 + 选项答题
+   - 答题反馈 + 和弦色彩描述
+   - 会话统计 + 跨会话进度卡片
+   - 🎺 图标， GraphicEq 配色
+
+#### 集成
+- `AppNavigation.kt`：`Screen.NinthChordTraining` route（`ninth_chord_training`，Icons.Filled.GraphicEq）
+- `LibraryScreen.kt`：`NinthChordTrainingEntryCard` 入口卡片
+
+### 测试（97 个新用例，全部通过）
+- **NinthChordTrainingEngineTest.kt**：确定性出题、选项完整性/唯一性、
+  各品质 MIDI 精确验证、根音范围 [48,67]、难度配置嵌套子集
+- **NinthChordTrainingSessionTest.kt**：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全、reset 清空
+- **NinthChordTrainingAudioBuilderTest.kt**：渲染非空、不削波 [-1,1]、不同品质差异、
+  estimateDurationMs 正确性（含运音法因子）、常量合理性
+- **NinthChordTrainingProgressTest.kt**：分难度累计、全局汇总、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 97 个新用例全部通过 (总计 4349 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/ninth-chord-ear-training → merge main
+- Tag: v3.2.0
+- Push: origin/main
+
+### 版本号
+v3.1.0 → **v3.2.0** (versionCode 114 → 115)
+
+### 代码统计
+- Kotlin 文件: 496 个 (main 330 + test 174)
+- 代码行数: 136000+ 行
+- 新增: 8 个源文件 + 4 个测试文件
 
 ### 下一步计划
-- 继续扩展培训模块系列：可考虑节奏听写训练 / 旋律终止方式听辨 / 和弦扩展音听辨
+- 继续扩展培训模块系列：可考虑十一和弦/十三和弦听辨、和弦功能听辨、调外音听辨
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
