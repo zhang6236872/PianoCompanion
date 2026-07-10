@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v2.99.0** (调性中心辨识训练 KeyIdentificationTraining: MusicKey 6调(C/G/F/D大调+B♭大调+A小调, tonicPitchClass/category/keySignature/description × scaleIntervals大调[0,2,4,5,7,9,11]+12/小调[0,2,3,5,7,8,10]+12) × KeyDifficulty 3级(初级3选项C/G/F大调/中级5选项+D/B♭大调/高级6选项+A小调关系调) × MelodyPattern 4种(ASCENDING_SCALE 9音上行+回归/FIFTH_PATTERN 9音五度往返/ARPEGGIO 7音琶音/SCALE_UP_DOWN 15音完整上下行, 全部起止于主音degree0) × KeyQuestion(key/tonicMidi/tonicName/melodyPattern/midiNotes/difficulty/answerChoices/correctAnswer, MIDI校验[21,108]) × KeyAnswerRecord × KeyIdentificationTrainingEngine确定性种子出题(随机调+随机模式→buildMelodyMidiNotes主音+扩展音阶半音偏移) × KeyIdentificationTrainingSession会话状态机(start/listen/answer/judge/next) × KeyIdentificationTrainingProgress跨会话进度JSON容错 × KeyIdentificationTrainingAudioBuilder顺序音符PCM渲染(NOTE_DURATION_MS=400+NOTE_GAP_MS=80+软限幅) × KeyIdentificationTrainingPlayer × KeyIdentificationTrainingViewModel × KeyIdentificationTrainingScreen Material 3(难度选择+播放+选项答题+调性色彩/调号教学反馈+进度统计) × AppNavigation路由key_identification_training+LibraryScreen入口卡片)
+- 当前版本: **v3.0.0** (七和弦品质听辨训练 SeventhChordQualityEarTraining: 5种品质(MAJOR_7大七[0,4,7,11]/DOMINANT_7属七[0,4,7,10]/MINOR_7小七[0,3,7,10]/HALF_DIMINISHED_7半减七[0,3,6,10]/DIMINISHED_7减七[0,3,6,9] × tensionLevel紧张度排序0-4 × 3难度(初级3选项大七属七小七/中级4选项+半减七/高级5选项+减七) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildSeventhChordMidiNotes) × 柱式和弦PCM渲染(4音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+紧张度指示条+进度统计) × AppNavigation路由seventh_chord_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v2.99.0
+- 最新 tag: v3.0.0
 
 ## 健康状态 (2026-07-10 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 3937 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4145 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
-- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0
-- Kotlin 文件: 464 个 / 代码行数: 124800+ 行
+- ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → v1.3.0 → v1.4.0 → v2.0.0 → v2.1.0 → v2.2.0 → v2.3.0 → v2.4.0 → v2.5.0 → v2.6.0 → v2.7.0 → v2.8.0 → v2.9.0 → v2.10.0 → v2.11.0 → v2.12.0 → v2.13.0 → v2.14.0 → v2.15.0 → v2.16.0 → v2.17.0 → v2.18.0 → v2.19.0 → v2.20.0 → v2.21.0 → v2.22.0 → v2.23.0 → v2.24.0 → v2.25.0 → v2.26.0 → v2.27.0 → v2.28.0 → v2.29.0 → v2.30.0 → v2.31.0 → v2.32.0 → v2.33.0 → v2.34.0 → v2.35.0 → v2.36.0 → v2.37.0 → v2.38.0 → v2.39.0 → v2.40.0 → v2.41.0 → v2.42.0 → v2.43.0 → v2.44.0 → v2.45.0 → v2.46.0 → v2.47.0 → v2.48.0 → v2.49.0 → v2.50.0 → v2.51.0 → v2.52.0 → v2.53.0 → v2.54.0 → v2.55.0 → v2.56.0 → v2.57.0 → v2.58.0 → v2.59.0 → v2.60.0 → v2.61.0 → v2.62.0 → v2.63.0 → v2.64.0 → v2.65.0 → v2.66.0 → v2.67.0 → v2.68.0 → v2.69.0 → v2.70.0 → v2.71.0 → v2.72.0 → v2.74.0 → v2.75.0 → v2.78.0 → v2.79.0 → v2.80.0 → v2.81.0 → v2.82.0 → v2.83.0 → v2.84.0 → v2.85.0 → v2.86.0 → v2.87.0 → v2.88.0 → v2.89.0 → v2.90.0 → v2.91.0 → v2.92.0 → v2.93.0 → v2.94.0 → v2.95.0 → v2.96.0 → v2.97.0 → v2.98.0 → v2.99.0 → v3.0.0
+- Kotlin 文件: 480 个 / 代码行数: 130500+ 行
 
 
 ## 开发历史
@@ -4654,3 +4654,61 @@ v2.98.0 → **v2.99.0** (versionCode 111 → 112)
 - Kotlin 文件: 478 个 (main 312 + test 166)
 - 代码行数: 127700+ 行
 - 新增: 8 个源文件 + 4 个测试文件 = 2873 行
+
+---
+
+## 2026-07-10: 七和弦品质听辨训练（Seventh Chord Quality Ear Training）— v3.0.0
+
+### 任务
+新增第 12 个听辨训练模块：七和弦品质听辨训练。用户听柱式和弦（4 音同时发声），判断属于哪种七和弦品质。这是听辨训练模块中首次使用同时发声的块状和弦，对音响色彩感知要求更高。
+
+### 核心设计
+- **七和弦品质（SeventhChordQuality）**：5 种品质，按 tensionLevel(紧张度 0-4) 排序
+  - MAJOR_7 大七和弦 [0,4,7,11] — 温暖、明亮、爵士色彩
+  - DOMINANT_7 属七和弦 [0,4,7,10] — 强烈张力、布鲁斯色彩
+  - MINOR_7 小七和弦 [0,3,7,10] — 柔和、忧郁、内省
+  - HALF_DIMINISHED_7 半减七和弦 [0,3,6,10] — 神秘、浮动
+  - DIMINISHED_7 减七和弦 [0,3,6,9] — 极度紧张、悬疑
+- **难度递进（SeventhChordDifficulty）**：
+  - 初级：3 选项（大七/属七/小七）— 最基础、色彩差异最大
+  - 中级：4 选项（+ 半减七）— 增加中间色彩
+  - 高级：5 选项（+ 减七）— 全部品质，最难区分
+- **出题引擎**：种子确定性，随机品质 + 随机根音(C3-G3) → buildSeventhChordMidiNotes
+- **音频渲染**：柱式和弦 PCM 44100Hz，4 音同时发声 + 软限幅防爆音
+- **会话状态机**：start/listen/answer/judge/next + 连击追踪
+- **进度跟踪**：分难度累计，手动 JSON 序列化（容错解析）
+- **UI**：Material 3 Compose，难度选择 + 播放按钮 + 选项答题 + 紧张度指示条 + 进度统计
+
+### 测试（101 个新用例，全部通过）
+- **SeventhChordTrainingEngineTest.kt**：确定性出题、选项完整性/打乱/含正确答案、
+  各品质 MIDI 精确验证、根音范围 [48,67]、难度配置嵌套子集、tensionLevel 排序
+- **SeventhChordTrainingSessionTest.kt**：状态机生命周期、连击追踪/不递减、准确率计算、
+  答题历史保序、边界安全、reset 清空
+- **SeventhChordTrainingAudioBuilderTest.kt**：渲染非空、不削波 [-1,1]、不同品质差异、
+  estimateDurationMs 正确性、常量合理性
+- **SeventhChordTrainingProgressTest.kt**：分难度累计、全局汇总、bestAccuracy/bestStreak 不降级、
+  JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 101 个新用例全部通过 (总计 4145 用例), 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
+
+### Git
+- 分支: feature/seventh-chord-ear-training → merge main
+- Tag: v3.0.0
+- Push: origin/main
+
+### 版本号
+v2.99.0 → **v3.0.0** (versionCode 112 → 113)
+
+### 代码统计
+- Kotlin 文件: 480 个 (main 314 + test 166)
+- 代码行数: 130500+ 行
+- 新增: 8 个源文件 + 4 个测试文件
+
+### 下一步计划
+- 继续扩展培训模块系列：可考虑挂留和弦听辨 / 节奏听写训练 / 旋律终止方式听辨
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
