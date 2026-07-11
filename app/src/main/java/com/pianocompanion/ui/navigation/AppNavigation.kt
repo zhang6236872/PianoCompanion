@@ -56,6 +56,7 @@ import com.pianocompanion.ui.keyidentificationtraining.KeyIdentificationTraining
 import com.pianocompanion.ui.seventhchordtraining.SeventhChordTrainingScreen
 import com.pianocompanion.ui.suspendedchordtraining.SuspendedChordTrainingScreen
 import com.pianocompanion.ui.ninthchordtraining.NinthChordTrainingScreen
+import com.pianocompanion.ui.eleventhchordtraining.EleventhChordTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -93,6 +94,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object SeventhChordTraining : Screen("seventh_chord_training", "七和弦听辨", Icons.Filled.GraphicEq)
     data object SuspendedChordTraining : Screen("suspended_chord_training", "挂留和弦听辨", Icons.Filled.Waves)
     data object NinthChordTraining : Screen("ninth_chord_training", "九和弦听辨", Icons.Filled.GraphicEq)
+    data object EleventhChordTraining : Screen("eleventh_chord_training", "十一和弦听辨", Icons.Filled.GraphicEq)
 }
 
 private val screens = listOf(
@@ -294,6 +296,9 @@ fun AppScaffold() {
             }
             composable(Screen.NinthChordTraining.route) {
                 NinthChordTrainingScreen()
+            }
+            composable(Screen.EleventhChordTraining.route) {
+                EleventhChordTrainingScreen()
             }
         }
     }
