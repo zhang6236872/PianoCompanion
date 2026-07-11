@@ -4979,8 +4979,69 @@ v3.2.0 → **v3.3.0** (versionCode 115 → 116)
 - 代码行数: 140000+ 行
 - 新增: 8 个源文件 + 4 个测试文件
 
+---
+
+## 2026-07-12 十三和弦色彩听辨训练模块 (v3.4.0)
+
+### 概述
+新增第 16 个听辨训练模块「十三和弦色彩听辨训练」，沿用十一和弦模块的架构模式，扩展至 5 种十三和弦品质，完成和弦听辨系列的三和弦→七和弦→九和弦→十一和弦→十三和弦完整阶梯。
+
+### 新增文件（8 源 + 4 测试 = 12 文件）
+**源文件** (`app/src/main/java/com/pianocompanion/thirteenthchordtraining/` + `ui/thirteenthchordtraining/`):
+- **ThirteenthChordTrainingModels.kt** — 数据模型：`ThirteenthChordQuality`（5 种品质）、`ThirteenthChordDifficulty`（BEGINNER/INTERMEDIATE/ADVANCED）、`ThirteenthChordQuestion`、`ThirteenthChordTrainingConfig`
+- **ThirteenthChordTrainingEngine.kt** — 种子随机出题引擎，MIDI 音符构建（根音 + 7 声部堆叠至 13th）
+- **ThirteenthChordTrainingSession.kt** — 会话状态机：连击追踪、准确率计算、答题历史
+- **ThirteenthChordTrainingAudioBuilder.kt** — PCM 音频渲染器，使用 PianoToneSynthesizer 合成 7 音和弦
+- **ThirteenthChordTrainingProgress.kt** — 跨会话进度持久化，手写 JSON 序列化/反序列化
+- **ThirteenthChordTrainingPlayer.kt** — Android AudioTrack 播放器
+- **ThirteenthChordTrainingViewModel.kt** — AndroidViewModel + 协程
+- **ThirteenthChordTrainingScreen.kt** — Jetpack Compose UI 界面
+
+**测试文件** (`app/src/test/java/com/pianocompanion/thirteenthchordtraining/`):
+- **ThirteenthChordTrainingEngineTest.kt** — 确定性、选项数量与正确性、MIDI 音符正确性、难度分阶
+- **ThirteenthChordTrainingSessionTest.kt** — 状态机生命周期、连击/准确率/答题历史/reset
+- **ThirteenthChordTrainingAudioBuilderTest.kt** — 渲染非空、不削波 [-1,1]、不同品质可区分
+- **ThirteenthChordTrainingProgressTest.kt** — 分难度累计、全局汇总、best 不降级、JSON 往返、容错解析
+
+### 5 种十三和弦品质
+| 品质 | 中文名 | 音程堆叠 |
+|------|--------|----------|
+| MAJOR_13 | 大十三和弦 | 1 3 5 7 9 ♯11 13 |
+| DOMINANT_13 | 属十三和弦 | 1 3 5 ♭7 9 11 13 |
+| MINOR_13 | 小十三和弦 | 1 ♭3 5 ♭7 9 11 13 |
+| MINOR_MAJOR_13 | 小大十三和弦 | 1 ♭3 5 7 9 ♯11 13 |
+| HALF_DIMINISHED_13 | 半减十三和弦 | 1 ♭3 ♭5 ♭7 9 11 13 |
+
+### 难度分阶
+- BEGINNER: 3 种品质（MAJOR_13 / DOMINANT_13 / MINOR_13）
+- INTERMEDIATE: 4 种品质（+ MINOR_MAJOR_13）
+- ADVANCED: 5 种品质（+ HALF_DIMINISHED_13）
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import`、`Screen.ThirteenthChordTraining` 路由对象、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ThirteenthChordTrainingEntryCard` 入口卡片到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 116→117, versionName 3.3.0→3.4.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest --tests "com.pianocompanion.thirteenthchordtraining.*"` — 全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/thirteenth-chord-ear-training → merge main（--no-ff）
+- Tag: v3.4.0
+- Push: origin/main + tags
+
+### 版本号
+v3.3.0 → **v3.4.0** (versionCode 116 → 117)
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件
+- 15 files changed, 2856 insertions(+)
+
 ### 下一步计划
-- 继续扩展培训模块系列：可考虑十三和弦听辨、和弦功能听辨、调外音听辨
+- 和弦听辨系列已完成三和弦→七和弦→九和弦→十一和弦→十三和弦完整阶梯
+- 可考虑：和弦功能听辨（Tonic/Subdominant/Dominant 等）、调外音听辨、和声进行听辨
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
