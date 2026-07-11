@@ -5045,3 +5045,106 @@ v3.3.0 → **v3.4.0** (versionCode 116 → 117)
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## 2026-07-12 和弦功能听辨训练模块 (v3.5.0)
+
+### 概述
+新增第 17 个听辨训练模块「和弦功能听辨训练」（Chord Function Ear Training）。
+与之前的和弦品质听辨系列不同，本模块训练用户识别和弦在调性中的**和声功能角色**
+（主功能 T / 下属功能 S / 属功能 D），而非和弦的品质类型（大三/小三等）。
+
+这是从「辨认和弦是什么」到「理解和弦在调性中做什么」的关键跨越，
+基于里曼功能理论（Riemann functional theory）。
+
+### 核心设计
+
+#### 三大和声功能（HarmonicFunction）
+- **主功能（Tonic, T）**：稳定、归属、到家了。包含 I（核心）、iii、vi（替代）
+  - 紧张度等级 0（最稳定）
+- **下属功能（Subdominant, S）**：离开主音、向外运动。包含 IV（核心）、ii（替代）
+  - 紧张度等级 1（中等运动）
+- **属功能（Dominant, D）**：紧张、渴望解决。包含 V（核心）、vii°（替代）
+  - 紧张度等级 2（最紧张）
+
+#### 难度分阶（ChordFunctionDifficulty）
+- **初级（BEGINNER）**：仅 I/IV/V 正三和弦，功能对应最清晰（I=T, IV=S, V=D），使用三和弦
+- **中级（INTERMEDIATE）**：全部 7 个自然音三和弦，需识别功能替代和弦
+  （如 vi 是小三和弦但属于主功能，vii° 是减三和弦但属于属功能）
+- **高级（ADVANCED）**：全部 7 个自然音七和弦，和声色彩更丰富，辨识难度最高
+
+#### 调性随机化
+- 4 个大调：C/G/F/D 随机选择，防止用户靠绝对音高记忆答案
+
+### 新增文件（8 源 + 4 测试 = 12 文件）
+
+**源文件** (`app/src/main/java/com/pianocompanion/chordfunctiontraining/` + `ui/chordfunctiontraining/`):
+- **ChordFunctionTrainingModels.kt** — 数据模型：`HarmonicFunction`（3 功能）、`MusicalKey`（4 调性）、
+  `ScaleDegree`（7 音级，含 triadIntervals/seventhIntervals/function 映射）、`ChordFunctionDifficulty`（3 难度）、
+  `ChordFunctionQuestion`（MIDI 范围校验 [21,108]、3-4 音校验）、`ChordFunctionAnswerRecord`
+- **ChordFunctionTrainingEngine.kt** — 确定性种子出题引擎（`withSeed`），随机调性 + 随机音级 → `buildChordMidiNotes`
+- **ChordFunctionTrainingSession.kt** — 会话状态机：start/submit/next/reset + 连击追踪、准确率、答题历史
+- **ChordFunctionTrainingAudioBuilder.kt** — 柱式和弦 PCM 渲染器，复用 PianoToneSynthesizer + 软限幅
+- **ChordFunctionTrainingProgress.kt** — 跨会话进度持久化，手动 JSON 序列化（容错解析）
+- **ChordFunctionTrainingPlayer.kt** — Android AudioTrack MODE_STATIC 播放器
+- **ChordFunctionTrainingViewModel.kt** — AndroidViewModel + StateFlow + 协程音频准备
+- **ChordFunctionTrainingScreen.kt** — Material 3 Compose UI，含紧张度指示条、功能教学说明
+
+**测试文件** (`app/src/test/java/com/pianocompanion/chordfunctiontraining/`):
+- **ChordFunctionTrainingEngineTest.kt**（50+ 用例）— 确定性出题、选项完整性/唯一性、
+  各音级 MIDI 精确验证（C/G/F/D 大调）、功能映射正确性、音域范围、难度配置
+- **ChordFunctionTrainingSessionTest.kt**（30+ 用例）— 状态机生命周期、连击追踪/不递减、
+  准确率计算、答题历史保序、边界安全、reset 清空、多轮答题验证
+- **ChordFunctionTrainingAudioBuilderTest.kt**（20+ 用例）— 渲染非空、不削波 [-1,1]、
+  确定性输出、包络验证（前导/尾部静音）、边界和弦、常量合理性
+- **ChordFunctionTrainingProgressTest.kt**（30+ 用例）— 分难度累计、全局汇总、
+  bestAccuracy/bestStreak 不降级、JSON 往返、容错解析（空/损坏/缺失字段/部分 entry）
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import`、`Screen.ChordFunctionTraining` 路由对象（`chord_function_training`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ChordFunctionTrainingEntryCard` 入口卡片到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 117→118, versionName 3.4.0→3.5.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest --tests "com.pianocompanion.chordfunctiontraining.*"` — 125 个新用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/chord-function-ear-training → merge main（--no-ff）
+- Tag: v3.5.0
+- Push: origin/main + tags
+
+### 版本号
+v3.4.0 → **v3.5.0** (versionCode 117 → 118)
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件
+- 培训模块总数: 17 个
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+
+### 下一步计划
+- 和弦品质听辨系列（三和弦→十三和弦）+ 功能听辨已全部完成
+- 可考虑：调外音听辨、和声进行听辨（完整 T-S-D-T 进行）、节奏听写训练
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
