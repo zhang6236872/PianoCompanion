@@ -66,6 +66,7 @@
 | 2r | **OMR 延音线(tie)检测** | 🟡 P1 | TieDetector: 列投影覆盖率法(≥75%)检测同音高符头间连续弧线 + 音高判别(Y差异≤0.5间距排除slur) + 延音线链(A→B→C)支持；OmrPipeline 被 tie 的第二个音符时值合并到第一个 ✅ (v2.25.0) |
 | 2s | **调号识别训练 (KeySigTrainer)** | 🟡 P1 | keysig/: 五度圈调号出题引擎(KeySigEngine 30 种调性) + 纯 Kotlin 会话/进度(JSON) + AudioTrack 音阶试听 + Compose 五线谱 Canvas 渲染(高低音谱号升降号) + 3 难度(初级0-3/中级0-5/高级大调+小调) + 4 选项选择题 + LibraryScreen 入口卡片；53 单元测试通过 ✅ (v2.79.0) |
 | 2t | **旋律记忆训练 (MelodyMemory)** | 🟡 P1 | melodymemory/: 确定性出题引擎(MelodyMemoryEngine withSeed) — 随机起始音C4-G4 + 按难度音程步进(初级二度/中级三度/高级四五度) + 旋律走向(上行↑/下行↓/同音→)生成 + 4选项含干扰项 + 穷举回退保证选项数; MelodyMemorySession 状态机(出题→听辨→答题→判定→下一题 + 连击追踪); MelodyMemoryProgress 手动JSON序列化容错持久化; MelodyMemoryAudioBuilder 复用PianoToneSynthesizer依次渲染旋律PCM + SLOW/NORMAL速度控制; MelodyMemoryPlayer AudioTrack播放; MelodyMemoryViewModel 协程管理; Material 3 Compose UI(难度/速度选择→播放→箭头答题→反馈→下一题); 3难度(BEGINNER 3音/INTERMEDIATE 4音/ADVANCED 5音) + 2速度; AppNavigation路由 + LibraryScreen入口卡片；81 单元测试通过 ✅ (v2.92.0) |
+| 2u | **节奏听写训练 (RhythmDictation)** | 🟡 P1 | rhythmdictation/: 确定性出题引擎(RhythmDictationEngine withSeed) — 8种2拍节奏单元(♩♩/♩♪♪/♩.♪/♪♪♪♪/𝅗𝅥/♩𝄽/𝄽♪♪/♪♩♪) + 3难度(初级2选1/中级4选1/高级6选1) + 3速度(慢60/中90/快120BPM) + computeOnsetTimes onset时间序列计算; RhythmDictationSession 状态机(start→answer→next + 连击追踪); RhythmDictationProgress 手动JSON序列化容错持久化; RhythmDictationAudioBuilder 等高click正弦波包络PCM合成(880Hz/10ms衰减常数) + per-cell/per-question渲染; RhythmDictationPlayer AudioTrack播放; RhythmDictationViewModel 协程管理; Material 3 Compose UI(难度+速度选择→播放→符号选项答题→反馈→进度统计); AppNavigation路由rhythm_dictation + LibraryScreen入口卡片(🥁); 4902 单元测试通过(含45+新用例) ✅ (v3.7.0) |
 | 3 | **云端同步传输层** | 🟢 P2 | 接入 Firebase/Google Drive, 复用已就绪的 SyncEngine |
 | 4 | **真机端到端测试** | 🔴 P0 | 需物理设备验证音频全链路 |
 
@@ -128,10 +129,10 @@
 ```
 
 ## 📊 代码统计
-- Kotlin 文件: 452 个
-- 代码行数: 122000+ 行
-- 单元测试: 3843 个 (100% 通过)
-- 版本标签: v1.0.0 → v2.97.0 (全部完成)
+- Kotlin 文件: 460 个
+- 代码行数: 125000+ 行
+- 单元测试: 4902 个 (100% 通过)
+- 版本标签: v1.0.0 → v3.7.0 (全部完成)
 
 ## 🔀 分支策略
 ```
