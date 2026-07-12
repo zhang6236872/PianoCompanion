@@ -482,6 +482,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Non-scale tone ear training entry ===
+            item {
+                NonScaleToneTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.NonScaleToneTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2251,6 +2260,52 @@ private fun ChordFunctionTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "和弦功能听辨训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 调外音听辨训练入口卡片。
+ *
+ * 听上行五音旋律，判断其中是否含有调外音（变化音）及其类型，
+ * 训练对旋律中半音变化的听觉敏感度。
+ */
+@Composable
+private fun NonScaleToneTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎵", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "调外音听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听旋律辨变化音 · ♭3/♯4/♭5/♯2 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "调外音听辨训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }

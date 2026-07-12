@@ -5148,3 +5148,101 @@ v3.4.0 → **v3.5.0** (versionCode 117 → 118)
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：给各训练模块添加统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## v3.6.0 — 调外音听辨训练 (Non-Scale Tone Ear Training) (2026-07-12)
+
+### 目标
+在已有 17 个训练模块基础上，新增第 18 个训练模块——**调外音听辨训练**。
+用户听到一段 5 音上行旋律短句（do-re-mi-fa-sol），其中可能有一个音被做了半音升降，
+需要凭听觉判断这段旋律是纯调内（无调外音）还是包含某种调外音，并从选项中选出正确类型。
+
+这是训练听辨旋律中**半音变化（变化音/chromatic tone）**能力的模块——
+从最显著的蓝调三度（♭3）到最隐蔽的弗里几亚二度（♯2），逐步训练耳朵对半音偏离的敏感度。
+
+### 核心设计
+- **5 种类型（含调内对照）**：
+  - DIATONIC（调内）— 纯自然大调音阶
+  - FLATTED_THIRD（♭3）— 降三度，小调色彩/蓝调音
+  - RAISED_FOURTH（♯4）— 升四度，利底亚色彩/三全音紧张
+  - FLATTED_FIFTH（♭5）— 降五度，蓝调三全音
+  - RAISED_SECOND（♯2）— 升二度，弗里几亚色彩/半音经过
+- **旋律型渲染**（非柱式和弦）：5 个音依次弹奏（NOT 符式和弦），因为训练目标是辨认旋律中的变化音
+- **调性池**：C/G/F/D 大调（防止靠绝对音高记忆答案）
+- **难度递增**：初级 3 选项 / 中级 4 选项 / 高级 5 选项
+
+### 新增文件（8 源文件 + 4 测试文件）
+
+**领域层（纯 Kotlin，无 Android 依赖）：**
+- `NonScaleToneTrainingModels.kt` — 数据模型：NonScaleToneType 枚举（5 种类型，含 displayName/symbol/description/alteredDegree/semitoneDeviation/difficultyRank/colorHex）、NstMusicalKey 枚举（C/G/F/D 大调）、NonScaleToneDifficulty 枚举（初/中/高）、NonScaleToneQuestion 数据类（含 MIDI 范围校验）、NonScaleToneAnswerRecord
+- `NonScaleToneTrainingEngine.kt` — 出题引擎：确定性 Random（withSeed）、随机选调性+类型、buildPhraseMidiNotes 构建旋律（DIATONIC_DEGREE_OFFSETS + 半音偏移）
+- `NonScaleToneTrainingSession.kt` — 会话状态机：start→submit→next→reset、连击统计、历史记录、准确率
+- `NonScaleToneTrainingAudioBuilder.kt` — 旋律型 PCM 渲染：复用 PianoToneSynthesizer、依次排列音符、软限幅（softClip）、常量（NOTE_DURATION_MS=550, LEAD_SILENCE_MS=250, TAIL_SILENCE_MS=450）
+- `NonScaleToneTrainingProgress.kt` — 跨会话进度跟踪：手动 JSON 序列化/反序列化、容错解析、难度隔离
+
+**Android 层：**
+- `NonScaleToneTrainingPlayer.kt` — AudioTrack（MODE_STATIC）播放器
+- `NonScaleToneTrainingViewModel.kt` — AndroidViewModel + StateFlow
+
+**UI 层：**
+- `NonScaleToneTrainingScreen.kt` — Material 3 Compose UI 主界面（难度选择、旋律播放、选项答题、反馈、统计）
+
+**测试文件：**
+- `NonScaleToneTrainingEngineTest.kt`（35+ 用例）— 确定性、选项完整性（3/4/5 选项）、正确答案匹配类型、MIDI 正确性（5 种类型 × 4 调性）、旋律上行排列、音域范围、难度配置、Question 参数校验、类型属性完备性
+- `NonScaleToneTrainingAudioBuilderTest.kt`（20+ 用例）— PCM 非空/时长/范围/归一化、不同旋律差异、确定性、能量/峰值、前导/尾部静音、边界音符、常量验证
+- `NonScaleToneTrainingSessionTest.kt`（25+ 用例）— 初始状态/启动/正确答题/错误答题/连击/切换/重复/重置/历史/准确率/难度记忆/多轮
+- `NonScaleToneTrainingProgressTest.kt`（30+ 用例）— 累计统计/难度隔离/准确率/JSON 往返/容错解析/多次累积/字段完整性
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import NonScaleToneTrainingScreen`、`Screen.NonScaleToneTraining` 路由对象（`non_scale_tone_training`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `NonScaleToneTrainingEntryCard` 入口卡片到 LazyColumn + 定义（🎵 图标、"调外音听辨训练"标题）
+- **build.gradle.kts**: versionCode 118→119, versionName 3.5.0→3.6.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/non-scale-tone-ear-training → merge main（--no-ff）
+- Tag: v3.6.0
+- Push: origin/main + tags
+
+### 版本号
+v3.5.0 → **v3.6.0** (versionCode 118 → 119)
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件
+- 培训模块总数: 18 个
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+
+### 下一步计划
+- 18 个训练模块已完成，听辨训练系列核心功能基本完备
+- 可考虑的新模块：
+  - 和声进行听辨（完整 T-S-D-T 进行）
+  - 节奏听写训练（听节奏写出节奏型）
+  - 音程转位听辨（上行/下行音程）
+  - 调式音阶听辨（多利亚/混合利底亚等教会调式）
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：统一进度统计汇总页面（Dashboard）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
