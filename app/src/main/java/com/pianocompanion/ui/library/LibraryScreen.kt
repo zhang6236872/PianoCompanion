@@ -491,6 +491,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Rhythm dictation training entry ===
+            item {
+                RhythmDictationEntryCard(onClick = {
+                    navController.navigate(Screen.RhythmDictation.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2306,6 +2315,52 @@ private fun NonScaleToneTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "调外音听辨训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 节奏听写训练入口卡片。
+ *
+ * 听 2 拍节奏单元，从乐谱符号中选出正确记谱，
+ * 训练将听觉节奏转化为视觉记谱的能力。
+ */
+@Composable
+private fun RhythmDictationEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🥁", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "节奏听写训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听节奏辨时值 · ♩♪𝅗𝅥♩. · 8 种节奏单元 · 3 难度 × 3 速度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "节奏听写训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
