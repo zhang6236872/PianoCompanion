@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.3.0** (十一和弦色彩听辨训练 EleventhChordEarTraining: 5种品质(MAJOR_11大十一[0,4,7,10,14,17]/MINOR_11小十一[0,3,7,10,14,17]/DOMINANT_11属十一[0,4,7,10,14,17]/MINOR_MAJOR_11小大十一[0,3,7,11,14,17]/HALF_DIMINISHED_11半减十一[0,3,6,10,14,17]) × 3难度(初级2选1 maj11/dom11/中级4选1+m11/mMaj11/高级5选1+half-dim11) × 确定性种子出题引擎(随机品质+随机根音C3-G3→buildEleventhChordMidiNotes) × 柱式十一和弦PCM渲染(6音同时发声+软限幅) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放+选项答题+和弦色彩描述+进度统计) × AppNavigation路由eleventh_chord_training+LibraryScreen入口卡片)
+- 当前版本: **v3.7.0** (节奏听写训练 RhythmDictation: 8种2拍节奏单元(TWO_QUARTERS♩♩/QUARTER_EIGHTHS♩♪♪/DOTTED_QUARTER_EIGHTH♩.♪/FOUR_EIGHTHS♪♪♪♪/HALF_NOTE𝅗𝅥/QUARTER_REST♩𝄽/REST_EIGHTHS𝄽♪♪/SYNCOPATED♪♩♪) × 3难度(初级2选1/中级4选1/高级6选1) × 3速度(慢60BPM/中90BPM/快120BPM) × 确定性种子出题引擎 × 等高click正弦波包络PCM合成(880Hz/10ms衰减常数) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度+速度选择+播放+符号选项答题+进度统计) × AppNavigation路由rhythm_dictation+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.3.0
+- 最新 tag: v3.7.0
 
 ## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -5243,6 +5243,111 @@ v3.5.0 → **v3.6.0** (versionCode 118 → 119)
   - 节奏听写训练（听节奏写出节奏型）
   - 音程转位听辨（上行/下行音程）
   - 调式音阶听辨（多利亚/混合利底亚等教会调式）
+- 或增强现有模块：乐谱多页面、标签搜索
+- 或优化既有模块：统一进度统计汇总页面（Dashboard）
+- 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+## v3.7.0 — 节奏听写训练 (Rhythm Dictation Training) (2026-07-13)
+
+### 目标
+在已有 18 个训练模块基础上，新增第 19 个训练模块——**节奏听写训练**。
+用户听到一段等高「哒」声节奏序列（2 拍单元），需要从多个记谱符号选项中选出正确的节奏型。
+
+与第 3 个模块「节奏型听辨训练 (RhythmPattern)」不同：
+- **RhythmPattern** 训练识别**整小节节奏型名称**（四分音符型/八分音符型/附点/切分等宏观模式）
+- **RhythmDictation** 训练将**听觉节奏转化为视觉记谱**——从乐谱符号中辨识具体的音符时值组合
+
+这是从「听辨模式」到「精确记谱」的跨越，更接近传统听写（dictation）的含义。
+
+### 核心设计
+- **8 种 2 拍节奏单元（RhythmCellType）**：
+  - TWO_QUARTERS（♩♩）— 两个四分音符
+  - QUARTER_EIGHTHS（♩♪♪）— 四分 + 两个八分
+  - DOTTED_QUARTER_EIGHTH（♩.♪）— 附点四分 + 八分
+  - FOUR_EIGHTHS（♪♪♪♪）— 四个八分音符
+  - HALF_NOTE（𝅗𝅥）— 一个二分音符
+  - QUARTER_REST（♩𝄽）— 四分音符 + 四分休止符
+  - REST_EIGHTHS（𝄽♪♪）— 四分休止 + 两个八分
+  - SYNCOPATED（♪♩♪）— 切分节奏（八分-四分-八分）
+- **3 个难度**：初级（2 选 1，基础节奏型）/ 中级（4 选 1，含附点/休止）/ 高级（6 选 1，含切分）
+- **3 个速度**：慢速 60 BPM / 中速 90 BPM / 快速 120 BPM
+- **等高 click 合成**：880Hz 正弦波 + 指数衰减包络（10ms 衰减常数），所有 click 等高等量，
+  唯一区分依据是 onset 间距（时间模式）
+- **确定性 RNG**：`withSeed()` 确保测试可复现
+
+### 新增文件（8 源文件 + 4 测试文件）
+
+**领域层（纯 Kotlin，无 Android 依赖）：**
+- `RhythmDictationModels.kt` — 数据模型：RhythmCellType 枚举（8 种，含 displayName/symbol/notes/beatMs 总和校验/beats=2 常量）、RhythmDictationDifficulty 枚举（初/中/高，cellPools 定义可用节奏池）、RhythmDictationTempo 枚举（SLOW 60BPM/MEDIUM 90BPM/FAST 120BPM，含 beatMs 属性）、RhythmDictationQuestion 数据类、RhythmDictationAnswerRecord
+- `RhythmDictationEngine.kt` — 出题引擎：确定性 Random（withSeed 工厂）、按难度从 cellPools 随机选正确答案 + 干扰选项、computeOnsetTimes 计算 onset 时间序列
+- `RhythmDictationSession.kt` — 会话状态机：start→answer→next→reset、连击追踪、答题历史、准确率计算
+- `RhythmDictationAudioBuilder.kt` — PCM 渲染：正弦波 click + 指数衰减包络、LEAD_SILENCE_MS=300/CLICK_DURATION_MS=80/TAIL_SILENCE_MS=400、per-cell 和 per-question 渲染、computeOnsetTimes（与 Engine 一致）
+- `RhythmDictationProgress.kt` — 跨会话进度跟踪：手动 JSON 序列化/反序列化、容错解析、按难度+速度分维度统计
+
+**Android 层：**
+- `RhythmDictationPlayer.kt` — AudioTrack（MODE_STATIC）播放器
+- `RhythmDictationViewModel.kt` — AndroidViewModel + StateFlow + 协程音频准备
+
+**UI 层：**
+- `RhythmDictationScreen.kt` — Material 3 Compose UI（难度+速度选择、播放、符号选项答题、反馈、进度统计）
+
+**测试文件：**
+- `RhythmDictationEngineTest.kt`（35+ 用例）— 确定性出题、选项唯一性/完整性、难度选项数匹配、各 cell 类型 onset 时间精确验证、cellPools 配置
+- `RhythmDictationSessionTest.kt`（30+ 用例）— 状态机生命周期、连击追踪/不递减、准确率计算、答题历史保序、边界安全、reset 清空
+- `RhythmDictationAudioBuilderTest.kt`（20+ 用例）— 渲染非空、范围 [-1,1]、确定性输出、PCM 长度合理、不同速度/节奏差异、computeOnsetTimes 一致性
+- `RhythmDictationProgressTest.kt`（30+ 用例）— 累计统计、难度隔离、全局汇总、bestAccuracy/bestStreak 不降级、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import RhythmDictationScreen`、`Screen.RhythmDictation` 路由对象（`rhythm_dictation`，标题"节奏听写"，图标 `Icons.Filled.GraphicEq`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `RhythmDictationEntryCard` 入口卡片（🥁 图标、"节奏听写训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 119→120, versionName 3.6.0→3.7.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4902 个用例全部通过, 0 失败
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/rhythm-dictation-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.6.0 → **v3.7.0** (versionCode 119 → 120)
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件
+- 培训模块总数: 19 个
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
+
+### 下一步计划
+- 19 个训练模块已完成，听辨训练系列功能持续丰富
+- 可考虑的新模块：
+  - 和声进行听辨（完整 T-S-D-T 进行）
+  - 音程转位听辨（上行/下行音程）
+  - 调式音阶听辨（多利亚/混合利底亚等教会调式）
+  - 节拍位置感知（强拍/弱拍）
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
