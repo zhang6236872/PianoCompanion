@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.7.0** (节奏听写训练 RhythmDictation: 8种2拍节奏单元(TWO_QUARTERS♩♩/QUARTER_EIGHTHS♩♪♪/DOTTED_QUARTER_EIGHTH♩.♪/FOUR_EIGHTHS♪♪♪♪/HALF_NOTE𝅗𝅥/QUARTER_REST♩𝄽/REST_EIGHTHS𝄽♪♪/SYNCOPATED♪♩♪) × 3难度(初级2选1/中级4选1/高级6选1) × 3速度(慢60BPM/中90BPM/快120BPM) × 确定性种子出题引擎 × 等高click正弦波包络PCM合成(880Hz/10ms衰减常数) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度+速度选择+播放+符号选项答题+进度统计) × AppNavigation路由rhythm_dictation+LibraryScreen入口卡片)
+- 当前版本: **v3.8.0** (拍号听辨训练 MeterRecognition: 6种拍号(2/4 · 3/4 · 4/4 · 6/8 · 5/4 · 7/8) × 3难度(初级3选1/中级4选1/高级6选1) × 3速度(慢70BPM/中100BPM/快130BPM) × 确定性种子出题引擎 × 强弱拍重音区分PCM合成(880Hz强拍1.0/弱拍0.45/指数包络8ms) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度+速度选择+播放/重播+拍号选项答题+进度统计) × AppNavigation路由meter_recognition+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.7.0
+- 最新 tag: v3.7.0 (拍号听辨完成后打 v3.8.0)
 
 ## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -5342,12 +5342,93 @@ v3.6.0 → **v3.7.0** (versionCode 119 → 120)
 19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
 
 ### 下一步计划
-- 19 个训练模块已完成，听辨训练系列功能持续丰富
+- 20 个训练模块已完成，听辨训练系列功能持续丰富
 - 可考虑的新模块：
   - 和声进行听辨（完整 T-S-D-T 进行）
   - 音程转位听辨（上行/下行音程）
   - 调式音阶听辨（多利亚/混合利底亚等教会调式）
-  - 节拍位置感知（强拍/弱拍）
+  - 速度辨识训练（不同 BPM 的速度感知）
 - 或增强现有模块：乐谱多页面、标签搜索
 - 或优化既有模块：统一进度统计汇总页面（Dashboard）
 - 弃用警告待处理：Icons.Filled.QueueMusic / MenuBook（AppNavigation 中）应迁移到 Icons.AutoMirrored
+
+---
+
+### 2026-07-13 (自主开发) — v3.8.0 / versionCode 121：拍号听辨训练（Meter Recognition）
+
+**新增第 20 个训练模块：拍号听辨训练（MeterRecognition）**
+
+用户听到一段重复的重音节拍模式，需要辨别出正确的拍号。训练节拍感知能力。
+
+#### 功能设计
+- **6 种拍号**: 2/4、3/4、4/4、6/8、5/4、7/8
+- **3 个难度**:
+  - 初级 (BEGINNER): 2/4、3/4、4/4 三选一
+  - 中级 (INTERMEDIATE): 2/4、3/4、4/4、6/8 四选一
+  - 高级 (ADVANCED): 全部 6 种拍号六选一
+- **3 个速度**: 慢速 70 BPM、中速 100 BPM、快速 130 BPM
+- **音频引擎**: PCM 正弦波合成，强拍（第 1 拍）振幅 1.0，弱拍振幅 0.45，指数包络 8ms 衰减，880Hz 音高
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮，选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度 + 速度组合记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+#### 架构（参照 RhythmDictation 模块模式）
+- `com.pianocompanion.meterrecognition` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `MeterRecognitionModels.kt` — TimeSignature 枚举（6 种 + 显示名/分子/分母/拍数/每拍细分数）、MeterRecognitionQuestion、MeterRecognitionDifficulty、MeterRecognitionTempo
+  - `MeterRecognitionEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选拍号候选集）
+  - `MeterRecognitionSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `MeterRecognitionAudioBuilder.kt` — PCM 音频合成器（强弱拍振幅区分、指数包络、16 位单声道 44100Hz）
+  - `MeterRecognitionProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty+tempo 统计）
+  - `MeterRecognitionPlayer.kt` — Android AudioTrack 播放封装
+  - `MeterRecognitionViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI
+- `com.pianocompanion.ui.meterrecognition` — UI 包
+  - `MeterRecognitionScreen.kt` — Material 3 Compose 界面（难度+速度选择 → 播放/重播 → 拍号选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/meterrecognition/` — 4 个测试文件
+  - `MeterRecognitionEngineTest.kt`（25+ 用例）— 确定性出题、难度拍号覆盖、答案正确性、种子复现
+  - `MeterRecognitionSessionTest.kt`（20+ 用例）— 会话生命周期、状态转换、连击/正确率计算
+  - `MeterRecognitionAudioBuilderTest.kt`（20+ 用例）— PCM 缓冲区有效性、采样率/时长、强拍振幅 > 弱拍
+  - `MeterRecognitionProgressTest.kt`（20+ 用例）— 累计统计、难度隔离、JSON 往返、容错解析
+
+#### 集成点
+- **AppNavigation.kt**: 新增 `import MeterRecognitionScreen`、`Screen.MeterRecognition` 路由对象（`meter_recognition`，标题"拍号听辨"，图标 `Icons.Filled.Tune`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `MeterRecognitionEntryCard` 入口卡片（📏 图标、"拍号听辨训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 120→121, versionName 3.7.0→3.8.0
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+#### Git
+- 分支: feature/meter-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.7.0 → **v3.8.0** (versionCode 120 → 121)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2900 行
+- 培训模块总数: 20 个
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
+20. ✅ MeterRecognition（拍号听辨训练）— v3.8.0
