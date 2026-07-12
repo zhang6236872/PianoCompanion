@@ -500,6 +500,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Meter recognition training entry ===
+            item {
+                MeterRecognitionEntryCard(onClick = {
+                    navController.navigate(Screen.MeterRecognition.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2361,6 +2370,52 @@ private fun RhythmDictationEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "节奏听写训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 拍号听辨训练入口卡片。
+ *
+ * 听重音节拍分组模式，判断拍号（2/4、3/4、4/4、6/8 等），
+ * 训练感知节拍宏观分组的能力。
+ */
+@Composable
+private fun MeterRecognitionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("📏", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "拍号听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听重音辨拍号 · 2/4 · 3/4 · 4/4 · 6/8 · 5/4 · 7/8 · 6 种拍号 · 3 难度 × 3 速度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "拍号听辨训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
