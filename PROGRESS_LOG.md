@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.10.0** (音色辨识训练 TimbreTraining: 6种乐器音色(PIANO钢琴/VIOLIN小提琴/GUITAR吉他/FLUTE长笛/CLARINET单簧管/TRUMPET小号) × 加法合成PCM(每乐器独特谐波幅度数组+ADSR包络) × 3难度(初级3选1/中级4选1/高级6选1) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+乐器选项答题+进度统计) × AppNavigation路由timbre_training+LibraryScreen入口卡片)
+- 当前版本: **v3.11.0** (力度辨识训练 DynamicsTraining: 6种力度级别(pp极弱/p弱/mp中弱/mf中强/f强/ff极强) × 钢琴风格加法合成PCM(5谐波+指数衰减包络+力度振幅缩放) × 3难度(初级3选1/中级4选1/高级6选1) × C大调琶音(C4-E4-G4-C5) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+力度选项答题+进度统计) × AppNavigation路由dynamics_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -5577,6 +5577,108 @@ v3.9.0 → **v3.10.0** (versionCode 122 → 123)
 - 总测试用例: 5211 个（含 Paparazzi 截图测试）
 
 ### 下一步计划
-1. 力度辨识训练（Dynamics Recognition）— 辨别音乐力度（pp/p/mp/mf/f/ff）
+1. ~~力度辨识训练（Dynamics Recognition）~~ ✅ v3.11.0 已完成
 2. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
 3. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
+
+---
+
+## 2026-07-14 第 23 个训练模块：力度辨识训练（DynamicsTraining）
+
+**新增第 23 个训练模块：力度辨识训练（DynamicsTraining）**
+
+用户听到一段 C 大调琶音（C-E-G-C4 音符）以特定力度（响度）演奏，需要根据听到的音量大小判断对应的意大利语力度术语。训练对不同力度级别的感知能力。
+
+### 功能设计
+- **6 种力度级别（意大利语力度术语）**:
+  - pp（Pianissimo 极弱）振幅 0.15 — 如耳语般轻柔
+  - p（Piano 弱）振幅 0.30 — 轻柔安静
+  - mp（Mezzo-piano 中弱）振幅 0.45 — 适中偏轻
+  - mf（Mezzo-forte 中强）振幅 0.60 — 适中偏强
+  - f（Forte 强）振幅 0.80 — 有力明亮
+  - ff（Fortissimo 极强）振幅 0.95 — 响亮激烈
+- **3 个难度**:
+  - 初级 (BEGINNER): pp、mf、ff 三选一（极端差距，易区分）
+  - 中级 (INTERMEDIATE): pp、p、mf、f 四选一（加入相邻力度）
+  - 高级 (ADVANCED): 全部 6 种六选一（含 mp vs mf 等细微区分）
+- **音频引擎**: 钢琴风格加法合成（基频 + 4 谐波 + 指数衰减包络），
+  C 大调琶音 C4-E4-G4-C5（261.63/329.63/392.00/523.25Hz），所有题目音高节奏相同，
+  唯一区分依据是整体振幅水平
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示力度缩写 + 中文名），选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 TempoTraining/TimbreTraining 模块模式）
+- `com.pianocompanion.dynamicstraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `DynamicsTrainingModels.kt` — DynamicLevel 枚举（6 种力度 + 缩写/意大利语名/中文名/振幅/描述）、DynamicsTrainingDifficulty（3 级）、DynamicsTrainingQuestion
+  - `DynamicsTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选力度候选集，选项打乱）
+  - `DynamicsTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `DynamicsTrainingAudioBuilder.kt` — PCM 音频合成器（钢琴风格加法合成、5 谐波叠加、指数衰减包络、44100Hz，按力度振幅缩放）
+  - `DynamicsTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `DynamicsTrainingPlayer.kt` — Android AudioTrack 播放封装（使用 ScoreAudioFormat 标准 PCM 格式）
+  - `DynamicsTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.dynamicstraining` — UI 包
+  - `DynamicsTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 力度选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/dynamicstraining/` — 4 个测试文件（88 用例）
+  - `DynamicsTrainingEngineTest.kt`（27 用例）— 确定性出题、难度力度覆盖、答案正确性、选项无重复、振幅单调性
+  - `DynamicsTrainingSessionTest.kt`（23 用例）— 会话生命周期、状态转换、连击/正确率计算
+  - `DynamicsTrainingAudioBuilderTest.kt`（17 用例）— PCM 缓冲区有效性、采样范围、各力度渲染成功、RMS 单调递增验证力度差异
+  - `DynamicsTrainingProgressTest.kt`（21 用例）— 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import DynamicsTrainingScreen`、`Screen.DynamicsTraining` 路由对象（`dynamics_training`，标题"力度辨识"，图标 `Icons.Filled.VolumeUp`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `DynamicsTrainingEntryCard` 入口卡片（🔊 图标、"力度辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 123→124, versionName 3.10.0→3.11.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5299 个用例全部通过，含新增 88 个 DynamicsTraining 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **力度感知训练**: 所有题目使用相同的 C 大调琶音（C4-E4-G4-C5），唯一区分依据是整体振幅——训练纯响度感知能力
+- **钢琴风格加法合成**: 基频 + 4 个递减谐波（1.0/0.5/0.25/0.15/0.08）+ 指数衰减包络（200ms 时间常数），无需音频素材文件，模块完全自包含
+- **归一化音色合成 + 力度振幅缩放**: 每个音符先归一化到 [-1,1] 再乘以力度振幅，确保不同力度的音色一致、仅响度不同
+
+### Git
+- 分支: feature/dynamics-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.10.0 → **v3.11.0** (versionCode 123 → 124)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2557 行
+- 培训模块总数: 23 个
+- 总测试用例: 5299 个（含 Paparazzi 截图测试）
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
+20. ✅ MeterRecognition（拍号听辨训练）— v3.8.0
+21. ✅ TempoTraining（速度辨识训练）— v3.9.0
+22. ✅ TimbreTraining（音色辨识训练）— v3.10.0
+23. ✅ DynamicsTraining（力度辨识训练）— v3.11.0
+
+### 下一步计划
+1. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
+2. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
+3. 可考虑增强现有模块或优化既有模块
