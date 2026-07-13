@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.8.0** (拍号听辨训练 MeterRecognition: 6种拍号(2/4 · 3/4 · 4/4 · 6/8 · 5/4 · 7/8) × 3难度(初级3选1/中级4选1/高级6选1) × 3速度(慢70BPM/中100BPM/快130BPM) × 确定性种子出题引擎 × 强弱拍重音区分PCM合成(880Hz强拍1.0/弱拍0.45/指数包络8ms) × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度+速度选择+播放/重播+拍号选项答题+进度统计) × AppNavigation路由meter_recognition+LibraryScreen入口卡片)
+- 当前版本: **v3.9.0** (速度辨识训练 TempoTraining: 6种意大利速度术语(Largo广板40-59/Adagio柔板66-76/Andante行板76-107/Moderato中板108-119/Allegro快板120-167/Presto急板168-200) × 3难度(初级3选1/中级4选1/高级4选1) × 8次击打PCM节拍合成(1000Hz短脉冲+5ms指数包络+前导静音) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+速度术语选项答题+进度统计) × AppNavigation路由tempo_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.7.0 (拍号听辨完成后打 v3.8.0)
+- 最新 tag: v3.8.0 (速度辨识完成后打 v3.9.0)
 
 ## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -5432,3 +5432,76 @@ v3.7.0 → **v3.8.0** (versionCode 120 → 121)
 18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
 19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
 20. ✅ MeterRecognition（拍号听辨训练）— v3.8.0
+21. ✅ TempoTraining（速度辨识训练）— v3.9.0
+
+---
+
+### 2026-07-13 (自主开发) — v3.9.0 / versionCode 122：速度辨识训练（Tempo Recognition Training）
+
+**新增第 21 个训练模块：速度辨识训练（TempoTraining）**
+
+用户听到一段等间距的节拍点击序列（8 次），需要根据听到的速度（BPM）判断对应的意大利速度术语。训练速度感知能力。
+
+#### 功能设计
+- **6 种意大利速度术语**:
+  - Largo（广板）: 40-59 BPM
+  - Adagio（柔板）: 66-76 BPM
+  - Andante（行板）: 76-107 BPM
+  - Moderato（中板）: 108-119 BPM
+  - Allegro（快板）: 120-167 BPM
+  - Presto（急板）: 168-200 BPM
+- **3 个难度**:
+  - 初级 (BEGINNER): Largo、Moderato、Presto 三选一（速度差异最大，易区分）
+  - 中级 (INTERMEDIATE): Largo、Andante、Moderato、Presto 四选一（增加行板）
+  - 高级 (ADVANCED): 全部 6 种六选一（完整覆盖）
+- **音频引擎**: 8 次等间距击打 PCM 合成，1000Hz 正弦脉冲，5ms 指数包络衰减，前导静音 0.3 秒
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示意大利术语 + 中文翻译），选择后即时判分 + 显示正确答案 + 实际 BPM
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+#### 架构（参照 MeterRecognition 模块模式）
+- `com.pianocompanion.tempotraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `TempoTrainingModels.kt` — TempoCategory 枚举（6 种意大利术语 + 中文名 + BPM 范围 + fullLabel）、TempoTrainingDifficulty（3 级）、TempoTrainingQuestion
+  - `TempoTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选速度候选集，BPM 随机选择 + 选项打乱）
+  - `TempoTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `TempoTrainingAudioBuilder.kt` — PCM 音频合成器（等间距击打、指数包络、44100Hz，computeOnsetTimes 可供测试验证节拍间距）
+  - `TempoTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `TempoTrainingPlayer.kt` — Android AudioTrack 播放封装（使用 ScoreAudioFormat 标准 PCM 格式）
+  - `TempoTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.tempotraining` — UI 包
+  - `TempoTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 速度术语选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/tempotraining/` — 4 个测试文件
+  - `TempoTrainingEngineTest.kt`（28 用例）— 确定性出题、难度速度覆盖、答案正确性、选项无重复、computeOnsetTimes 正确性、BPM 单调性
+  - `TempoTrainingSessionTest.kt`（24 用例）— 会话生命周期、状态转换、连击/正确率计算、lastAnswer 记录
+  - `TempoTrainingAudioBuilderTest.kt`（22 用例）— PCM 缓冲区有效性、采样范围、节拍间距、前导静音、所有速度渲染成功
+  - `TempoTrainingProgressTest.kt`（22 用例）— 累计统计、难度隔离、JSON 往返、容错解析、全局汇总
+
+#### 集成点
+- **AppNavigation.kt**: 新增 `import TempoTrainingScreen`、`Screen.TempoTraining` 路由对象（`tempo_training`，标题"速度辨识"，图标 `Icons.Filled.Speed`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `TempoTrainingEntryCard` 入口卡片（🚀 图标、"速度辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 121→122, versionName 3.8.0→3.9.0
+
+#### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅 3 个已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5108 个用例全部通过，含新增 96 个 TempoTraining 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+#### Git
+- 分支: feature/tempo-recognition-training → merge main（--no-ff）
+- Push: origin/main
+- Tag: v3.9.0
+
+### 版本号
+v3.8.0 → **v3.9.0** (versionCode 121 → 122)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2800 行
+- 培训模块总数: 21 个
+- 总测试用例: 5108 个（含 Paparazzi 截图测试）
+
+### 下一步计划
+1. 音色辨识训练（Timbre Recognition）— 辨别不同乐器的音色（钢琴/小提琴/吉他/长笛/单簧管/小号）
+2. 力度辨识训练（Dynamics Recognition）— 辨别音乐力度（pp/p/mp/mf/f/ff）
+3. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
+4. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）

@@ -62,6 +62,7 @@ import com.pianocompanion.ui.chordfunctiontraining.ChordFunctionTrainingScreen
 import com.pianocompanion.ui.nonscaletonetraining.NonScaleToneTrainingScreen
 import com.pianocompanion.ui.rhythmdictation.RhythmDictationScreen
 import com.pianocompanion.ui.meterrecognition.MeterRecognitionScreen
+import com.pianocompanion.ui.tempotraining.TempoTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -105,6 +106,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object NonScaleToneTraining : Screen("non_scale_tone_training", "调外音听辨", Icons.Filled.GraphicEq)
     data object RhythmDictation : Screen("rhythm_dictation", "节奏听写", Icons.Filled.GraphicEq)
     data object MeterRecognition : Screen("meter_recognition", "拍号听辨", Icons.Filled.Tune)
+    data object TempoTraining : Screen("tempo_training", "速度辨识", Icons.Filled.Speed)
 }
 
 private val screens = listOf(
@@ -324,6 +326,9 @@ fun AppScaffold() {
             }
             composable(Screen.MeterRecognition.route) {
                 MeterRecognitionScreen()
+            }
+            composable(Screen.TempoTraining.route) {
+                TempoTrainingScreen()
             }
         }
     }
