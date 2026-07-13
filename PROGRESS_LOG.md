@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.11.0** (力度辨识训练 DynamicsTraining: 6种力度级别(pp极弱/p弱/mp中弱/mf中强/f强/ff极强) × 钢琴风格加法合成PCM(5谐波+指数衰减包络+力度振幅缩放) × 3难度(初级3选1/中级4选1/高级6选1) × C大调琶音(C4-E4-G4-C5) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+力度选项答题+进度统计) × AppNavigation路由dynamics_training+LibraryScreen入口卡片)
+- 当前版本: **v3.12.0** (音区辨识训练 RegisterTraining: 6种音区(DEEP_BASS低低音区C2/BASS低音区C3/TENOR中音区C4/ALTO中高音区C5/SOPRANO高音区C6/TOP极高音区C7) × 钢琴风格加法合成PCM(5谐波+指数衰减包络+奈奎斯特保护) × C大调琶音频率自动计算 × 3难度(初级3选1/中级4选1/高级6选1) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+音区选项答题+进度统计) × AppNavigation路由register_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -5679,6 +5679,110 @@ v3.10.0 → **v3.11.0** (versionCode 123 → 124)
 23. ✅ DynamicsTraining（力度辨识训练）— v3.11.0
 
 ### 下一步计划
-1. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
+1. ~~音区辨识训练（Register Recognition）~~ ✅ v3.12.0 已完成
 2. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
 3. 可考虑增强现有模块或优化既有模块
+
+---
+
+## 2026-07-14 第 24 个训练模块：音区辨识训练（RegisterTraining）
+
+**新增第 24 个训练模块：音区辨识训练（RegisterTraining）**
+
+用户听到一段 C 大调琶音（C-E-G-C）在特定的八度区域演奏，需要根据音高范围判断所属的音区。
+训练对不同音区（从低低音区 C2 到极高音区 C7）的整体感知能力。
+
+### 功能设计
+- **6 种音区（从低到高）**:
+  - DEEP_BASS（低低音区/C2 八度）65.41Hz — 深沉厚重，如同大提琴最低弦的共鸣
+  - BASS（低音区/C3 八度）130.81Hz — 温暖饱满，男低音的歌唱音域
+  - TENOR（中音区/C4 八度）261.63Hz — 明亮自然，钢琴中央 C 所在的八度
+  - ALTO（中高音区/C5 八度）523.25Hz — 清晰亮丽，女高音的歌唱音域
+  - SOPRANO（高音区/C6 八度）1046.50Hz — 尖锐明亮，如同鸟鸣般清透
+  - TOP（极高音区/C7 八度）2093.00Hz — 穿透力极强，如哨音般尖锐
+- **3 个难度**:
+  - 初级 (BEGINNER): DEEP_BASS、TENOR、SOPRANO 三选一（极端差距：低/中/高）
+  - 中级 (INTERMEDIATE): DEEP_BASS、BASS、ALTO、SOPRANO 四选一（加入相邻音区）
+  - 高级 (ADVANCED): 全部 6 种六选一（含相邻八度细微区分）
+- **音频引擎**: 钢琴风格加法合成（基频 + 4 谐波 + 指数衰减包络），
+  C 大调琶音 C-E-G-C 在对应八度演奏，频率自动计算（baseC × 谐波比），
+  极高音区的高次谐波超过奈奎斯特频率时自动跳过避免混叠
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示音区名），选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 TimbreTraining/DynamicsTraining 模块模式）
+- `com.pianocompanion.registertraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `RegisterTrainingModels.kt` — MusicRegister 枚举（6 种音区 + 英文名/中文名/八度名/emoji/C频率/描述）、arpeggioFrequencies 属性（自动计算 C-E-G-C 琶音频率）、RegisterTrainingDifficulty（3 级）、RegisterTrainingQuestion
+  - `RegisterTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选音区候选集，选项打乱）
+  - `RegisterTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `RegisterTrainingAudioBuilder.kt` — PCM 音频合成器（钢琴风格加法合成、5 谐波叠加、指数衰减包络、奈奎斯特频率保护、44100Hz，按音区八度确定基频）
+  - `RegisterTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `RegisterTrainingPlayer.kt` — Android AudioTrack 播放封装
+  - `RegisterTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.registertraining` — UI 包
+  - `RegisterTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 音区选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/registertraining/` — 4 个测试文件（86 用例）
+  - `RegisterTrainingEngineTest.kt`（28 用例）— 确定性出题、难度音区覆盖、答案正确性、选项无重复、baseC 单调递增、琶音频率验证
+  - `RegisterTrainingSessionTest.kt`（23 用例）— 会话生命周期、状态转换、连击/准确率计算
+  - `RegisterTrainingAudioBuilderTest.kt`（18 用例）— PCM 缓冲区有效性、采样范围、各音区渲染成功、频谱质心随音区升高验证
+  - `RegisterTrainingProgressTest.kt`（17 用例）— 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import RegisterTrainingScreen`、`Screen.RegisterTraining` 路由对象（`register_training`，标题"音区辨识"，图标 `Icons.Filled.Piano`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `RegisterTrainingEntryCard` 入口卡片（🎹 图标、"音区辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 124→125, versionName 3.11.0→3.12.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5385 个用例全部通过，含新增 86 个 RegisterTraining 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **音区感知训练**: 所有题目使用相同的 C 大调琶音（C-E-G-C），唯一区分依据是整体八度位置——训练纯音区感知能力
+- **琶音频率自动计算**: 每种音区的 C 音频率定义为 baseC，E/G/高八度C 通过精确的半音比率（2^(4/12) ≈ 1.25992、2^(7/12) ≈ 1.49831、×2）自动计算
+- **奈奎斯特频率保护**: 极高音区（C7 八度）的第 5 谐波频率达 20930Hz，接近 22050Hz 奈奎斯特极限，音频合成器自动检测并跳过超过奈奎斯特的谐波以避免混叠失真
+- **频谱质心验证**: 测试中使用过零率作为频谱质心近似指标，验证高音区的过零率显著高于低音区
+
+### Git
+- 分支: feature/register-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.11.0 → **v3.12.0** (versionCode 124 → 125)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2521 行
+- 培训模块总数: 24 个
+- 总测试用例: 5385 个（含 Paparazzi 截图测试）
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
+20. ✅ MeterRecognition（拍号听辨训练）— v3.8.0
+21. ✅ TempoTraining（速度辨识训练）— v3.9.0
+22. ✅ TimbreTraining（音色辨识训练）— v3.10.0
+23. ✅ DynamicsTraining（力度辨识训练）— v3.11.0
+24. ✅ RegisterTraining（音区辨识训练）— v3.12.0
+
+### 下一步计划
+1. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
+2. 可考虑增强现有模块或优化既有模块
