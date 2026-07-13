@@ -64,6 +64,7 @@ import com.pianocompanion.ui.rhythmdictation.RhythmDictationScreen
 import com.pianocompanion.ui.meterrecognition.MeterRecognitionScreen
 import com.pianocompanion.ui.tempotraining.TempoTrainingScreen
 import com.pianocompanion.ui.timbretraining.TimbreTrainingScreen
+import com.pianocompanion.ui.dynamicstraining.DynamicsTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -109,6 +110,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object MeterRecognition : Screen("meter_recognition", "拍号听辨", Icons.Filled.Tune)
     data object TempoTraining : Screen("tempo_training", "速度辨识", Icons.Filled.Speed)
     data object TimbreTraining : Screen("timbre_training", "音色辨识", Icons.Filled.MusicNote)
+    data object DynamicsTraining : Screen("dynamics_training", "力度辨识", Icons.Filled.VolumeUp)
 }
 
 private val screens = listOf(
@@ -334,6 +336,9 @@ fun AppScaffold() {
             }
             composable(Screen.TimbreTraining.route) {
                 TimbreTrainingScreen()
+            }
+            composable(Screen.DynamicsTraining.route) {
+                DynamicsTrainingScreen()
             }
         }
     }

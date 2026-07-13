@@ -527,6 +527,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Dynamics recognition training entry ===
+            item {
+                DynamicsTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.DynamicsTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2526,6 +2535,52 @@ private fun TimbreTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "音色辨识训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 力度辨识训练入口卡片。
+ *
+ * 听同一段琶音以不同力度演奏，根据响度判断力度级别
+ * （pp极弱/p弱/mp中弱/mf中强/f强/ff极强）。
+ */
+@Composable
+private fun DynamicsTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🔊", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "力度辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听响度辨力度 · pp · p · mp · mf · f · ff · 6 种力度 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "力度辨识训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
