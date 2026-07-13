@@ -3,9 +3,9 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.9.0** (速度辨识训练 TempoTraining: 6种意大利速度术语(Largo广板40-59/Adagio柔板66-76/Andante行板76-107/Moderato中板108-119/Allegro快板120-167/Presto急板168-200) × 3难度(初级3选1/中级4选1/高级4选1) × 8次击打PCM节拍合成(1000Hz短脉冲+5ms指数包络+前导静音) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+速度术语选项答题+进度统计) × AppNavigation路由tempo_training+LibraryScreen入口卡片)
+- 当前版本: **v3.10.0** (音色辨识训练 TimbreTraining: 6种乐器音色(PIANO钢琴/VIOLIN小提琴/GUITAR吉他/FLUTE长笛/CLARINET单簧管/TRUMPET小号) × 加法合成PCM(每乐器独特谐波幅度数组+ADSR包络) × 3难度(初级3选1/中级4选1/高级6选1) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+乐器选项答题+进度统计) × AppNavigation路由timbre_training+LibraryScreen入口卡片)
 - 当前分支: main
-- 最新 tag: v3.8.0 (速度辨识完成后打 v3.9.0)
+- 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
 ## 健康状态 (2026-07-11 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
@@ -5501,7 +5501,82 @@ v3.8.0 → **v3.9.0** (versionCode 121 → 122)
 - 总测试用例: 5108 个（含 Paparazzi 截图测试）
 
 ### 下一步计划
-1. 音色辨识训练（Timbre Recognition）— 辨别不同乐器的音色（钢琴/小提琴/吉他/长笛/单簧管/小号）
+1. ~~音色辨识训练（Timbre Recognition）~~ ✅ v3.10.0 已完成
 2. 力度辨识训练（Dynamics Recognition）— 辨别音乐力度（pp/p/mp/mf/f/ff）
 3. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
 4. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
+
+---
+
+## 2026-07-14 第 22 个训练模块：音色辨识训练（TimbreTraining）
+
+**新增第 22 个训练模块：音色辨识训练（TimbreTraining）**
+
+用户听到一段乐器演奏的音符（440Hz A4），需要根据听到的音色判断对应的乐器。训练对不同乐器音色的辨识能力。
+
+### 功能设计
+- **6 种乐器音色**:
+  - PIANO（钢琴）: 谐波 [1.0, 0.5, 0.25, 0.15, 0.08, 0.04]，极快起音 + 指数衰减
+  - VIOLIN（小提琴）: 锯齿波 [1.0, 0.5, 0.333, 0.25, 0.2, 0.167, 0.143, 0.125]，缓慢起音 + 持续
+  - GUITAR（吉他）: 谐波 [1.0, 0.6, 0.35, 0.15, 0.06, 0.03]，快速起音 + 中等衰减
+  - FLUTE（长笛）: 近纯正弦 [1.0, 0.10, 0.04, 0.01]，柔和起音 + 持续
+  - CLARINET（单簧管）: 奇次谐波主导 [1.0, 0.0, 0.5, 0.0, 0.25, 0.0, 0.12]，中等起音 + 长持续
+  - TRUMPET（小号）: 丰富谐波 [1.0, 0.5, 0.4, 0.3, 0.2, 0.15, 0.1]，快速起音 + 持续 + 较快释放
+- **3 个难度**:
+  - 初级 (BEGINNER): PIANO、FLUTE、TRUMPET 三选一（音色差异最大，易区分）
+  - 中级 (INTERMEDIATE): PIANO、VIOLIN、FLUTE、TRUMPET 四选一（增加小提琴）
+  - 高级 (ADVANCED): 全部 6 种六选一（完整覆盖）
+- **音频引擎**: 加法合成（additive synthesis），每乐器独特谐波幅度数组 + ADSR 包络模型（衰减型/持续型两分类），44100Hz PCM Float，前导+尾部静音 300ms
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示乐器中文名），选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 TempoTraining 模块模式）
+- `com.pianocompanion.timbretraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `TimbreTrainingModels.kt` — TimbreInstrument 枚举（6 种乐器 + 中文名 + 基频 440Hz）、TimbreTrainingDifficulty（3 级）、TimbreTrainingQuestion
+  - `TimbreTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选乐器候选集，选项打乱）
+  - `TimbreTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `TimbreTrainingAudioBuilder.kt` — PCM 音频合成器（加法合成、谐波叠加、ADSR 包络、44100Hz，每乐器独特谐波 + 包络）
+  - `TimbreTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `TimbreTrainingPlayer.kt` — Android AudioTrack 播放封装（使用 ScoreAudioFormat 标准 PCM 格式）
+  - `TimbreTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.timbretraining` — UI 包
+  - `TimbreTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 乐器选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/timbretraining/` — 4 个测试文件
+  - `TimbreTrainingEngineTest.kt` — 确定性出题、难度乐器覆盖、答案正确性、选项无重复
+  - `TimbreTrainingSessionTest.kt` — 会话生命周期、状态转换、连击/正确率计算
+  - `TimbreTrainingAudioBuilderTest.kt` — PCM 缓冲区有效性、采样范围、各乐器渲染成功、钢琴比吉他衰减更快、小号比长笛更明亮（归一化总变差/RMS 指标验证谐波丰富度）
+  - `TimbreTrainingProgressTest.kt` — 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import TimbreTrainingScreen`、`Screen.TimbreTraining` 路由对象（`timbre_training`，标题"音色辨识"，图标 `Icons.Filled.GraphicEq`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `TimbreTrainingEntryCard` 入口卡片（🎺 图标、"音色辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 122→123, versionName 3.9.0→3.10.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5211 个用例全部通过，含新增 ~103 个 TimbreTraining 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **加法合成音色模型**: 使用不同谐波幅度数组模拟 6 种乐器音色，无需音频素材文件，模块完全自包含
+- **ADSR 包络分类**: 衰减型（钢琴/吉他 — 无持续段，指数衰减）vs 持续型（小提琴/长笛/单簧管/小号 — 快速过渡到 sustain 后保持），通过 sustainRatio 参数区分
+- **归一化亮度指标**: 测试中使用 TV/RMS (总变差/RMS) 作为归一化亮度指标，消除加法合成中谐波归一化导致的基频幅度差异，纯粹反映波形复杂度
+
+### Git
+- 分支: feature/timbre-recognition-training → merge main（--no-ff）
+- Push: origin/main
+- Tag: v3.10.0
+
+### 版本号
+v3.9.0 → **v3.10.0** (versionCode 122 → 123)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件
+- 培训模块总数: 22 个
+- 总测试用例: 5211 个（含 Paparazzi 截图测试）
+
+### 下一步计划
+1. 力度辨识训练（Dynamics Recognition）— 辨别音乐力度（pp/p/mp/mf/f/ff）
+2. 音区辨识训练（Register Recognition）— 辨别音区（低音区/中音区/高音区/极高音区）
+3. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）

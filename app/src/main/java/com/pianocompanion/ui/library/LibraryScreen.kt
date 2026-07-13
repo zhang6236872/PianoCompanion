@@ -518,6 +518,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Timbre recognition training entry ===
+            item {
+                TimbreTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.TimbreTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2471,6 +2480,52 @@ private fun TempoTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "速度辨识训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 音色辨识训练入口卡片。
+ *
+ * 听同音高不同乐器的音色，根据谐波结构和包络判断乐器类型
+ * （钢琴/小提琴/吉他/长笛/单簧管/小号）。
+ */
+@Composable
+private fun TimbreTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎻", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "音色辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听音色辨乐器 · 钢琴 · 小提琴 · 吉他 · 长笛 · 单簧管 · 小号 · 6 种乐器 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "音色辨识训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
