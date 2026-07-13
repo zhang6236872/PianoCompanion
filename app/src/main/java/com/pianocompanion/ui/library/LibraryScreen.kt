@@ -509,6 +509,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Tempo recognition training entry ===
+            item {
+                TempoTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.TempoTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2416,6 +2425,52 @@ private fun MeterRecognitionEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "拍号听辨训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 速度辨识训练入口卡片。
+ *
+ * 听匀速节拍序列，根据间距判断速度（BPM），
+ * 匹配意大利语速度术语（Largo/Adagio/Andante/Moderato/Allegro/Presto）。
+ */
+@Composable
+private fun TempoTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("⏱️", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "速度辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听节拍辨速度 · Largo · Adagio · Andante · Moderato · Allegro · Presto · 6 种速度 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "速度辨识训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
