@@ -5884,7 +5884,147 @@ v3.12.0 → **v3.13.0** (versionCode 125 → 126)
 23. ✅ DynamicsTraining（力度辨识训练）— v3.11.0
 24. ✅ RegisterTraining（音区辨识训练）— v3.12.0
 25. ✅ MelodicDirection（旋律方向辨识训练）— v3.13.0
+26. ✅ HarmonicInterval（和声音程辨识训练）— v3.14.0
+27. ✅ TextureRecognition（织体辨识训练）— v3.15.0
 
 ### 下一步计划
-1. 可考虑增强现有模块或优化既有模块
-2. 可考虑新的听辨训练类型（如和声音程辨识、复调听辨等）
+1. 可考虑新的听辨训练类型（如复调听辨、和弦色彩进阶等）
+2. 可考虑增强现有模块或优化既有模块
+
+---
+
+## 2026-07-14 第 26 个训练模块：和声音程辨识训练（HarmonicIntervalTraining）
+
+**新增第 26 个训练模块：和声音程辨识训练（HarmonicIntervalTraining）**
+
+用户听到两个音**同时**响起的和声音程，需要辨识音程类型（小三度/大三度/纯四度/三全音/纯五度/小六度/大六度/纯八度）。训练对和声音程色彩（协和/不协和实践感）的感知能力。
+
+### 功能设计
+- **8 种和声音程**:
+  - MINOR_THIRD（小三度 m3）— 3 半音，柔和暗淡，小调色彩
+  - MAJOR_THIRD（大三度 M3）— 4 半音，明亮温暖，大调色彩
+  - PERFECT_FOURTH（纯四度 P4）— 5 半音，悬浮开阔
+  - TRITONE（三全音 TT）— 6 半音，紧张不协和（魔鬼音程）
+  - PERFECT_FIFTH（纯五度 P5）— 7 半音，空洞开放，完全协和
+  - MINOR_SIXTH（小六度 m6）— 8 半音，丰富柔和
+  - MAJOR_SIXTH（大六度 M6）— 9 半音，明亮甜美
+  - OCTAVE（纯八度 P8）— 12 半音，融合统一，最高协和
+- **3 个难度**:
+  - 初级 (BEGINNER): 八度/纯五度/大三度 三选一（差异最大）
+  - 中级 (INTERMEDIATE): 加入小三度/纯四度 五选一（区分大小三度）
+  - 高级 (ADVANCED): 全部 8 种八选一（含三全音/六度，考验精细色彩辨识）
+- **音频引擎**: 钢琴风格加法合成（两音同时演奏），下方音固定 C4（MIDI 60），
+  上方音 = C4 + 半音偏移，频率通过 `440 × 2^((midi-69)/12)` 精确计算，
+  5 谐波叠加 + 指数衰减包络 + 奈奎斯特保护
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示音程名 + 简写），选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 RegisterTraining 模块模式）
+- `com.pianocompanion.harmonicintervaltraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `HarmonicIntervalTrainingModels.kt` — HarmonicInterval 枚举（8 种音程 + 中文名/简写/半音数/协和度/描述）、HarmonicIntervalDifficulty（3 级）、HarmonicIntervalQuestion
+  - `HarmonicIntervalTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选音程候选集，选项打乱）
+  - `HarmonicIntervalTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `HarmonicIntervalTrainingAudioBuilder.kt` — PCM 音频合成器（和声音程：两音同时叠加、钢琴风格加法合成、5 谐波叠加、指数衰减包络、奈奎斯特保护、44100Hz）
+  - `HarmonicIntervalTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `HarmonicIntervalTrainingPlayer.kt` — Android AudioTrack 播放封装
+  - `HarmonicIntervalTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.harmonicintervaltraining` — UI 包
+  - `HarmonicIntervalTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 音程选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/harmonicintervaltraining/` — 4 个测试文件（85 用例）
+  - `HarmonicIntervalEngineTest.kt`（25 用例）— 确定性出题、难度覆盖、答案正确性、选项无重复、半音数/协和度验证
+  - `HarmonicIntervalSessionTest.kt`（23 用例）— 会话生命周期、状态转换、连击/准确率计算
+  - `HarmonicIntervalAudioBuilderTest.kt`（22 用例）— PCM 缓冲区有效性、采样范围、频率计算、不同音程波形区分度、前导/尾部静音验证
+  - `HarmonicIntervalProgressTest.kt`（15 用例）— 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import HarmonicIntervalTrainingScreen`、`Screen.HarmonicInterval` 路由对象（`harmonic_interval`，标题"和声音程"，图标 `Icons.Filled.ShowChart`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `HarmonicIntervalEntryCard` 入口卡片（🎵 图标、"和声音程辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 126→127, versionName 3.13.0→3.14.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（全部通过，含新增 85 个 HarmonicInterval 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **和声音程色彩感知训练**: 不同于旋律音程关注先后演奏的两个音之间的距离，和声音程关注**两个音同时响起**时产生的和声色彩（协和/不协和），训练对音程"浓度"的深层感知
+- **两音同时叠加合成**: 下方音和上方音的波形在时间上完全对齐，叠加后产生和声效果。三全音（6 半音）会产生明显的拍频（beating），纯八度（12 半音）的谐波完全重合
+- **协和度分级**: 每种音程标注 0-4 级协和度（三全音=0，纯八度/纯五度=4），帮助用户理解协和/不协和的光谱
+
+### Git
+- 分支: feature/harmonic-interval-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.13.0 → **v3.14.0** (versionCode 126 → 127)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2547 行
+- 培训模块总数: 26 个
+
+---
+
+## 2026-07-15 第 27 个训练模块：织体辨识训练（TextureRecognitionTraining）
+
+**新增第 27 个训练模块：织体辨识训练（TextureRecognitionTraining）**
+
+用户听到一段多声部音频片段，需要辨识其织体类型（单声部/柱式和弦/分解和弦/复调/支声）。训练对不同音乐织体（texture）的听觉辨识能力，培养对音乐层次感和声部组织的感知。
+
+### 功能设计
+- **5 种织体类型**:
+  - MONOPHONIC（单声部）— 单一旋律线，无伴奏
+  - HOMOPHONIC_CHORDAL（柱式和弦）— 旋律 + 同时响起的和弦伴奏
+  - HOMOPHONIC_ARPEGGIATED（分解和弦）— 旋律 + 依次拨响的琶音伴奏
+  - POLYPHONIC（复调）— 两条独立旋律线，各有不同节奏
+  - HETEROPHONIC（支声）— 同一旋律的多个装饰变体同时演奏
+- **3 个难度**:
+  - 初级 (BEGINNER): 单声部/柱式和弦/分解和弦 三选一（差异明显）
+  - 中级 (INTERMEDIATE): 加入复调 四选一（区分独立声部）
+  - 高级 (ADVANCED): 全部 5 种五选一（含支声，考验精细辨识）
+- **音频引擎**: 钢琴风格加法合成（正弦波 + 谐波叠加、ADSR 包络、44100Hz、单声道），按织体类型生成不同的 NoteEvent 模式
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 HarmonicIntervalTraining 模块模式）
+- `com.pianocompanion.texturerecognitiontraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `TextureRecognitionTrainingModels.kt` — TextureType 枚举（5 种织体 + 中文名/描述）、TextureDifficulty（3 级）、TextureQuestion、NoteEvent
+  - `TextureRecognitionEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选织体候选集，选项打乱）
+  - `TextureRecognitionSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `TextureRecognitionAudioBuilder.kt` — PCM 音频合成器（5 种织体各自不同的 NoteEvent 模式：单旋律线/柱式和弦/琶音分解/独立对位声部/装饰支声、钢琴风格加法合成、5 谐波叠加、指数衰减包络、奈奎斯特保护、44100Hz）
+  - `TextureRecognitionProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `TextureRecognitionPlayer.kt` — Android AudioTrack 播放封装
+  - `TextureRecognitionViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.texturerecognitiontraining` — UI 包
+  - `TextureRecognitionTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 织体选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/texturerecognitiontraining/` — 4 个测试文件
+  - `TextureEngineTest.kt` — 确定性出题、难度覆盖、答案正确性、选项无重复验证
+  - `TextureSessionTest.kt` — 会话生命周期、状态转换、连击/准确率计算
+  - `TextureAudioBuilderTest.kt` — PCM 缓冲区有效性、采样范围、不同织体波形区分度（波形差异 + 同时事件数结构验证）、前导/尾部静音验证
+  - `TextureProgressTest.kt` — 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import TextureRecognitionTrainingScreen`、`Screen.TextureRecognition` 路由对象（`texture_recognition`，标题"织体辨识"，图标 `Icons.Filled.Layers`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `TextureRecognitionEntryCard` 入口卡片（🎼 图标、"织体辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 127→128, versionName 3.14.0→3.15.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（全部 5630 通过，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **音乐织体感知训练**: 织体（texture）是描述音乐声部组织方式的核心概念，本模块通过听力辨识训练用户对单声部/主调（柱式/分解）/复调/支声的理解
+- **多种 NoteEvent 模式合成**: 同一音频合成器根据织体类型生成完全不同的音符事件模式 — 单旋律线 vs 同时和弦 vs 依次琶音 vs 独立对位 vs 装饰变体，确保每种织体的音频特征清晰可辨
+- **波形区分度测试策略**: 由于幅度归一化导致 RMS 能量比较不可靠，改用波形逐采样差异（waveformDifference）+ 同时事件数结构验证，更鲁棒地测试不同织体的区分度
+
+### Git
+- 分支: feature/texture-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.14.0 → **v3.15.0** (versionCode 127 → 128)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 培训模块总数: 27 个
