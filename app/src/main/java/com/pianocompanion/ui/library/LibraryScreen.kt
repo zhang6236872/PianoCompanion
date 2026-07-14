@@ -554,6 +554,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Harmonic interval training entry ===
+            item {
+                HarmonicIntervalEntryCard(onClick = {
+                    navController.navigate(Screen.HarmonicInterval.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -2691,6 +2700,52 @@ private fun MelodicDirectionEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "旋律方向辨识训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 和声音程辨识训练入口卡片。
+ *
+ * 听两个音同时响起的和声，判断音程类型
+ * （小三度/大三度/纯四度/三全音/纯五度/小六度/大六度/纯八度）。
+ */
+@Composable
+private fun HarmonicIntervalEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎵", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "和声音程辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听和声辨音程 · 8 种音程 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "和声音程辨识训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
