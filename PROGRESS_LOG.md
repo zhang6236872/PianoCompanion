@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.12.0** (音区辨识训练 RegisterTraining: 6种音区(DEEP_BASS低低音区C2/BASS低音区C3/TENOR中音区C4/ALTO中高音区C5/SOPRANO高音区C6/TOP极高音区C7) × 钢琴风格加法合成PCM(5谐波+指数衰减包络+奈奎斯特保护) × C大调琶音频率自动计算 × 3难度(初级3选1/中级4选1/高级6选1) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+音区选项答题+进度统计) × AppNavigation路由register_training+LibraryScreen入口卡片)
+- 当前版本: **v3.13.0** (旋律方向辨识训练 MelodicDirectionTraining: 5种旋律方向(ASCENDING上行↑/DESCENDING下行↓/STATIC平行→/ARCH拱形∩/V_SHAPE V形∪) × 钢琴风格加法合成PCM(C4基准+半音偏移+5谐波+指数衰减) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+方向选项答题+进度统计) × AppNavigation路由melodic_direction+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -5784,5 +5784,107 @@ v3.11.0 → **v3.12.0** (versionCode 124 → 125)
 24. ✅ RegisterTraining（音区辨识训练）— v3.12.0
 
 ### 下一步计划
-1. 旋律方向辨识（Melodic Direction）— 辨别旋律走向（上行/下行/平行/拱形/V形）
+1. ~~旋律方向辨识（Melodic Direction）~~ ✅ v3.13.0 已完成
 2. 可考虑增强现有模块或优化既有模块
+
+---
+
+## 2026-07-14 第 25 个训练模块：旋律方向辨识训练（MelodicDirectionTraining）
+
+**新增第 25 个训练模块：旋律方向辨识训练（MelodicDirectionTraining）**
+
+用户听到一段 4 音符旋律，需要根据音高变化趋势判断旋律的走向（上行/下行/平行/拱形/V形）。训练对旋律轮廓（contour）的感知能力。
+
+### 功能设计
+- **5 种旋律方向**:
+  - ASCENDING（上行 ↑）— C-D-E-G，音符持续升高，半音偏移 [0,2,4,7]
+  - DESCENDING（下行 ↓）— G-E-D-C，音符持续降低，半音偏移 [7,4,2,0]
+  - STATIC（平行 →）— C-C-C-C，所有音符保持不变
+  - ARCH（拱形 ∩）— C-E-G-E，先升后降（山峰形）
+  - V_SHAPE（V形 ∪）— G-E-C-E，先降后升（山谷形）
+- **3 个难度**:
+  - 初级 (BEGINNER): 上行、下行、平行 三选一（差异最大）
+  - 中级 (INTERMEDIATE): 上行、下行、平行、拱形 四选一（加入拱形）
+  - 高级 (ADVANCED): 全部 5 种五选一（含拱形 vs V形区分）
+- **音频引擎**: 钢琴风格加法合成（基频 + 5 谐波 + 指数衰减包络），
+  C4 (MIDI 60) 为基准音，各音符频率通过半音偏移 × 2^(n/12) 计算，
+  高于奈奎斯特频率的谐波自动跳过避免混叠
+- **播放选项**: 初次播放 + 重播按钮，播放完成后自动进入答题状态
+- **答题方式**: 多选一按钮（显示方向符号 + 中文名），选择后即时判分 + 显示正确答案
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 RegisterTraining 模块模式）
+- `com.pianocompanion.melodicdirectiontraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `MelodicDirectionTrainingModels.kt` — MelodicDirection 枚举（5 种方向 + 符号/中文名/emoji/描述/半音偏移数组）、MelodicDirectionDifficulty（3 级）、MelodicDirectionQuestion
+  - `MelodicDirectionTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选方向候选集，选项打乱）
+  - `MelodicDirectionTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击
+  - `MelodicDirectionTrainingAudioBuilder.kt` — PCM 音频合成器（钢琴风格加法合成、半音偏移频率计算、5 谐波叠加、指数衰减包络、奈奎斯特保护、44100Hz）
+  - `MelodicDirectionTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `MelodicDirectionTrainingPlayer.kt` — Android AudioTrack 播放封装
+  - `MelodicDirectionTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.melodicdirectiontraining` — UI 包
+  - `MelodicDirectionTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 方向选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/melodicdirectiontraining/` — 4 个测试文件（83 用例）
+  - `MelodicDirectionEngineTest.kt`（25 用例）— 确定性出题、难度方向覆盖、答案正确性、选项无重复、半音偏移单调性/逆序关系
+  - `MelodicDirectionSessionTest.kt`（23 用例）— 会话生命周期、状态转换、连击/准确率计算
+  - `MelodicDirectionAudioBuilderTest.kt`（20 用例）— PCM 缓冲区有效性、采样范围、频率计算、旋律轮廓区分度、前导/尾部静音验证
+  - `MelodicDirectionProgressTest.kt`（15 用例）— 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import MelodicDirectionTrainingScreen`、`Screen.MelodicDirection` 路由对象（`melodic_direction`，标题"旋律方向"，图标 `Icons.Filled.TrendingUp`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `MelodicDirectionEntryCard` 入口卡片（🎼 图标、"旋律方向辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 125→126, versionName 3.12.0→3.13.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5469 个用例全部通过，含新增 83 个 MelodicDirection 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **旋律轮廓感知训练**: 不同于音程训练关注两个音之间的精确距离，旋律方向辨识关注**整体旋律走向**（contour），训练对旋律线形的感知能力
+- **半音偏移频率计算**: 每种方向定义一组相对于 C4 (MIDI 60) 的半音偏移量，通过 `440 × 2^((midi-69)/12)` 精确计算各音符频率
+- **上行为下行的逆序**: ASCENDING = [0,2,4,7]，DESCENDING = [7,4,2,0]，互为精确逆序，保证上下行旋律在听感上完全对称
+
+### Git
+- 分支: feature/melodic-direction-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.12.0 → **v3.13.0** (versionCode 125 → 126)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+- 新增代码行: 2422 行
+- 培训模块总数: 25 个
+- 总测试用例: 5469 个（含 Paparazzi 截图测试）
+
+### 培训模块系列进度
+1. ✅ ModeRecognition（调式听辨训练）— v2.89.0
+2. ✅ ChordTraining（和弦听辨训练）— v2.90.0
+3. ✅ RhythmPattern（节奏型听辨训练）— v2.91.0
+4. ✅ MelodyMemory（旋律记忆训练）— v2.92.0
+5. ✅ IntervalTraining（音程听辨训练）— v2.93.0
+6. ✅ PitchTraining（绝对音高训练）— v2.94.0
+7. ✅ CadenceTraining（终止式听辨训练）— v2.95.0
+8. ✅ ScaleTraining（音阶听辨训练）— v2.96.0
+9. ✅ InversionTraining（和弦转位听辨训练）— v2.97.0
+10. ✅ ProgressionTraining（和弦进行听辨训练）— v2.98.0
+11. ✅ KeyIdentificationTraining（调性中心辨识训练）— v2.99.0
+12. ✅ SeventhChordTraining（七和弦品质听辨训练）— v3.0.0
+13. ✅ SuspendedChordTraining（挂留和弦听辨训练）— v3.1.0
+14. ✅ NinthChordTraining（九和弦色彩听辨训练）— v3.2.0
+15. ✅ EleventhChordTraining（十一和弦色彩听辨训练）— v3.3.0
+16. ✅ ThirteenthChordTraining（十三和弦色彩听辨训练）— v3.4.0
+17. ✅ ChordFunctionTraining（和弦功能听辨训练）— v3.5.0
+18. ✅ NonScaleToneTraining（调外音听辨训练）— v3.6.0
+19. ✅ RhythmDictation（节奏听写训练）— v3.7.0
+20. ✅ MeterRecognition（拍号听辨训练）— v3.8.0
+21. ✅ TempoTraining（速度辨识训练）— v3.9.0
+22. ✅ TimbreTraining（音色辨识训练）— v3.10.0
+23. ✅ DynamicsTraining（力度辨识训练）— v3.11.0
+24. ✅ RegisterTraining（音区辨识训练）— v3.12.0
+25. ✅ MelodicDirection（旋律方向辨识训练）— v3.13.0
+
+### 下一步计划
+1. 可考虑增强现有模块或优化既有模块
+2. 可考虑新的听辨训练类型（如和声音程辨识、复调听辨等）
