@@ -6027,4 +6027,76 @@ v3.14.0 → **v3.15.0** (versionCode 127 → 128)
 
 ### 代码统计
 - 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
-- 培训模块总数: 27 个
+
+---
+
+### 2026-07-15 (自主开发)
+- **新增第 28 个训练模块：演奏法辨识训练（ArticulationRecognitionTraining）— ✅ 完成**
+
+用户听到一段 C 大调五声音阶（C-D-E-G-A）以特定演奏法播放，需要从选项中辨识其演奏法类型（连音/断音/保持音/重音/次断音）。训练对不同演奏法（articulation）的听觉辨识能力，培养对音符起音、持续和释放方式的精细感知。
+
+### 功能设计
+- **5 种演奏法类型**:
+  - LEGATO（连音）— 平滑连贯的连音奏法，音符之间无缝过渡
+  - STACCATO（断音）— 短促分离的断音奏法，音符带明显间隔
+  - TENUTO（保持音）— 充分保持的奏法，音符饱满绵长
+  - MARCATO（重音）— 强烈突出的重音奏法，起音有力
+  - PORTATO（次断音）— 半连半断的次断音，音符略分离但仍保持
+- **3 个难度**:
+  - 初级 (BEGINNER): 连音/断音 二选一（差异最明显）
+  - 中级 (INTERMEDIATE): 3~4 种演奏法选一（增加混淆项）
+  - 高级 (ADVANCED): 全部 5 种五选一（考验精细辨识）
+- **音频引擎**: 钢琴风格正弦波合成（44100Hz 单声道），针对每种演奏法使用不同的 ADSR 包络:
+  - 连音: 平滑重叠的包络过渡（无间隙）
+  - 断音: 极短持续 + 短释放 + 明显间隔
+  - 保持音: 全时值 + 柔和起音
+  - 重音: 锐利高振幅起音 + 快速衰减
+  - 次断音: 中等持续 + 轻微间隔（半连半断）
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 DynamicsTraining 模块模式）
+- `com.pianocompanion.articulationtraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `ArticulationTrainingModels.kt` — ArticulationType 枚举（5 种演奏法 + 中文名/描述）、ArticulationTrainingDifficulty（3 级）、ArticulationTrainingQuestion、ArticulationTrainingAnswerRecord
+  - `ArticulationTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选演奏法候选集，选项打乱）
+  - `ArticulationTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击/历史记录
+  - `ArticulationTrainingAudioBuilder.kt` — PCM 音频合成器（C 大调五声音阶 C-D-E-G-A 旋律、按演奏法类型定制 ADSR 包络、奈奎斯特保护、44100Hz 单声道）
+  - `ArticulationTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `ArticulationTrainingPlayer.kt` — Android AudioTrack 播放封装
+  - `ArticulationTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.articulationtraining` — UI 包
+  - `ArticulationTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 演奏法选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/articulationtraining/` — 4 个测试文件
+  - `ArticulationEngineTest.kt` — 确定性出题（同种子相同结果）、难度缩放（选项数量验证）、答案正确性验证
+  - `ArticulationSessionTest.kt` — 会话生命周期、状态转换、连击/准确率计算、历史记录验证
+  - `ArticulationAudioBuilderTest.kt` — PCM 缓冲区有效性、采样范围 [-1,1]、不同演奏法波形区分度（RMS 能量 + 波形差异）
+  - `ArticulationProgressTest.kt` — 累计统计、难度隔离、JSON 往返一致性、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import ArticulationTrainingScreen`、`Screen.ArticulationTraining` 路由对象（`articulation_training`，标题"演奏法辨识"，图标 `Icons.Filled.GraphicEq`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ArticulationTrainingEntryCard` 入口卡片（🎵 图标、"演奏法辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 128→129, versionName 3.15.0→3.16.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（全部 5724 通过，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **演奏法感知训练**: 演奏法（articulation）是音乐表现力的核心要素，决定了音符的起音、持续和释放方式。本模块通过听力辨识训练用户对连音/断音/重音等奏法的精细感知
+- **ADSR 包络差异化合成**: 同一段 C 大调五声音阶旋律，通过不同的 ADSR 包络参数实现 5 种截然不同的演奏效果。连音使用平滑重叠包络、断音使用极短持续+间隔、保持音充分延音、重音锐利起音、次断音半连半断，每种演奏法听感特征清晰
+- **波形区分度测试**: 通过 RMS 能量比较 + 波形逐采样差异验证不同演奏法的音频确实可区分，确保训练有效
+
+### Git
+- 分支: feature/articulation-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.15.0 → **v3.16.0** (versionCode 128 → 129)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+
+### 下一步计划
+- 可继续扩展更多训练模块（如调式辨识、和声进行辨识等）
+- 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
+- 培训模块总数: 28 个
