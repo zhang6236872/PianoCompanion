@@ -67,6 +67,7 @@ import com.pianocompanion.ui.timbretraining.TimbreTrainingScreen
 import com.pianocompanion.ui.dynamicstraining.DynamicsTrainingScreen
 import com.pianocompanion.ui.registertraining.RegisterTrainingScreen
 import com.pianocompanion.ui.melodicdirectiontraining.MelodicDirectionTrainingScreen
+import com.pianocompanion.ui.harmonicintervaltraining.HarmonicIntervalTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -115,6 +116,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object DynamicsTraining : Screen("dynamics_training", "力度辨识", Icons.Filled.VolumeUp)
     data object RegisterTraining : Screen("register_training", "音区辨识", Icons.Filled.Piano)
     data object MelodicDirection : Screen("melodic_direction", "旋律方向", Icons.Filled.TrendingUp)
+    data object HarmonicInterval : Screen("harmonic_interval", "和声音程", Icons.Filled.ShowChart)
 }
 
 private val screens = listOf(
@@ -349,6 +351,9 @@ fun AppScaffold() {
             }
             composable(Screen.MelodicDirection.route) {
                 MelodicDirectionTrainingScreen()
+            }
+            composable(Screen.HarmonicInterval.route) {
+                HarmonicIntervalTrainingScreen()
             }
         }
     }
