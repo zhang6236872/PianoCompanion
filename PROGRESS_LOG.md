@@ -3,16 +3,16 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.18.0** (声部运动辨识训练 ContrapuntalMotionTraining: 4种对位声部运动(平行进行⇈/同向进行↗↗/反向进行⇅/斜向进行⇄) × 双声部PCM正弦波合成(高声部C5-A5/低声部C3-A3两八度间隔) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+运动选项答题+进度统计) × AppNavigation路由contrapuntal_motion+LibraryScreen入口卡片)
+- 当前版本: **v3.19.0** (转调辨识训练 ModulationRecognitionTraining: 4种转调类型(转入属调↑5/转入下属调↓5/转入关系调↔/无转调≡) × 4和弦序列PCM钢琴合成(原调C大调建立调性→目标调V-I终止确立新调) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+转调选项答题+进度统计) × AppNavigation路由modulation_recognition+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
-## 健康状态 (2026-07-11 核验)
+## 健康状态 (2026-07-16 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 4451 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 5944 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → ... → v3.0.0 → v3.1.0 → v3.2.0 → v3.3.0
-- Kotlin 文件: 508 个 / 代码行数: 140000+ 行
+- Kotlin 文件: 520 个 / 代码行数: 143000+ 行
 
 
 ## 开发历史
@@ -6239,4 +6239,103 @@ v3.17.0 → **v3.18.0** (versionCode 130 → 131)
 ### 下一步计划
 - 培训模块总数: 30 个
 - 可继续扩展更多训练模块（如和弦转位辨识、不协和音程辨识、调性中心辨识等）
+- 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
+
+---
+
+## 2026-07-16 (自主开发) — v3.19.0: 转调辨识训练 (ModulationRecognitionTraining)
+
+### 概述
+- **第 31 个训练模块**：转调辨识训练（Modulation Recognition Training）
+- 训练用户辨识音乐进行中调性中心（tonal center）的转移——这是理解大型曲式结构、
+  和弦进行功能和音乐发展推进的核心听力技能
+- 版本: v3.19.0 (versionCode 132)
+- 注：本次发现在 `feature/modulation-recognition-training` 分支上已有上次会话遗留的
+  未完成实现（域逻辑+UI+测试+导航路由已写好，但缺少 LibraryScreen 入口卡片、版本号
+  未更新、未提交）。本次完成了收尾工作：补全 LibraryScreen 入口卡片 + 版本号 + 全量
+  验证 + 提交合并推送。
+
+### 核心功能
+- **4 种转调类型**（ModulationType）：
+  1. TO_DOMINANT（转入属调 ↑5）—— 向上五度转调（如 C大调→G大调），最常见、最自然的
+     转调，带来明亮、开放的色彩变化，常用于副歌/高潮段落
+  2. TO_SUBDOMINANT（转入下属调 ↓5）—— 向下五度转调（如 C大调→F大调），柔和、温暖
+     的色彩变化，常用于第二主题/抒情段落
+  3. TO_RELATIVE（转入关系调 ↔）—— 同音列大↔小调互换（如 C大调→a小调），使用相同
+     音符但色彩从明朗变为忧郁（或反之），戏剧性情绪变化
+  4. NO_MODULATION（无转调 ≡）—— 停留原调，I-IV-V-I 功能进行巩固调性，无调性转移
+- **3 个难度等级**（ModulationDifficulty）：
+  - BEGINNER（初级）：2 种对比最明显的类型（属调 / 无转调），2 选项
+  - INTERMEDIATE（中级）：3 种（加入下属调），3 选项
+  - ADVANCED（高级）：全部 4 种（加入关系调大小调切换），4 选项
+
+### 技术架构
+- **领域层**（`modulationrecognition/`，纯 Kotlin，无 Android 依赖）：
+  - `ModulationRecognitionModels.kt` — 数据模型（转调类型枚举 + 中文名/描述/提示、
+    难度枚举、题目、答题记录）
+  - `ModulationEngine.kt` — 确定性随机出题引擎，`withSeed()` 工厂方法，按难度筛选
+    转调候选集，选项打乱
+  - `ModulationSession.kt` — 会话状态机（start/submit/next 生命周期、连击计算、
+    历史记录）
+  - `ModulationAudioBuilder.kt` — PCM 钢琴风格加法合成（5 谐波 + 指数衰减包络），
+    4 和弦序列：前 2 和弦在原调 C 大调建立调性中心，后 2 和弦根据转调类型变化目标调
+    的 V-I 终止确立新调，44100Hz
+  - `ModulationProgress.kt` — 跨会话进度跟踪，手动 JSON 序列化，容错解析
+  - `ModulationPlayer.kt` — AudioTrack 播放器
+  - `ModulationViewModel.kt` — AndroidViewModel + UI 状态管理（协程播放）
+- **UI 层**（`ui/modulationrecognition/`）：
+  - `ModulationRecognitionTrainingScreen.kt` — Material 3 Compose 屏幕
+    （难度选择 + 播放/重播 + 转调选项答题 + 教学反馈 + 进度统计）
+
+### 音频合成设计
+每种转调类型的 4 和弦序列（每个和弦 800ms，三和弦原位）：
+- TO_DOMINANT: C(I)→F(IV)→D(G调V)→G(G调I) — 后半段转入属调 G 大调
+- TO_SUBDOMINANT: C(I)→G(V)→C(F调V)→F(F调I) — 后半段转入下属调 F 大调
+- TO_RELATIVE: C(I)→G(V)→E(am调V)→Am(am调i) — 后半段转入关系小调 a 小调
+- NO_MODULATION: C(I)→F(IV)→G(V)→C(I) — 全程 C 大调功能进行
+
+### 测试（4 个文件，73 用例）
+- `ModulationSessionTest.kt`(20) — 生命周期、状态转换、连击/准确率计算、历史记录
+- `ModulationAudioBuilderTest.kt`(20) — PCM 缓冲区有效性、采样范围 [-1,1]、
+  转调发生验证（调性标签序列变化）、奈奎斯特保护
+- `ModulationProgressTest.kt`(19) — 累计统计、难度隔离、JSON 往返一致性、容错解析
+- `ModulationEngineTest.kt`(14) — 确定性出题（同种子相同结果）、难度缩放（选项数量）、
+  答案正确性验证
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import ModulationRecognitionTrainingScreen`、
+  `Screen.ModulationRecognition` 路由对象（`modulation_recognition`，标题"转调辨识"，
+  图标 `Icons.Filled.Cached`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ModulationRecognitionEntryCard` 入口卡片
+  （🔄 图标、"转调辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 131→132, versionName 3.18.0→3.19.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（全部 5944 通过，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **调性中心感知训练**: 转调（modulation）是音乐发展最重要的手段之一，要求听者感知
+  到调性中心的变化方向。本模块通过和弦进行序列的前后对比，训练用户辨识属调（上五度）、
+  下属调（下五度）、关系调（大小调色彩翻转）三种最经典的转调方向
+- **和弦进行转调建模**: 用 4 和弦序列（原调 I-IV/V 建立调性 → 目标调 V-I 终止确立新调）
+  清晰呈现转调过程。属调用 D-F#-A 的升 F 突出"明亮感"，关系小调用和声小调 V（E-G#-B）
+  的升 G 确立小调终止
+- **钢琴风格多谐波合成**: 每个音符用基频 + 4 谐波加法合成 + 指数衰减包络，模拟真实钢琴
+  音色，多音叠加后归一化并限幅到 [-1,1]，确保音频清晰可辨且无削波
+
+### Git
+- 分支: feature/modulation-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.18.0 → **v3.19.0** (versionCode 131 → 132)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计，2542 行新增）
+
+### 下一步计划
+- 培训模块总数: 31 个
+- 可继续扩展更多训练模块（如不协和音程辨识、调式辨识、终止式辨识等）
 - 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
