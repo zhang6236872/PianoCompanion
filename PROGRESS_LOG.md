@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.13.0** (旋律方向辨识训练 MelodicDirectionTraining: 5种旋律方向(ASCENDING上行↑/DESCENDING下行↓/STATIC平行→/ARCH拱形∩/V_SHAPE V形∪) × 钢琴风格加法合成PCM(C4基准+半音偏移+5谐波+指数衰减) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+方向选项答题+进度统计) × AppNavigation路由melodic_direction+LibraryScreen入口卡片)
+- 当前版本: **v3.18.0** (声部运动辨识训练 ContrapuntalMotionTraining: 4种对位声部运动(平行进行⇈/同向进行↗↗/反向进行⇅/斜向进行⇄) × 双声部PCM正弦波合成(高声部C5-A5/低声部C3-A3两八度间隔) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+运动选项答题+进度统计) × AppNavigation路由contrapuntal_motion+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6172,3 +6172,71 @@ v3.16.0 → **v3.17.0** (versionCode 129 → 130)
 - 可继续扩展更多训练模块（如调式辨识、和声进行辨识、节奏型辨识等）
 - 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
 - 培训模块总数: 29 个
+
+---
+
+## 2026-07-16 (自主开发) — v3.18.0: 声部运动辨识训练 (ContrapuntalMotionTraining)
+
+### 概述
+- **第 30 个训练模块**：声部运动辨识训练（Contrapuntal Motion Recognition Training）
+- 训练用户辨识两条旋律线之间的四种对位声部运动类型
+- 版本: v3.18.0 (versionCode 131)
+
+### 核心功能
+- **4 种声部运动类型**（ContrapuntalMotionType）：
+  1. PARALLEL（平行进行 ⇈）—— 两个声部同向运动且保持相同音程距离
+  2. SIMILAR（同向进行 ↗↗）—— 两个声部同向运动但音程距离变化
+  3. CONTRARY（反向进行 ⇅）—— 两个声部朝相反方向运动
+  4. OBLIQUE（斜向进行 ⇄）—— 一个声部保持不动，另一个运动
+- **3 个难度等级**（ContrapuntalMotionDifficulty）：
+  - BEGINNER（初级）：2 种差异最大的运动（平行 / 斜向），2 选项
+  - INTERMEDIATE（中级）：3 种运动含反向，3 选项
+  - ADVANCED（高级）：全部 4 种运动，4 选项（区分平行与同向）
+
+### 技术架构
+- **领域层**（`contrapuntalmotiontraining/`，纯 Kotlin，无 Android 依赖）：
+  - `ContrapuntalMotionTrainingModels.kt` — 数据模型（运动类型枚举、难度枚举、题目、答题记录）
+  - `ContrapuntalMotionEngine.kt` — 确定性随机出题引擎，withSeed 工厂方法
+  - `ContrapuntalMotionSession.kt` — 会话状态机（start/submit/next 生命周期、连击计算、历史记录）
+  - `ContrapuntalMotionAudioBuilder.kt` — PCM 正弦波合成，两声部分别在不同八度区间渲染，44100Hz
+  - `ContrapuntalMotionProgress.kt` — 跨会话进度跟踪，手动 JSON 序列化，容错解析
+  - `ContrapuntalMotionPlayer.kt` — AudioTrack 播放器
+  - `ContrapuntalMotionViewModel.kt` — AndroidViewModel + UI 状态管理
+- **UI 层**（`ui/contrapuntalmotiontraining/`）：
+  - `ContrapuntalMotionTrainingScreen.kt` — Material 3 Compose 屏幕（难度选择 + 播放/重播 + 选项答题 + 进度统计）
+
+### 测试（4 个文件，40+ 用例）
+- `ContrapuntalMotionEngineTest.kt` — 确定性出题、难度覆盖、选项完整性
+- `ContrapuntalMotionSessionTest.kt` — 生命周期、状态转换、连击/准确率计算、历史记录
+- `ContrapuntalMotionAudioBuilderTest.kt` — PCM 缓冲区有效性、采样范围 [-1,1]
+- `ContrapuntalMotionProgressTest.kt` — 累计统计、难度隔离、JSON 往返一致性、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import CompareArrows`（AutoMirrored）、`Screen.ContrapuntalMotion` 路由对象（`contrapuntal_motion`，标题"声部运动辨识"，图标 `Icons.AutoMirrored.Filled.CompareArrows`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ContrapuntalMotionEntryCard` 入口卡片（⇅ 图标、"声部运动辨识训练"标题）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 130→131, versionName 3.17.0→3.18.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（5871 用例，0 失败）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **对位声部运动听力训练**: 声部运动（contrapuntal motion）是对位法和声部进行（voice leading）的核心概念，本模块帮助用户辨识四种基本运动关系
+- **双声部合成**: 高声部在 C5-A5 区间，低声部在 C3-A3 区间，两个八度的间隔确保声部可辨识性。平行进行时两声部按相同音程同步移动；反向进行时一个升一个降；斜向进行时一声部保持重复音
+- **修复 CompareArrows 弃用问题**: 使用 `Icons.AutoMirrored.Filled.CompareArrows` 替代已弃用的 `Icons.Filled.CompareArrows`
+
+### Git
+- 分支: feature/contrapuntal-motion-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.17.0 → **v3.18.0** (versionCode 130 → 131)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计，2621 行新增）
+
+### 下一步计划
+- 培训模块总数: 30 个
+- 可继续扩展更多训练模块（如和弦转位辨识、不协和音程辨识、调性中心辨识等）
+- 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
