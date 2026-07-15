@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,6 +72,7 @@ import com.pianocompanion.ui.harmonicintervaltraining.HarmonicIntervalTrainingSc
 import com.pianocompanion.ui.texturerecognitiontraining.TextureRecognitionTrainingScreen
 import com.pianocompanion.ui.articulationtraining.ArticulationTrainingScreen
 import com.pianocompanion.ui.polyrhythmtraining.PolyrhythmTrainingScreen
+import com.pianocompanion.ui.contrapuntalmotiontraining.ContrapuntalMotionTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -123,6 +125,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object TextureRecognition : Screen("texture_recognition", "织体辨识", Icons.Filled.Layers)
     data object ArticulationTraining : Screen("articulation_training", "演奏法辨识", Icons.Filled.GraphicEq)
     data object PolyrhythmTraining : Screen("polyrhythm_training", "复合节奏辨识", Icons.Filled.GraphicEq)
+    data object ContrapuntalMotion : Screen("contrapuntal_motion", "声部运动辨识", Icons.AutoMirrored.Filled.CompareArrows)
 }
 
 private val screens = listOf(
@@ -369,6 +372,9 @@ fun AppScaffold() {
             }
             composable(Screen.PolyrhythmTraining.route) {
                 PolyrhythmTrainingScreen()
+            }
+            composable(Screen.ContrapuntalMotion.route) {
+                ContrapuntalMotionTrainingScreen()
             }
         }
     }
