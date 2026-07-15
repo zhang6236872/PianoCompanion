@@ -73,6 +73,7 @@ import com.pianocompanion.ui.texturerecognitiontraining.TextureRecognitionTraini
 import com.pianocompanion.ui.articulationtraining.ArticulationTrainingScreen
 import com.pianocompanion.ui.polyrhythmtraining.PolyrhythmTrainingScreen
 import com.pianocompanion.ui.contrapuntalmotiontraining.ContrapuntalMotionTrainingScreen
+import com.pianocompanion.ui.modulationrecognition.ModulationRecognitionTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -125,6 +126,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object TextureRecognition : Screen("texture_recognition", "织体辨识", Icons.Filled.Layers)
     data object ArticulationTraining : Screen("articulation_training", "演奏法辨识", Icons.Filled.GraphicEq)
     data object PolyrhythmTraining : Screen("polyrhythm_training", "复合节奏辨识", Icons.Filled.GraphicEq)
+    data object ModulationRecognition : Screen("modulation_recognition", "转调辨识", Icons.Filled.Cached)
     data object ContrapuntalMotion : Screen("contrapuntal_motion", "声部运动辨识", Icons.AutoMirrored.Filled.CompareArrows)
 }
 
@@ -375,6 +377,9 @@ fun AppScaffold() {
             }
             composable(Screen.ContrapuntalMotion.route) {
                 ContrapuntalMotionTrainingScreen()
+            }
+            composable(Screen.ModulationRecognition.route) {
+                ModulationRecognitionTrainingScreen()
             }
         }
     }
