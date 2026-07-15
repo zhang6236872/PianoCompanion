@@ -6100,3 +6100,75 @@ v3.15.0 → **v3.16.0** (versionCode 128 → 129)
 - 可继续扩展更多训练模块（如调式辨识、和声进行辨识等）
 - 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
 - 培训模块总数: 28 个
+
+---
+
+## v3.17.0 — 复合节奏辨识训练 (PolyrhythmRecognitionTraining) ✅
+
+**时间**: 2026-07-15  
+**模块 #29**  
+**分支**: feature/polyrhythm-recognition-training
+
+### 功能概述
+新增"复合节奏辨识训练"模块，训练用户辨识同时进行的两个节奏脉动所构成的复合节奏（polyrhythm）。这是高级节奏听力的核心训练内容，通过同时播放两个不同时值细分的节奏脉动，让用户辨识它们的比例关系。
+
+### 训练内容
+- **5 种复合节奏类型**:
+  - 2:3（二对三）— 经典复合节奏，三连音 vs 二连音
+  - 3:4（三对四）— 中等难度，三连音 vs 十六分音符
+  - 4:5（四对五）— 高难度，四连音 vs 五连音
+  - 2:5（二对五）— 较罕见，二连音 vs 五连音
+  - 3:5（三对五）— 高难度，三连音 vs 五连音
+- **3 个难度**:
+  - 初级 (BEGINNER): 2:3 / 3:4 中三选一（最常见类型）
+  - 中级 (INTERMEDIATE): 2:3 / 3:4 / 2:5 / 3:5 中四选一
+  - 高级 (ADVANCED): 全部 5 种五选一（含 4:5 等高难度）
+- **音频引擎**: 双声部 PCM 合成（44100Hz 单声道），两个脉动使用不同频率（高音 880Hz / 低音 440Hz），各自按比例均匀分布于同一拍周期内，共播放 4 拍循环，清晰可辨
+- **进度追踪**: 按难度记录正确率、连击、最佳成绩，跨会话持久化（手动 JSON）
+
+### 架构（参照 ArticulationTraining 模块模式）
+- `com.pianocompanion.polyrhythmtraining` — 域逻辑包（纯 Kotlin，无 Android 依赖）
+  - `PolyrhythmTrainingModels.kt` — PolyrhythmType 枚举（5 种复合节奏 + 中文名/描述）、PolyrhythmDifficulty（3 级）、PolyrhythmQuestion、PolyrhythmAnswerRecord
+  - `PolyrhythmTrainingEngine.kt` — 出题引擎（带种子的确定性随机数生成器，`withSeed()` 工厂方法，按难度筛选复合节奏候选集，选项打乱）
+  - `PolyrhythmTrainingSession.kt` — 会话状态机（Idle → Playing → Answering → Revealed → 循环），跟踪已答数/正确数/连击/历史记录
+  - `PolyrhythmTrainingAudioBuilder.kt` — PCM 音频合成器（双声部节奏脉动，高/低音区分，奈奎斯特保护，44100Hz 单声道）
+  - `PolyrhythmTrainingProgress.kt` — 跨会话进度追踪（手动 JSON 序列化/反序列化、容错解析、per-difficulty 统计）
+  - `PolyrhythmTrainingPlayer.kt` — Android AudioTrack 播放封装
+  - `PolyrhythmTrainingViewModel.kt` — AndroidViewModel 桥接域逻辑与 UI（协程播放）
+- `com.pianocompanion.ui.polyrhythmtraining` — UI 包
+  - `PolyrhythmTrainingScreen.kt` — Material 3 Compose 界面（难度选择 → 播放/重播 → 复合节奏选项答题 → 进度统计）
+- `app/src/test/java/com/pianocompanion/polyrhythmtraining/` — 4 个测试文件
+  - `PolyrhythmEngineTest.kt` — 确定性出题（同种子相同结果）、难度缩放（选项数量验证）、答案正确性验证
+  - `PolyrhythmSessionTest.kt` — 会话生命周期、状态转换、连击/准确率计算、历史记录验证
+  - `PolyrhythmAudioBuilderTest.kt` — PCM 缓冲区有效性、采样范围 [-1,1]、双声部可辨识性验证
+  - `PolyrhythmProgressTest.kt` — 累计统计、难度隔离、JSON 往返一致性、容错解析
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import PolyrhythmTrainingScreen`、`Screen.PolyrhythmTraining` 路由对象（`polyrhythm_training`，标题"复合节奏辨识"，图标 `Icons.Filled.GraphicEq`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `PolyrhythmTrainingEntryCard` 入口卡片（🥁 图标、"复合节奏辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 129→130, versionName 3.16.0→3.17.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 技术亮点
+- **复合节奏听力训练**: 复合节奏（polyrhythm）是高级节奏训练的核心，要求同时感知两个或多个不同时值细分的节奏脉动。本模块通过双声部合成让用户辨识 2:3、3:4、4:5 等经典比例
+- **双声部节奏合成**: 高音（880Hz）和低音（440Hz）两个脉动分别按各自比例均匀分布于同一拍周期内，共播放 4 拍循环。两个声部频率差异确保可辨识性
+- **双声部可辨识性测试**: 验证合成音频中高/低频成分同时存在，确保训练有效
+
+### Git
+- 分支: feature/polyrhythm-recognition-training → merge main（--no-ff）
+- Push: origin/main
+
+### 版本号
+v3.16.0 → **v3.17.0** (versionCode 129 → 130)
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（15 文件变更总计）
+
+### 下一步计划
+- 可继续扩展更多训练模块（如调式辨识、和声进行辨识、节奏型辨识等）
+- 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
+- 培训模块总数: 29 个
