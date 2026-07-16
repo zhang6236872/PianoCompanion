@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.19.0** (转调辨识训练 ModulationRecognitionTraining: 4种转调类型(转入属调↑5/转入下属调↓5/转入关系调↔/无转调≡) × 4和弦序列PCM钢琴合成(原调C大调建立调性→目标调V-I终止确立新调) × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+转调选项答题+进度统计) × AppNavigation路由modulation_recognition+LibraryScreen入口卡片)
+- 当前版本: **v3.20.0** (协和度辨识训练 ConsonanceTraining: 3大协和类别(完全协和P8/P5/P4·不完全协和M3/m3/M6/m6·不协和m2/M2/m7/M7/TT) × 2呈现方式(和声音程HARMONIC同时发声/旋律音程MELODIC先后发声) × PCM多谐波合成ADSR包络 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+协和选项答题+教学反馈+进度统计) × AppNavigation路由consonance_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6339,3 +6339,60 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 - 培训模块总数: 31 个
 - 可继续扩展更多训练模块（如不协和音程辨识、调式辨识、终止式辨识等）
 - 或转向其他功能增强（如五线谱显示优化、练习报告导出等）
+
+
+---
+
+## 2026-07-16 (自主开发) — v3.20.0: 协和度辨识训练 ConsonanceTraining
+
+### 概述
+新增第 **32** 个训练模块：**协和度辨识训练（Consonance & Dissonance Recognition）**。
+训练用户感知音程的协和与不协和特性，这是与精确音程辨识（IntervalRecognition）不同的
+听觉能力——前者侧重声音融合度/紧张感的整体感知，后者要求准确命名具体音程距离。
+
+### 音程分类（传统乐理三分类）
+1. **完全协和（Perfect Consonance）**: P8（纯八度）、P5（纯五度）、P4（纯四度）
+2. **不完全协和（Imperfect Consonance）**: M3（大三度）、m3（小三度）、M6（大六度）、m6（小六度）
+3. **不协和（Dissonance）**: m2（小二度）、M2（大二度）、m7（小七度）、M7（大七度）、TT（三全音）
+
+### 2 种呈现方式（Presentation）
+1. **HARMONIC（和声音程）**: 两音同时发声，最能体现协和/不协和听感差异
+2. **MELODIC（旋律音程）**: 两音先后发声，训练旋律中紧张度感知
+
+### 3 个难度等级（ConsonanceDifficulty）
+- **BEGINNER（初级）**: 二选一（协和 vs 不协和）
+- **INTERMEDIATE（中级）**: 三选一（完全协和/不完全协和/不协和）
+- **ADVANCED（高级）**: 三选一，题库含三全音(TT)全部音程
+
+### 技术架构
+- **领域层**（`consonancetraining/`，纯 Kotlin）：
+  - `ConsonanceModels.kt` — 数据模型（协和类别/音程/难度/呈现方式枚举 + 题目/记录）
+  - `ConsonanceEngine.kt` — 确定性出题引擎 withSeed()，按难度筛选音程候选集
+  - `ConsonanceSession.kt` — 会话状态机（连击/准确率/历史）
+  - `ConsonanceAudioBuilder.kt` — PCM 多谐波合成 + ADSR，和声/旋律两种渲染
+  - `ConsonanceProgress.kt` — 跨会话进度 JSON 容错序列化
+  - `ConsonancePlayer.kt` — AudioTrack 播放器
+  - `ConsonanceViewModel.kt` — AndroidViewModel + UI 状态管理
+- **UI 层**（`ui/consonancetraining/`）：
+  - `ConsonanceTrainingScreen.kt` — Material 3 Compose 全屏 UI
+
+### 测试（4 个文件）
+- `ConsonanceEngineTest.kt` — 确定性出题、难度缩放、答案正确性
+- `ConsonanceSessionTest.kt` — 生命周期、状态转换、连击/准确率
+- `ConsonanceAudioBuilderTest.kt` — PCM 有效性、采样范围、模式差异
+- `ConsonanceProgressTest.kt` — 累计统计、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: `Screen.ConsonanceTraining`（route=`consonance_training`，图标 GraphicEq）
+- **LibraryScreen.kt**: `ConsonanceEntryCard`（🔔 协和度辨识训练）
+- **build.gradle.kts**: versionCode 132→133, versionName 3.19.0→3.20.0
+
+### 验证
+- ✅ 编译通过: compileDebugKotlin BUILD SUCCESSFUL
+- ✅ 单元测试通过: testDebugUnitTest BUILD SUCCESSFUL
+- ✅ APK 构建成功: assembleDebug BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/consonance-training → merge main（--no-ff）
+- 版本号: v3.19.0 → **v3.20.0** (versionCode 132 → 133)
+- 培训模块总数: 32 个
