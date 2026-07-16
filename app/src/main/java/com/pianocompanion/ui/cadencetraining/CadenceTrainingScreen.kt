@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,20 +19,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pianocompanion.cadencetraining.*
 
 /**
- * 终止式听辨训练主界面（Material 3 Compose）。
+ * 终止式辨识训练主界面（Material 3 Compose）。
  *
- * 功能流程（听辨训练）：
+ * 功能流程（终止式辨识训练）：
  * 1. 选择难度（初级/中级/高级）
- * 2. 开始练习后，依次播放两个和弦（和弦进行）
- * 3. 用户凭听觉判断这是哪种终止式（完全正格/变格/半终止/伪终止）
- * 4. 答题后显示对错 + 终止式听感描述，可重播验证
- * 5. 点击「下一题」继续
+ * 2. 开始练习后，播放一段两和弦的终止式进行
+ * 3. 用户辨识该进行的收束质量与功能走向
+ * 4. 从选项中选出正确的终止式类型
+ * 5. 答题后显示对错 + 类型描述 + 和声进行，点击「下一题」继续
+ *
+ * 核心训练：辨识终止式的收束质量——完全正格/不完全正格/变格/阻碍/半终止。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CadenceTrainingScreen(
     viewModel: CadenceTrainingViewModel = run {
-        val context = LocalContext.current
+        val context = androidx.compose.ui.platform.LocalContext.current
         viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
@@ -47,7 +48,7 @@ fun CadenceTrainingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🎵 终止式听辨训练", fontWeight = FontWeight.Bold) },
+                title = { Text("🎵 终止式辨识", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -63,13 +64,13 @@ fun CadenceTrainingScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (!uiState.isSessionActive) {
-                CadenceTrainingSetupPanel(
+                CadenceSetupPanel(
                     difficulty = uiState.difficulty,
                     progress = uiState.progress,
                     onStart = { viewModel.startSession(uiState.difficulty) }
                 )
             } else {
-                CadenceTrainingPracticePanel(
+                CadencePracticePanel(
                     uiState = uiState,
                     onPlayAudio = { viewModel.playAudio() },
                     onStopAudio = { viewModel.stopAudio() },
@@ -86,7 +87,7 @@ fun CadenceTrainingScreen(
 // ── 配置面板 ──────────────────────────────────────────────
 
 @Composable
-private fun CadenceTrainingSetupPanel(
+private fun CadenceSetupPanel(
     difficulty: CadenceDifficulty,
     progress: CadenceTrainingProgress,
     onStart: () -> Unit
@@ -123,10 +124,10 @@ private fun CadenceTrainingSetupPanel(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("📊 练习记录", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    CadenceStatColumn("总答题", "${progress.totalAnswered}")
-                    CadenceStatColumn("正确", "${progress.totalCorrect}")
-                    CadenceStatColumn("准确率", "${"%.0f".format(progress.overallAccuracy * 100)}%")
-                    CadenceStatColumn("最长连击", "${progress.overallBestStreak}")
+                    CADStatColumn("总答题", "${progress.totalAnswered}")
+                    CADStatColumn("正确", "${progress.totalCorrect}")
+                    CADStatColumn("准确率", "${"%.0f".format(progress.overallAccuracy * 100)}%")
+                    CADStatColumn("最长连击", "${progress.overallBestStreak}")
                 }
             }
         }
@@ -153,22 +154,22 @@ private fun CadenceTrainingSetupPanel(
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("💡 如何练习", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("1. 点击播放按钮，听两个和弦的进行", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("2. 凭听觉判断这段进行是哪种终止式", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("3. 从选项中选择正确答案", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("4. 答题后可重播，并查看该终止式的听感描述", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("1. 点击播放，听一段两个和弦的进行", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("2. 注意这段进行的「结尾」——它听起来像「结束了」还是「暂停了」？", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("3. 关键是判断最后的和弦是主和弦（收束）还是属和弦（悬置）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("4. 从终止式类型选项中选出正确答案", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("📖 听辨技巧", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("• 完全正格终止（V→I）：强烈的「句号」感，完全解决", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 变格终止（IV→I）：温和的「阿门」结束感", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 半终止（→V）：悬而未决的「逗号」停顿感", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 伪终止（V→vi）：意外转折，本该解决却走向别处", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("🎼 五种终止式", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("• 🏁 完全正格终止 — V→I，旋律落在主音（最强的「句号」）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• 📝 不完全正格终止 — V→I，旋律落在三/五度音（收束稍弱）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• ⛪ 变格终止 — IV→I（赞美诗「阿门」结尾，柔和虔诚）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• ❓ 阻碍终止 — V→vi（预期 I 却得到小调，令人意外）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• ⏸️ 半终止 — 停在 V 上（像「逗号」，悬而未决）", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("🔑 关键提示", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("• 注意第二个和弦：解决到 I = 有结束感，停在 V = 悬停感", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 如果第二个和弦听起来像「到了家」→ 正格或变格终止", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 如果第二个和弦听起来像「还悬着」→ 半终止", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("• 如果第二个和弦让你感到意外 → 伪终止", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("🔑 听辨技巧", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("• 结尾的最后一个和弦是「主和弦（do mi sol）」吗？", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• 它听起来「圆满结束」还是「悬在半空」？", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("• 是不是「像要结束却拐了个弯」变成小调？", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -176,7 +177,7 @@ private fun CadenceTrainingSetupPanel(
 // ── 练习面板 ──────────────────────────────────────────────
 
 @Composable
-private fun CadenceTrainingPracticePanel(
+private fun CadencePracticePanel(
     uiState: CadenceTrainingUiState,
     onPlayAudio: () -> Unit,
     onStopAudio: () -> Unit,
@@ -191,9 +192,9 @@ private fun CadenceTrainingPracticePanel(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        CadenceStatCard("${uiState.correctCount}/${uiState.answeredCount}", "答题")
-        CadenceStatCard("${uiState.currentStreak}", "连击")
-        CadenceStatCard(
+        CADStatCard("${uiState.correctCount}/${uiState.answeredCount}", "答题")
+        CADStatCard("${uiState.currentStreak}", "连击")
+        CADStatCard(
             if (uiState.answeredCount > 0) "${"%.0f".format(uiState.correctCount.toDouble() / uiState.answeredCount * 100)}%" else "—",
             "准确率"
         )
@@ -207,13 +208,13 @@ private fun CadenceTrainingPracticePanel(
     ) {
         Surface(
             shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer
+            color = MaterialTheme.colorScheme.tertiaryContainer
         ) {
             Text(
-                "${question.difficulty.displayName} · ${question.tonicName} 大调",
+                question.difficulty.displayName,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -222,7 +223,7 @@ private fun CadenceTrainingPracticePanel(
         }
     }
 
-    // 和弦进行播放卡片（大号播放按钮）
+    // 播放卡片
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -234,7 +235,11 @@ private fun CadenceTrainingPracticePanel(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("🎧 听辨这段和弦进行", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("🎧 仔细听这段和弦进行", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "两个和弦依次响起 · 注意结尾的收束质量——是圆满结束还是悬而未决？",
+                fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             FilledIconButton(
                 onClick = {
@@ -245,7 +250,7 @@ private fun CadenceTrainingPracticePanel(
             ) {
                 Icon(
                     if (uiState.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayCircle,
-                    "播放和弦进行",
+                    "播放",
                     modifier = Modifier.size(40.dp)
                 )
             }
@@ -293,22 +298,35 @@ private fun CadenceTrainingPracticePanel(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "${result.question.fullDescription}",
-                        fontSize = 15.sp,
+                        "${result.question.type.displayName}（${result.question.type.abbreviation}）",
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "🎼 和声进行：${result.question.type.progressionLabel}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     if (!result.isCorrect) {
                         Text(
-                            "正确答案：${result.question.correctAnswer}",
+                            "你的答案：${result.userAnswer}",
                             fontSize = 14.sp
                         )
                     }
                     Text(
-                        "听感：${result.question.type.description}",
+                        result.question.type.description,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.run {
                             if (result.isCorrect) onPrimaryContainer else onErrorContainer
                         }.copy(alpha = 0.85f)
+                    )
+                    Text(
+                        "🎵 收束感：${result.question.type.resolutionLabel}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.run {
+                            if (result.isCorrect) onPrimaryContainer else onErrorContainer
+                        }.copy(alpha = 0.75f)
                     )
                 }
             }
@@ -321,9 +339,11 @@ private fun CadenceTrainingPracticePanel(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         question.answerChoices.forEach { choice ->
-            CadenceAnswerButton(
+            CADAnswerButton(
                 text = choice,
                 enabled = !uiState.isAnswered,
+                isCorrect = choice == question.correctAnswer,
+                isAnswered = uiState.isAnswered,
                 onClick = { onSubmit(choice) }
             )
         }
@@ -345,27 +365,42 @@ private fun CadenceTrainingPracticePanel(
 }
 
 @Composable
-private fun CadenceAnswerButton(
+private fun CADAnswerButton(
     text: String,
     enabled: Boolean,
+    isCorrect: Boolean,
+    isAnswered: Boolean,
     onClick: () -> Unit
 ) {
+    val containerColor = when {
+        isAnswered && isCorrect -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val contentColor = when {
+        isAnswered && isCorrect -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp),
-        shape = RoundedCornerShape(12.dp)
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
     ) {
-        Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 // ── 统计组件 ──────────────────────────────────────────────
 
 @Composable
-private fun RowScope.CadenceStatCard(value: String, label: String) {
+private fun RowScope.CADStatCard(value: String, label: String) {
     Card(
         modifier = Modifier.weight(1f),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -382,7 +417,7 @@ private fun RowScope.CadenceStatCard(value: String, label: String) {
 }
 
 @Composable
-private fun CadenceStatColumn(value: String, label: String) {
+private fun CADStatColumn(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))

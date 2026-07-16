@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.21.0** (和弦外音辨识训练 NonChordToneTraining: 4种外音类型(经过音passing tone级进进入级进离开/辅助音neighbor tone级进进入级进返回/倚音appoggiatura跳进进入级进离开/逃逸音escape tone级进进入跳进离开) × 3难度(初级2选项/中级3选项/高级4选项) × 持续和弦背景+3音符旋律(中间音为外音)加法合成含4次谐波指数衰减 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+外音类型答题+教学反馈+进度统计) × AppNavigation路由non_chord_tone_training+LibraryScreen入口卡片)
+- 当前版本: **v3.22.0** (终止式听辨训练 CadenceTraining: 4种终止式类型(完全正格PAC V→I/变格PC IV→I/半终止HC →V/伪终止DC V→vi) × 3难度(初级2选项/中级3选项/高级4选项) × ChordFunction调内和弦功能(I/ii/IV/V/V7/vi罗马数字分析) × 两和弦依次播放加法合成含4次谐波指数衰减 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+终止式类型答题+教学反馈+进度统计) × AppNavigation路由cadence_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6449,3 +6449,65 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 - 分支: feature/non-chord-tone-training → merge main（--no-ff）
 - 版本号: v3.20.0 → **v3.21.0** (versionCode 133 → 134)
 - 培训模块总数: 33 个
+
+---
+
+### 2026-07-17 (自主开发) — v3.22.0: 终止式听辨训练 (CadenceTraining)
+
+## 概述
+新增第 34 个训练模块：**终止式听辨训练 (Cadence Ear Training)**。用户聆听两和弦的和弦进行后，辨识终止式类型——培养对音乐「标点符号」的感知能力。
+
+## 4 种终止式类型（CadenceType）
+1. **PERFECT_AUTHENTIC（完全正格终止, PAC）**: V→I，最强烈的「句号」感。属和弦到主和弦的完全解决
+2. **PLAGAL（变格终止, PC）**: IV→I，即「阿门终止」。下属和弦到主和弦，温和庄重的结束感
+3. **HALF（半终止, HC）**: →V，结束在属和弦上。产生「逗号」或「问号」的悬停感
+4. **DECEPTIVE（伪终止, DC）**: V→vi，属和弦本应解决到 I 却意外进行到 vi。产生「惊喜」或「转折」效果
+
+## ChordFunction 调内和弦功能（罗马数字分析）
+- **I（主和弦）**: listOf(0, 4, 7) — 调性中心
+- **ii（上主和弦）**: listOf(2, 5, 9)
+- **IV（下属和弦）**: listOf(5, 9, 12) — 变格终止起始
+- **V（属和弦）**: listOf(7, 11, 14) — 不稳定，强烈倾向解决
+- **V7（属七和弦）**: listOf(7, 11, 14, 17) — 更紧张的属功能
+- **vi（下中和弦）**: listOf(9, 12, 16) — 伪终止目标
+
+### 3 个难度等级（CadenceDifficulty）
+- **BEGINNER（初级）**: 二选一（完全正格 vs 变格——最基础的两种「结束」终止式）
+- **INTERMEDIATE（中级）**: 三选一（完全正格/变格/半终止——增加悬停感识别）
+- **ADVANCED（高级）**: 四选一（全部 4 种终止式——增加意外转折识别）
+
+### 技术架构
+- **领域层**（`cadencetraining/`，纯 Kotlin）：
+  - `CadenceTrainingModels.kt` — 数据模型（ChordFunction/CadenceType/CadenceDifficulty/CadenceQuestion/CadenceAnswerRecord）
+  - `CadenceTrainingEngine.kt` — 确定性出题引擎 withSeed()，按难度筛选候选终止式类型
+  - `CadenceTrainingSession.kt` — 会话状态机（连击/准确率/历史，next()清空lastAnswer）
+  - `CadenceTrainingAudioBuilder.kt` — 两和弦依次播放，加法合成含4次谐波指数衰减
+  - `CadenceTrainingProgress.kt` — 跨会话进度 JSON 容错序列化（按难度隔离统计）
+  - `CadenceTrainingPlayer.kt` — AudioTrack MODE_STATIC 播放器
+  - `CadenceTrainingViewModel.kt` — AndroidViewModel + StateFlow
+- **UI 层**（`ui/cadencetraining/`）：
+  - `CadenceTrainingScreen.kt` — Material 3 Compose 全屏 UI
+
+### 测试（4 个文件）
+- `CadenceTrainingEngineTest.kt` — 确定性出题、难度选项数缩放、类型/进行自洽性
+- `CadenceTrainingSessionTest.kt` — 生命周期、状态转换、连击/准确率
+- `CadenceTrainingAudioBuilderTest.kt` — PCM 有效性、采样范围
+- `CadenceTrainingProgressTest.kt` — 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: `Screen.CadenceTraining`（route=`cadence_training`，图标 AccountTree）
+- **LibraryScreen.kt**: `CadenceTrainingEntryCard`（🎼 终止式听辨训练）
+- **build.gradle.kts**: versionCode 134→135, versionName 3.21.0→3.22.0
+
+### 验证
+- ✅ 编译通过: compileDebugKotlin BUILD SUCCESSFUL（仅既有图标弃用警告）
+- ✅ 单元测试通过: testDebugUnitTest 全部通过
+- ✅ APK 构建成功: assembleDebug BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/cadence-recognition-training → merge main（--no-ff）
+- 版本号: v3.21.0 → **v3.22.0** (versionCode 134 → 135)
+- 培训模块总数: 34 个
+
+### 下一步计划
+- 继续扩展听辨训练模块或开始 Phase 2 任务（MIDI文件导入/五线谱增强等）
