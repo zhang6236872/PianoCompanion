@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.20.0** (协和度辨识训练 ConsonanceTraining: 3大协和类别(完全协和P8/P5/P4·不完全协和M3/m3/M6/m6·不协和m2/M2/m7/M7/TT) × 2呈现方式(和声音程HARMONIC同时发声/旋律音程MELODIC先后发声) × PCM多谐波合成ADSR包络 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+协和选项答题+教学反馈+进度统计) × AppNavigation路由consonance_training+LibraryScreen入口卡片)
+- 当前版本: **v3.21.0** (和弦外音辨识训练 NonChordToneTraining: 4种外音类型(经过音passing tone级进进入级进离开/辅助音neighbor tone级进进入级进返回/倚音appoggiatura跳进进入级进离开/逃逸音escape tone级进进入跳进离开) × 3难度(初级2选项/中级3选项/高级4选项) × 持续和弦背景+3音符旋律(中间音为外音)加法合成含4次谐波指数衰减 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+外音类型答题+教学反馈+进度统计) × AppNavigation路由non_chord_tone_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6396,3 +6396,56 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 - 分支: feature/consonance-training → merge main（--no-ff）
 - 版本号: v3.19.0 → **v3.20.0** (versionCode 132 → 133)
 - 培训模块总数: 32 个
+
+---
+
+## 2026-07-17 (自主开发) — v3.21.0: 和弦外音辨识训练 NonChordToneTraining
+
+### 概述
+新增第 **33** 个训练模块：**和弦外音辨识训练（Non-Chord Tone Recognition）**。
+训练用户辨识旋律中出现的和弦外音（装饰音），理解不同外音的进入/离开方式
+（级进 vs 跳进），这是和声分析中的核心能力——区分结构音（和弦内音）与装饰音。
+
+### 4 种和弦外音类型（NonChordToneType）
+1. **PASSING_TONE（经过音）**: 级进进入、同向级进离开（填充两个和弦音之间的间隙）
+2. **NEIGHBOR_TONE（辅助音）**: 级进进入、反向级进返回（围绕和弦音上下装饰）
+3. **APPOGGIATURA（倚音）**: 跳进进入、反向级进离开（强拍上的外音，产生张力后解决）
+4. **ESCAPE_TONE（逃逸音）**: 级进进入、反向跳进离开（弱拍外音，迅速逃离）
+
+### 3 个难度等级（NonChordToneDifficulty）
+- **BEGINNER（初级）**: 二选一（仅经过音 vs 辅助音，最易区分的两种级进外音）
+- **INTERMEDIATE（中级）**: 三选一（经过音/辅助音/倚音）
+- **ADVANCED（高级）**: 四选一（全部4种外音类型）
+
+### 技术架构
+- **领域层**（`nonchordtonetraining/`，纯 Kotlin）：
+  - `NonChordToneModels.kt` — 数据模型（外音类型/难度/模板/题目/记录）
+  - `NonChordToneEngine.kt` — 确定性出题引擎 withSeed()，按难度筛选候选类型
+  - `NonChordToneSession.kt` — 会话状态机（连击/准确率/历史，next()清空lastAnswer）
+  - `NonChordToneAudioBuilder.kt` — 持续和弦背景(根音/三音/五音低八度) + 3音符旋律(中间音为外音)，加法合成含4次谐波指数衰减
+  - `NonChordToneProgress.kt` — 跨会话进度 JSON 容错序列化（按难度隔离统计）
+  - `NonChordTonePlayer.kt` — AudioTrack MODE_STATIC 播放器
+  - `NonChordToneViewModel.kt` — AndroidViewModel + StateFlow
+- **UI 层**（`ui/nonchordtonetraining/`）：
+  - `NonChordToneTrainingScreen.kt` — Material 3 Compose 全屏 UI
+
+### 测试（4 个文件，25+ 用例）
+- `NonChordToneEngineTest.kt` — 确定性出题、难度选项数缩放、类型/模板自洽性
+- `NonChordToneSessionTest.kt` — 生命周期、状态转换、连击/准确率、历史记录
+- `NonChordToneAudioBuilderTest.kt` — PCM 有效性、采样范围[-1,1]、和弦+旋律事件结构
+- `NonChordToneProgressTest.kt` — 累计统计、难度隔离、JSON 往返、容错解析
+
+### 集成点
+- **AppNavigation.kt**: `Screen.NonChordToneTraining`（route=`non_chord_tone_training`，图标 GraphicEq）
+- **LibraryScreen.kt**: `NonChordToneEntryCard`（🎼 和弦外音辨识训练）
+- **build.gradle.kts**: versionCode 133→134, versionName 3.20.0→3.21.0
+
+### 验证
+- ✅ 编译通过: compileDebugKotlin BUILD SUCCESSFUL（仅既有图标弃用警告）
+- ✅ 单元测试通过: testDebugUnitTest 84项全部通过
+- ✅ APK 构建成功: assembleDebug BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/non-chord-tone-training → merge main（--no-ff）
+- 版本号: v3.20.0 → **v3.21.0** (versionCode 133 → 134)
+- 培训模块总数: 33 个
