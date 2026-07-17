@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.22.0** (终止式听辨训练 CadenceTraining: 4种终止式类型(完全正格PAC V→I/变格PC IV→I/半终止HC →V/伪终止DC V→vi) × 3难度(初级2选项/中级3选项/高级4选项) × ChordFunction调内和弦功能(I/ii/IV/V/V7/vi罗马数字分析) × 两和弦依次播放加法合成含4次谐波指数衰减 × 确定性种子出题引擎 × 会话状态机 × 跨会话进度JSON容错 × Material 3 Compose(难度选择+播放/重播+终止式类型答题+教学反馈+进度统计) × AppNavigation路由cadence_training+LibraryScreen入口卡片)
+- 当前版本: **v3.23.0** (装饰音辨识训练 OrnamentRecognitionTraining: 5种装饰音类型(颤音TRILL/波音MORDENT/回音TURN/短倚音GRACE_NOTE/长倚音APPOGGIATURA) × 3难度(初级2选项颤音vs短倚音/中级3选项+波音/高级5选项) × 确定性种子出题引擎withSeed × 会话状态机(连击/准确率/历史) × 跨会话进度JSON容错序列化按难度隔离 × 装饰音音符序列依次播放TENUTO连奏重音力度提升软限幅防削波 × Material 3 Compose(难度选择+播放/重播+装饰音类型答题+教学反馈+进度统计) × AppNavigation路由ornament_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6511,3 +6511,79 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 
 ### 下一步计划
 - 继续扩展听辨训练模块或开始 Phase 2 任务（MIDI文件导入/五线谱增强等）
+
+---
+
+## 2026-07-17 (自主开发) — 装饰音辨识训练 OrnamentRecognitionTraining（第35个训练模块）
+
+### 版本
+- **v3.22.0 → v3.23.0** (versionCode 135 → 136)
+
+### 功能概述
+新增第35个训练模块：**装饰音辨识训练（Ornament Recognition Training）**。
+用户聆听一段装饰音后，从选项中选择正确的装饰音类型（颤音/波音/回音/短倚音/长倚音）。
+
+### 5 种装饰音类型（OrnamentType）
+- **TRILL（颤音, tr）**: 主音与上方音快速交替9次，最后落回主音——最具华丽颤抖感
+  - 音符序列: 0,2,0,2,0,2,0,2,0（各85ms，末音130ms）
+- **MORDENT（波音, mo）**: 主音快速向上方音一掠再回到主音——单次「点头」
+  - 音符序列: 0(160ms),2(110ms),0(220ms)
+- **TURN（回音, tu）**: 围绕主音转一圈（上→主→下→主）——四音环绕如花环
+  - 音符序列: 2(135ms),0(135ms),-2(135ms),0(180ms)
+- **GRACE_NOTE（短倚音, ♪→）**: 极短装饰音(65ms)迅速滑入长主音(720ms)，一闪而过
+  - 音符序列: 2(65ms,accent=0.35),0(720ms)
+- **APPOGGIATURA（长倚音, app.）**: 较长带重音的倚音(360ms)「倚靠」后解决到主音(420ms)，甜蜜延宕
+  - 音符序列: 2(360ms,accent=0.55),0(420ms)
+
+### 3 个难度等级（OrnamentDifficulty）
+- **BEGINNER（初级）**: 颤音 vs 短倚音（2选项）——区分多次颤动与单次轻点
+- **INTERMEDIATE（中级）**: 颤音 + 波音 + 短倚音（3选项）——增加单次「点头」识别
+- **ADVANCED（高级）**: 全部5种（5选项）——增加环绕回音与长倚音识别
+
+### 技术架构
+- **领域层**（`ornamenttraining/`，纯 Kotlin，无 Android 依赖）：
+  - `OrnamentTrainingModels.kt` — 数据模型（OrnamentNote/OrnamentType/OrnamentDifficulty/OrnamentQuestion/OrnamentAnswerRecord）
+  - `OrnamentTrainingEngine.kt` — 确定性出题引擎 withSeed()，按难度筛选候选装饰音类型
+  - `OrnamentTrainingSession.kt` — 会话状态机（连击/准确率/历史，next()清空lastAnswer）
+  - `OrnamentTrainingAudioBuilder.kt` — 装饰音音符序列依次播放，TENUTO连奏，重音力度提升，软限幅防削波
+  - `OrnamentTrainingProgress.kt` — 跨会话进度 JSON 容错序列化（按难度隔离统计）
+  - `OrnamentTrainingPlayer.kt` — AudioTrack MODE_STATIC 播放器
+  - `OrnamentTrainingViewModel.kt` — AndroidViewModel + StateFlow
+- **UI 层**（`ui/ornamenttraining/`）：
+  - `OrnamentTrainingScreen.kt` — Material 3 Compose 全屏 UI（难度选择+播放/重播+装饰音类型答题+教学反馈+进度统计）
+
+### 音频合成设计
+每种装饰音的音符序列（每个音符 TENUTO 连奏衔接）：
+- 重音（accent）提升力度: baseVelocity + accent × 30，模拟倚音重音
+- 各音符 MIDI = 主音(C5-G5) + 半音偏移（0=主音，+2=上方音，-2=下方音）
+- 前导静音(150ms) + 音符序列 + 尾部静音(200ms)
+- 软限幅（tanh）防止叠加削波
+
+### 测试（4 个文件，62 用例，全部通过）
+- `OrnamentTrainingEngineTest.kt`(29) — 出题确定性、难度缩放、选项正确性/唯一性、
+  音域范围、音符序列匹配、各装饰音特性验证
+- `OrnamentTrainingSessionTest.kt`(20) — 生命周期、状态转换、连击/准确率计算、历史记录、防御性拷贝
+- `OrnamentTrainingAudioBuilderTest.kt`(13) — PCM 缓冲区有效性、采样范围[-1,1]、
+  缓冲区长度匹配、各装饰音渲染非静音、颤音比短倚音长、重音峰值验证、空输入处理、极端偏移钳制
+- `OrnamentTrainingProgressTest.kt` — 累计统计、难度隔离、全局聚合、JSON 往返一致性、容错解析、空会话
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import OrnamentTrainingScreen`、
+  `Screen.OrnamentTraining` 路由对象（`ornament_training`，标题"装饰音辨识"，
+  图标 `Icons.Filled.Star`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `OrnamentTrainingEntryCard` 入口卡片
+  （🎶 图标、"装饰音辨识训练"标题、tertiaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 135→136, versionName 3.22.0→3.23.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest --tests "*.ornamenttraining.*"` — 62用例全部通过
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/ornament-recognition-training → merge main（--no-ff）
+- 版本号: v3.22.0 → **v3.23.0** (versionCode 135 → 136)
+- 培训模块总数: **35 个**
+
+### 下一步计划
+- 继续扩展听辨训练模块集合或回顾 ROADMAP 中的 Phase 任务

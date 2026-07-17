@@ -50,6 +50,7 @@ import com.pianocompanion.ui.melodymemory.MelodyMemoryScreen
 import com.pianocompanion.ui.intervaltraining.IntervalTrainingScreen
 import com.pianocompanion.ui.pitchtraining.PitchTrainingScreen
 import com.pianocompanion.ui.cadencetraining.CadenceTrainingScreen
+import com.pianocompanion.ui.ornamenttraining.OrnamentTrainingScreen
 import com.pianocompanion.ui.scaletraining.ScaleTrainingScreen
 import com.pianocompanion.ui.inversiontraining.InversionTrainingScreen
 import com.pianocompanion.ui.progressiontraining.ProgressionTrainingScreen
@@ -106,6 +107,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object IntervalTraining : Screen("interval_training", "音程听辨", Icons.Filled.Tune)
     data object PitchTraining : Screen("pitch_training", "绝对音高", Icons.Filled.GraphicEq)
     data object CadenceTraining : Screen("cadence_training", "终止式听辨", Icons.Filled.AccountTree)
+    data object OrnamentTraining : Screen("ornament_training", "装饰音辨识", Icons.Filled.Star)
     data object ScaleTraining : Screen("scale_training", "音阶听辨", Icons.Filled.Stairs)
     data object InversionTraining : Screen("inversion_training", "和弦转位听辨", Icons.Filled.Layers)
     data object ProgressionTraining : Screen("progression_training", "和弦进行听辨", Icons.Filled.AutoAwesome)
@@ -312,6 +314,9 @@ fun AppScaffold() {
             }
             composable(Screen.CadenceTraining.route) {
                 CadenceTrainingScreen()
+            }
+            composable(Screen.OrnamentTraining.route) {
+                OrnamentTrainingScreen()
             }
             composable(Screen.ScaleTraining.route) {
                 ScaleTrainingScreen()
