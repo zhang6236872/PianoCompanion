@@ -6587,3 +6587,67 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合或回顾 ROADMAP 中的 Phase 任务
+
+---
+
+## 2026-07-18 v3.24.0 — 模进辨识训练（Sequence Recognition Training）
+
+### 任务
+新增「模进辨识训练」听辨模块，辨识旋律的构造类型（上行模进/下行模进/重复/自由进行）。
+模进（Sequence）是西方音乐中最基础、最常用的旋律发展手法：将动机在不同音高上重复。
+辨识模进要求听者从连续音符流中识别出「同一段旋律在不同高度再现」的关系。
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.sequencetraining`）
+- **SequenceTrainingModels.kt** — 数据模型：
+  - `SequenceType` 枚举（ASCENDING 上行模进 / DESCENDING 下行模进 / REPETITION 重复 / FREE 自由进行），
+    每个含 displayName/englishName/description/listeningHint
+  - `SequenceDifficulty`（BEGINNER 初级 / INTERMEDIATE 中级 / ADVANCED 高级）
+  - `SequenceQuestion`（含动机偏移 motifOffsets、步距 stepSemitones、重复次数 statementCount、
+    完整旋律 MIDI 序列 noteMidiSequence，带 require 校验）
+  - `SequenceAnswerRecord`、MIDI 音域常量 MIN_MIDI=21/MAX_MIDI=108
+- **SequenceTrainingEngine.kt** — 出题引擎（确定性随机 `withSeed`）：
+  - 从难度可用类型集合选题，随机选 3 音符动机模板（10 种，级进/琶音/回音等）
+  - ASCENDING/DESCENDING/REPETITION：动机重复 3 次，按步距（±2~5 半音）转调构成 9 音符旋律
+  - FREE：随机无规律步进生成 9 音符自由旋律
+  - 音域钳制 coerceIn(21,108)；选项 = 该难度所有类型 displayName（已打乱）
+- **SequenceTrainingSession.kt** — 会话状态机：start/submit/next/reset 生命周期，
+  跟踪 answeredCount/correctCount/currentStreak/bestStreak/history/lastAnswer
+- **SequenceTrainingProgress.kt** — 跨会话进度跟踪：按难度隔离统计，
+  手动 JSON 序列化（容错解析），recordSession/getProgress/toJson/fromJson
+- **SequenceTrainingAudioBuilder.kt** — PCM 音频渲染：复用 PianoToneSynthesizer，
+  前导静音(200ms) + 旋律音符依次排列 + 尾部静音(400ms)，软限幅防削波
+
+### Android 层
+- **SequenceTrainingPlayer.kt** — AudioTrack(MODE_STATIC) 播放封装，prepare/play/stop/release，轮询式播放完成回调
+- **SequenceTrainingViewModel.kt** — AndroidViewModel，连接领域层与 UI，SharedPreferences 持久化进度，
+  协程后台渲染音频
+- **SequenceTrainingScreen.kt**（`ui/sequencetraining`）— Material 3 Compose UI：
+  配置面板（难度 FilterChip + 练习记录 + 听辨技巧说明）、练习面板（播放卡片 + 4 选项答题 + 对错反馈）
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import SequenceTrainingScreen`、
+  `Screen.SequenceRecognitionTraining` 路由对象（`sequence_recognition_training`，标题"模进辨识"，
+  图标 `Icons.Filled.Repeat`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `SequenceRecognitionEntryCard` 入口卡片
+  （🔁 图标、"模进辨识训练"标题、primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 136→137, versionName 3.23.0→3.24.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告，非新代码引入）
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest --tests "*.sequencetraining.*"` — **80 用例全部通过**
+  （EngineTest 31 / SessionTest 20 / AudioBuilderTest 11 / ProgressTest 18）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 设计要点
+- **模进结构语义保证**：上行模进步距>0 且各段起始音递增；下行步距<0 且递减；
+  重复各段完全相同；自由步距=0。单元测试逐项验证。
+- **难度分级**：BEGINNER=2选项(上/下)、INTERMEDIATE=3选项(+自由)、ADVANCED=4选项(+重复)
+- **修复模板 Bug**：SetupPanel 的难度选择正确传递到 ViewModel（onStart 携带选中难度）
+
+### Git
+- 分支: feature/sequence-recognition-training → merge main（--no-ff）
+- 版本号: v3.23.0 → **v3.24.0** (versionCode 136 → 137)
+- 培训模块总数: **36 个**
+
+### 下一步计划
+- 继续扩展听辨训练模块集合或回顾 ROADMAP 中的 Phase 任务
