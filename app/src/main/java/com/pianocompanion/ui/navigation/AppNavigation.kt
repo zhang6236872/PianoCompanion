@@ -77,6 +77,7 @@ import com.pianocompanion.ui.contrapuntalmotiontraining.ContrapuntalMotionTraini
 import com.pianocompanion.ui.modulationrecognition.ModulationRecognitionTrainingScreen
 import com.pianocompanion.ui.consonancetraining.ConsonanceTrainingScreen
 import com.pianocompanion.ui.nonchordtonetraining.NonChordToneTrainingScreen
+import com.pianocompanion.ui.sequencetraining.SequenceTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -134,6 +135,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ContrapuntalMotion : Screen("contrapuntal_motion", "声部运动辨识", Icons.AutoMirrored.Filled.CompareArrows)
     data object ConsonanceTraining : Screen("consonance_training", "协和度辨识", Icons.Filled.GraphicEq)
     data object NonChordToneTraining : Screen("non_chord_tone_training", "和弦外音辨识", Icons.Filled.GraphicEq)
+    data object SequenceRecognitionTraining : Screen("sequence_recognition_training", "模进辨识", Icons.Filled.Repeat)
 }
 
 private val screens = listOf(
@@ -395,6 +397,9 @@ fun AppScaffold() {
             }
             composable(Screen.NonChordToneTraining.route) {
                 NonChordToneTrainingScreen()
+            }
+            composable(Screen.SequenceRecognitionTraining.route) {
+                SequenceTrainingScreen()
             }
         }
     }
