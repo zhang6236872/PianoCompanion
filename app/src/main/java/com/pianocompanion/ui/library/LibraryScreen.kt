@@ -391,6 +391,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Ornament recognition training entry ===
+            item {
+                OrnamentTrainingEntryCard(onClick = {
+                    navController.navigate(Screen.OrnamentTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
 
             // === Scale training entry ===
             item {
@@ -1975,6 +1983,52 @@ private fun CadenceTrainingEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "终止式听辨训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * 装饰音辨识训练入口卡片。
+ *
+ * 引导用户进入装饰音辨识训练：聆听围绕主音的快速装饰音符组合后判断装饰音类型
+ * （颤音/波音/回音/短倚音/长倚音），训练对旋律装饰形态的辨识能力。
+ */
+@Composable
+private fun OrnamentTrainingEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎶", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "装饰音辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "听装饰音辨形态 · 颤音/波音/回音/倚音 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "装饰音辨识训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
