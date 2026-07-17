@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.23.0** (装饰音辨识训练 OrnamentRecognitionTraining: 5种装饰音类型(颤音TRILL/波音MORDENT/回音TURN/短倚音GRACE_NOTE/长倚音APPOGGIATURA) × 3难度(初级2选项颤音vs短倚音/中级3选项+波音/高级5选项) × 确定性种子出题引擎withSeed × 会话状态机(连击/准确率/历史) × 跨会话进度JSON容错序列化按难度隔离 × 装饰音音符序列依次播放TENUTO连奏重音力度提升软限幅防削波 × Material 3 Compose(难度选择+播放/重播+装饰音类型答题+教学反馈+进度统计) × AppNavigation路由ornament_training+LibraryScreen入口卡片)
+- 当前版本: **v3.25.0** (调内音级训练 ScaleDegreeTraining: movable-do视唱练耳/相对音高 × 7音级(DoReMiFaSolLaTi) × 3难度(初级2选项主属/中级4选项+三下属/高级7全音阶) × 确定性种子出题引擎withSeed × 会话状态机(连击/准确率/历史) × 跨会话进度JSON容错序列化按难度隔离 × 主和弦琶音DoMiSolDo建立调性+目标音PCM合成软限幅 × Material 3 Compose(难度选择+播放/重播+音级答题+教学反馈+进度统计) × AppNavigation路由scale_degree_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6651,3 +6651,81 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合或回顾 ROADMAP 中的 Phase 任务
+
+
+## 2026-07-18 v3.25.0 — 调内音级训练（Scale Degree Training，movable-do 视唱练耳）
+
+### 任务
+新增「调内音级训练」听辨模块（第 37 个训练模块），训练 **相对音高 / movable-do 视唱** 能力：
+听者在主和弦建立的调性中，辨识目标音相对于主音的音级（Do Re Mi Fa Sol La Ti）。
+与既有「绝对音高」训练互补——主音 MIDI 高度每题随机（C3–C5），强化「相对关系」而非「绝对频率」。
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.scaledegreetraining`）
+- **ScaleDegreeModels.kt** — 数据模型：
+  - `ScaleDegree` 枚举（DO/RE/MI/FA/SOL/LA/TI），每个含 displayName(中文唱名)、
+    englishName、solfege(solfège 音节)、intervalFromTonic(相对主音半音数 0/2/4/5/7/9/11)、
+    function(调式功能: 主/上主/中/下属/属/下中/导)、listeningHint
+  - `ScaleDegreeDifficulty` 枚举（BEGINNER / INTERMEDIATE / ADVANCED），每个含
+    degrees 列表、choicesPerQuestion、displayName/description：
+    - BEGINNER = [DO, SOL]（2 选项，主/属音五度框架）
+    - INTERMEDIATE = [DO, MI, FA, SOL]（4 选项，大三和弦 + 下属）
+    - ADVANCED = 全部 7 个音级（7 选项）
+  - `ScaleDegreeQuestion`（含 tonicMidi 主音、degree 目标音级、durationMs、choices 选项集，
+    带 require 校验：durationMs>0、choices 非空、degree∈choices、degree∈difficulty.degrees）
+  - MIDI 音域常量 TONIC_MIN=48(C3) / TONIC_MAX=84(C6)，NOTE_DURATION=1200ms
+- **ScaleDegreeEngine.kt** — 出题引擎（确定性随机 `withSeed`）：
+  - 随机选主音 tonicMidi∈[48,84]，随机选目标音级∈难度.degrees
+  - choices = 难度.degrees（打乱顺序但保证目标在内）
+  - `generate(difficulty, seed)` 与无 seed 版本（Random 默认）
+- **ScaleDegreeSession.kt** — 会话状态机：start/submit/next/reset 生命周期，
+  跟踪 answeredCount/correctCount/currentStreak/bestStreak/history/lastAnswer，
+  accuracy 属性（correctCount/answeredCount，防除零）
+- **ScaleDegreeProgress.kt** — 跨会话进度跟踪：按难度隔离统计，
+  手动 JSON 序列化（容错解析：缺字段/类型错误/JSON 异常均回退默认），
+  recordSession/getProgress/toJson/fromJson
+- **ScaleDegreeAudioBuilder.kt** — PCM 音频渲染：复用 PianoToneSynthesizer，
+  **主和弦琶音 Do-Mi-Sol-Do(高八度)** 依次播放（建立调性）→ 短停顿 → **目标音**，
+  软限幅防削波；支持 16-bit PCM mono 44.1kHz 输出
+
+### Android 层
+- **ScaleDegreePlayer.kt** — AudioTrack(MODE_STATIC) 播放封装，prepare/play/stop/release，
+  轮询式播放完成回调
+- **ScaleDegreeViewModel.kt** — AndroidViewModel，连接领域层与 UI，
+  SharedPreferences 持久化进度，协程后台渲染音频，onCleared 释放 AudioTrack
+- **ScaleDegreeTrainingScreen.kt**（`ui/scaledegreetraining`）— Material 3 Compose UI：
+  配置面板（难度 FilterChip 3 档 + 累计练习次数 + 听辨技巧说明：
+  「先听主和弦建立调性，再判断目标音相对主音的位置」）、
+  练习面板（播放/重播卡片 🎼 + 选项答题按钮组 + 对错反馈 + 连击/准确率统计）、
+  进度面板（按难度展示最佳连击/准确率/总题数）
+
+### 集成点
+- **AppNavigation.kt**: 新增 `import ScaleDegreeTrainingScreen`、
+  `Screen.ScaleDegreeTraining` 路由对象（`scale_degree_training`，标题"调内音级"，
+  图标 `Icons.Filled.Tune`）、`composable(route)` 导航块
+- **LibraryScreen.kt**: 新增 `ScaleDegreeEntryCard` 入口卡片
+  （🎼 图标、"调内音级训练"标题、tertiaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 137→138, versionName 3.24.0→3.25.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL（仅已知 Icons 弃用警告）
+- ✅ 模块单元测试通过: `--tests "*.scaledegreetraining.*"` — **75 用例全部通过**
+  （EngineTest 24 / SessionTest 19 / AudioBuilderTest 16 / ProgressTest 16）
+  - 修复 ProgressTest 中 `assertEquals(double,double)` 弃用断言（加 0.0001 delta）
+- ✅ 全量测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（无回归）
+- ✅ APK 构建成功: `gradle :app:assembleDebug` BUILD SUCCESSFUL（19.4 MB）
+
+### 设计要点
+- **movable-do 而非 fixed-do**：主音每题随机 C3–C5，迫使用户建立相对音高参照，
+  而非死记绝对频率；主和弦琶音（Do-Mi-Sol-Do）明确调性中心
+- **难度渐进**：BEGINNER 仅主/属音（五度框架最易感知）→ INTERMEDIATE 加三音与下属 → ADVANCED 全音阶
+- **架构一致性**：完全沿用 ConsonanceTraining / OrnamentRecognitionTraining 的 8 文件分层
+  （Models/Engine/Session/Progress/AudioBuilder/Player/ViewModel/Screen），
+  纯 Kotlin 领域层完全可单元测试
+
+### Git
+- 分支: feature/scale-degree-training → merge main（--no-ff）
+- 版本号: v3.24.0 → **v3.25.0** (versionCode 137 → 138)
+- 培训模块总数: **37 个**
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨等）
