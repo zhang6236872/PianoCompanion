@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.25.0** (调内音级训练 ScaleDegreeTraining: movable-do视唱练耳/相对音高 × 7音级(DoReMiFaSolLaTi) × 3难度(初级2选项主属/中级4选项+三下属/高级7全音阶) × 确定性种子出题引擎withSeed × 会话状态机(连击/准确率/历史) × 跨会话进度JSON容错序列化按难度隔离 × 主和弦琶音DoMiSolDo建立调性+目标音PCM合成软限幅 × Material 3 Compose(难度选择+播放/重播+音级答题+教学反馈+进度统计) × AppNavigation路由scale_degree_training+LibraryScreen入口卡片)
+- 当前版本: **v3.28.0** (声部数量听辨训练 VoiceCountTraining: 和声密度感知/判断block chord同时鸣响音数(1-6) × 3难度(初级1-3音宽间距/中级1-4音中间距/高级1-6音密集间距) × 确定性种子出题引擎withSeed+voicing按间距池向上叠加+超音域平移 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波)+按声部索引确定性失谐(±9cents)防声部融合+block chord对齐叠加 × Material 3 Compose(难度选择+播放/声部数可视化/答题/反馈/进度) × AppNavigation路由voice_count_recognition+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -6886,4 +6886,92 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨等）
+
+---
+
+## 2026-07-19 v3.28.0 — 声部数量听辨训练（Voice Count / Harmonic Density Recognition Training）
+
+### 任务
+新增「声部数量听辨训练」听辨模块（**第 40 个训练模块**），训练**和声密度感知**——
+判断一段同时鸣响的和弦（block chord）中有几个音在同时响（1/2/3/4/5/6）。
+填补现有训练集合中和声密度维度的空白：
+- `chordtraining` 判断和弦「类型」（大三/属七…）
+- `intervaltraining` 判断「具体音程」
+- 本模块只判断「同时鸣响的音有多少个」——是辨认和弦种类之前的**前置感知能力**
+
+3 种难度（候选拍数 + 音符间距双维度）：
+- **初级**：1-3 音 · 宽间距（3-5 半音，声部清晰可辨）
+- **中级**：1-4 音 · 中间距（2-4 半音）
+- **高级**：1-6 音 · 密集间距（1-3 半音，声部融合难辨）
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.voicecounttraining`）
+- **VoiceCountModels.kt** —
+  - `NoteSpacing` 枚举（WIDE/MEDIUM/CLOSE，含 intervalPool 候选半音池 + displayName）
+  - `VoiceCountDifficulty` 枚举（BEGINNER/INTERMEDIATE/ADVANCED + `ALL` 列表），每难度绑定
+    maxVoices（3/4/6）/ spacing / durationMs
+  - `VoiceCountQuestion` 数据类（含 init 校验：音数 [1,6]、voicing 严格递增唯一、
+    答案须在选项中、间距一致）+ options / displayVoicing 派生属性
+  - `AnswerRecord` 数据类（答题记录）
+- **VoiceCountEngine.kt**（`VoiceCountEngine`）— 出题引擎：随机选音数 → 从根音按间距池向上叠加
+  → 超音域自动平移 → `ensureStrictlyIncreasingUnique` 修复边界重复；
+  `withSeed()` 确定性随机便于测试复现
+- **VoiceCountSession.kt**（`VoiceCountSession`）— 会话状态机：start/submit/next/reset；
+  跟踪 currentQuestion / score / streak / bestStreak / accuracy / history；
+  `history` getter 返回 `_history.toMutableList()` 保证真正的防御性副本
+- **VoiceCountProgress.kt**（`VoiceCountProgress` + `VoiceCountProgressEntry`）— 跨会话进度跟踪
+  （每难度累计统计）+ 手动 JSON 序列化；**严格解析**：entry 须包含全部 5 个字段
+  （totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy），缺失任一字段视为不完整
+- **VoiceCountAudioBuilder.kt**（`VoiceCountAudioBuilder`）— PCM Float 渲染（[-1,1]）：
+  - **加法合成钢琴音色**：每个音 = 基频 + 4 个谐波（2f/3f/4f/5f，递减振幅）+ 指数衰减包络
+  - **按声部索引确定性失谐**（±9 cents 内，`detuneForVoice`）—— 防止完全和谐导致声部融合
+    不可辨（更多音 = 感知更密集/更饱满）
+  - block chord 对齐叠加（所有音同时起音）
+  - 暴露测试友好的辅助方法：`midiToFreq` / `centsToRatio` / `detuneForVoice` /
+    `renderRaw`（未限幅，用于验证能量单调性）/ `render`（软限幅输出）
+
+### Android 层
+- **VoiceCountPlayer.kt**（`voicecounttraining`）— AudioTrack MODE_STATIC 播放器（play/stop/replay/release）
+- **VoiceCountViewModel.kt**（`voicecounttraining`）— AndroidViewModel + 协程音频准备 +
+  不可变 UiState + SharedPreferences 进度持久化
+- **VoiceCountTrainingScreen.kt**（`ui/voicecounttraining`）— Material 3 Compose UI：
+  难度选择 / 播放听辨 / 声部数可视化 / 选项作答 / 对错反馈 + 教学说明 /
+  连击与准确率统计 / 进度展示
+
+### 集成点
+- **AppNavigation.kt**: import + `Screen.VoiceCountTraining` 路由对象
+  （`voice_count_recognition`，标题"声部数量"，`Icons.AutoMirrored.Filled.LibraryMusic` 图标）
+  + composable 注册
+- **LibraryScreen.kt**: 新增 `VoiceCountEntryCard`（🎹 图标、"声部数量听辨训练"标题、
+  primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 140→141, versionName 3.27.0→3.28.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin`（仅既有 deprecation 警告）
+- ✅ 模块单元测试通过: `--tests "*.voicecounttraining.*"` — **77 用例全部通过**
+  - VoiceCountEngineTest: 21 用例（确定性出题/难度缩放/voicing 严格递增/超音域平移/选项正确性）
+  - VoiceCountSessionTest: 21 用例（状态机生命周期/得分/连击/准确率/防御性历史副本）
+  - VoiceCountAudioBuilderTest: 17 用例（PCM 有效性/频率精度/失谐单调性/能量随音数递增/谐波结构）
+  - VoiceCountProgressTest: 18 用例（累计统计/难度隔离/JSON 往返/容错解析/严格字段校验）
+- ✅ 全量单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（0 失败）
+- ✅ APK 构建通过: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 设计要点
+- **与 chordtraining/intervaltraining 的区别**：本模块不问和弦「是什么」，只问「几个音」，
+  是辨认和弦种类之前的密度感知前置训练
+- **加法合成 + 失谐**：钢琴音色（基频+谐波）+ 按声部索引确定性失谐，保证更多音 = 感知更密集
+  （失谐破坏完美和谐，防止声部融合）；同时为单元测试提供可验证的能量单调性
+- **音数越多越难**：初级最多 3 音宽间距（易辨），高级最多 6 音密集间距（声部融合，难辨）
+- **严格进度解析**：partial JSON entry（缺字段）被拒绝而非静默接受，避免错误统计
+
+### Git
+- 分支: feature/voice-count-training → merge main（--no-ff）
+- 版本号: v3.27.0 → **v3.28.0** (versionCode 140 → 141)
+- 培训模块总数: **40 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（2581 行新增）
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨、
+  音色辨识扩展、调式色彩对比等）
 
