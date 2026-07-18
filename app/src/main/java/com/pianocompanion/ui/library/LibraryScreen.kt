@@ -661,6 +661,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Accent / strong-beat recognition training entry ===
+            item {
+                AccentRecognitionEntryCard(onClick = {
+                    navController.navigate(Screen.AccentRecognitionTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -3382,6 +3391,46 @@ private fun DynamicsDirectionEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "力度变化方向辨识训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccentRecognitionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🥁", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "强拍辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "辨识小节中强拍（重音）落在第几拍 · 节奏核心能力 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "强拍辨识训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
