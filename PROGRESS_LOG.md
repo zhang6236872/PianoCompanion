@@ -6729,3 +6729,76 @@ v3.18.0 → **v3.19.0** (versionCode 131 → 132)
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨等）
+
+---
+
+## 2026-07-18 v3.26.0 — 力度变化方向辨识训练（Dynamics Direction / Crescendo Recognition Training）
+
+### 任务
+新增「力度变化方向辨识训练」听辨模块（**第 38 个训练模块**），训练辨识音乐的**力度变化方向**
+（crescendo / decrescendo 等表情术语走势），填补现有 `dynamicstraining`（仅覆盖静态力度级别
+pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
+
+5 种辨识目标：
+- **渐强 Crescendo (<)**：音量逐渐变大
+- **渐弱 Decrescendo (>)**：音量逐渐变小
+- **持平 Steady (n)**：音量保持不变（参照）
+- **渐强渐弱 Swell (⌣)**：先变大后变小（山丘 / messa di voce）
+- **渐弱渐强 Reverse Swell (⌢)**：先变小后变大（山谷）
+
+3 种难度：
+- **初级**：渐强 vs 渐弱（2 选项）
+- **中级**：+ 持平（3 选项）
+- **高级**：全 5 种方向（5 选项）
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.dynamicsdirectiontraining`）
+- **DynamicsDirectionModels.kt** — 5 种力度方向枚举（含符号/中文名/意大利语名/描述/听辨提示） +
+  3 种难度枚举 + Question / AnswerRecord 数据类 + 主音音域常量（C4-G4）
+- **DynamicsDirectionEngine.kt** — 出题引擎：随机选主音 + 从候选集选正确方向 + 构建打乱选项；
+  `withSeed()` 确定性随机便于测试复现
+- **DynamicsDirectionSession.kt** — 会话状态机：出题→答题→判定→下一题；跟踪题目/得分/连击/
+  最长连击/历史；防御性历史副本
+- **DynamicsDirectionProgress.kt** — 跨会话进度跟踪（每难度累计统计）+ 手动 JSON 序列化（容错解析）
+- **DynamicsDirectionAudioBuilder.kt** — PCM Float 渲染：
+  - 旋律轮廓固定（`MELODY_STEPS`，9 音符邻音波纹），**增益按力度方向轮廓缩放**，使力度变化成为唯一显著特征
+  - 增益轮廓：渐强=线性升、渐弱=线性降、持平=恒定 MID_GAIN、山丘=sin(πt)、山谷=倒山丘
+  - **不做峰值归一化**（仅 tanh 软限幅），保留各音符绝对响度关系（渐强尾音必须比首音响）—— 力度听辨的基础
+  - 钢琴风格加法合成（基频 + 4 谐波）+ 指数衰减包络
+  - `contourValue(direction, t)` / `gainContour(direction)` / `noteRmsEnergy(buffer, idx)` 公开便于测试
+
+### Android 层
+- **DynamicsDirectionPlayer.kt**（`dynamicsdirectiontraining`）— AudioTrack MODE_STATIC 播放器
+- **DynamicsDirectionViewModel.kt**（`dynamicsdirectiontraining`）— AndroidViewModel + 协程音频准备 +
+  不可变 UiState + SharedPreferences 进度持久化
+- **DynamicsDirectionTrainingScreen.kt**（`ui/dynamicsdirectiontraining`）— Material 3 Compose UI：
+  难度选择 / 播放听辨 / 选项作答 / 对错反馈 + 力度方向描述 + 听辨提示 / 连击与准确率统计
+
+### 集成点
+- **AppNavigation.kt**: import + `Screen.DynamicsDirectionTraining` 路由对象
+  （`dynamics_direction_training`，标题"力度变化方向"，TrendingUp 图标）+ composable 注册
+- **LibraryScreen.kt**: 新增 `DynamicsDirectionEntryCard`（📈 图标、"力度变化方向辨识训练"标题、
+  secondaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 138→139, versionName 3.25.0→3.26.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin`（仅既有 deprecation 警告）
+- ✅ 模块单元测试通过: `--tests "*.dynamicsdirectiontraining.*"` — **68 用例全部通过**
+  - DynamicsDirectionEngineTest: 23 用例（选项数量/内容/正确答案包含/无重复/打乱/难度匹配/确定性/覆盖率）
+  - DynamicsDirectionSessionTest: 19 用例（状态机生命周期/得分/连击/准确率/历史/重置）
+  - DynamicsDirectionAudioBuilderTest: 26 用例（轮廓形状纯函数验证 + 渲染能量走势 + midiToFreq）
+- ✅ APK 构建通过: `gradle :app:assembleDebug`
+
+### 设计要点
+- **旋律固定、增益变化**：避免音高变化成为干扰，使力度变化方向成为音频中唯一显著特征
+- **不做峰值归一化**：保留绝对响度关系，渐强尾音必须比首音响
+- **增益轮廓映射**：渐强=线性升、渐弱=线性降、持平=恒定、山丘=sin(πt)、山谷=倒山丘
+- 与现有 `dynamicstraining`（静态力度级别）无重叠 —— 本模块专注力度**变化方向**
+
+### Git
+- 分支: feature/dynamics-direction-training → merge main（--no-ff）
+- 版本号: v3.25.0 → **v3.26.0** (versionCode 138 → 139)
+- 培训模块总数: **38 个**
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、调式色彩对比等）
+
