@@ -6802,3 +6802,88 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、调式色彩对比等）
 
+---
+
+## 2026-07-19 v3.27.0 — 强拍 / 重音辨识训练（Accent / Strong-Beat Recognition Training）
+
+### 任务
+新增「强拍辨识训练」听辨模块（**第 39 个训练模块**），训练辨识小节中**强拍（重音）落在第几拍**。
+这是节奏核心能力 —— 与现有 `meterrecognition`（拍号识别，答案=拍号/拍子分组）本质不同：
+本模块的强拍位置是**随机**的（不一定是第 1 拍），用户必须专注追踪重音的周期位置，
+而非数拍子分组。两者是节奏感知的不同维度。
+
+3 种难度（候选拍数 + 重音突出程度双维度）：
+- **初级**：4 拍小节 · 鲜明重音（强拍 920Hz/0.85 vs 普通拍 600Hz/0.30）· 慢速 500ms
+- **中级**：3 / 4 拍小节 · 适中重音 · 中速 400ms
+- **高级**：2 / 3 / 4 / 5 拍小节 · 微妙重音（差异最小）· 快速
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.accentrecognition`）
+- **AccentRecognitionModels.kt** —
+  - `AccentStrength` 枚举（STRONG/MEDIUM/SUBTLE，含 accentFrequency/accentAmplitude/
+    baseFrequency/baseAmplitude/displayName）控制重音突出程度
+  - `AccentDifficulty` 枚举（BEGINNER/INTERMEDIATE/ADVANCED + `ALL` 列表），每难度绑定
+    beatsPerMeasureOptions / strength / tempoIntervalMs / measureRepeat
+  - `AccentQuestion` 数据类（含 init 校验：拍数范围 [2,8]、强拍位置 1..N、拍数须在难度候选集中、
+    正确答案须在选项中）+ totalClicks / positionLabel / fullDescription 派生属性
+  - `AccentAnswerRecord` 数据类（答题记录）
+- **AccentRecognitionEngine.kt**（`AccentEngine`）— 出题引擎：随机选小节拍数 → 随机选强拍位置 →
+  生成「第 1 拍…第 N 拍」候选选项；`withSeed()` 确定性随机便于测试复现
+- **AccentRecognitionSession.kt**（`AccentSession`）— 会话状态机：start/submit/next/reset；
+  跟踪 currentQuestion / score / streak / bestStreak / accuracy / history；
+  `history` getter 返回 `_history.toMutableList()` 保证真正的防御性副本（避免 toList() 对
+  size==1 优化为不可变 SingletonList 导致的 UnsupportedOperationException）
+- **AccentRecognitionProgress.kt**（`AccentProgress` + `AccentProgressEntry`）— 跨会话进度跟踪
+  （每难度累计统计）+ 手动 JSON 序列化；**严格解析**：entry 须包含全部 5 个字段
+  （totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy），缺失任一字段视为不完整
+  数据返回 null 不计入，避免静默接受损坏数据
+- **AccentRecognitionAudioBuilder.kt**（`AccentAudioBuilder`）— PCM Float 渲染（[-1,1]）：
+  - 等间隔 click 序列（N 拍 × measureRepeat），唯一区分依据是**重音级别**：
+    强拍用更高音高 + 更大音量，普通拍用更低音高 + 更小音量
+  - `computeOnsetTimes(q)` 计算 click 时间戳（含 LEAD_SILENCE_MS 前导静音）
+  - `computeAccentFlags(q)` 计算每个 click 是否为强拍
+  - 钟形包络（exp 衰减）+ 正弦波，44100Hz，奈奎斯特保护
+
+### Android 层
+- **AccentRecognitionPlayer.kt**（`accentrecognition`）— AudioTrack MODE_STATIC 播放器（play/stop/replay/release）
+- **AccentRecognitionViewModel.kt**（`accentrecognition`）— AndroidViewModel + 协程音频准备 +
+  不可变 UiState + SharedPreferences 进度持久化
+- **AccentRecognitionTrainingScreen.kt**（`ui/accentrecognition`）— Material 3 Compose UI：
+  难度选择 / 播放听辨 / 小节拍点可视化（强拍高亮）/ 选项作答 / 对错反馈 + 教学说明 /
+  连击与准确率统计 / 进度展示
+
+### 集成点
+- **AppNavigation.kt**: import + `Screen.AccentRecognitionTraining` 路由对象
+  （`accent_recognition`，标题"强拍辨识"，`Icons.Filled.GraphicEq` 图标）+ composable 注册
+- **LibraryScreen.kt**: 新增 `AccentRecognitionEntryCard`（🥁 图标、"强拍辨识训练"标题、
+  secondaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 139→140, versionName 3.26.0→3.27.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin`（仅既有 deprecation 警告）
+- ✅ 模块单元测试通过: `--tests "*.accentrecognition.*"` — **74 用例全部通过**
+  - AccentRecognitionEngineTest: 18 用例（确定性出题/难度缩放/选项正确性/答案包含正确位置）
+  - AccentRecognitionSessionTest: 18 用例（状态机生命周期/得分/连击/准确率/防御性历史副本）
+  - AccentRecognitionAudioBuilderTest: 20 用例（onset 时间序列/重音标志/PCM 有效性/强拍能量高于普通拍）
+  - AccentRecognitionProgressTest: 18 用例（累计统计/难度隔离/JSON 往返/容错解析/严格字段校验）
+- ✅ 全量单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL（0 失败）
+- ✅ APK 构建通过: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 设计要点
+- **与 meterrecognition 的区别**：拍号识别答案是拍号（数拍子分组），强拍辨识答案是强拍位置
+  （追踪重音周期位置）—— 技能本质不同，且本模块强拍位置随机（非第 1 拍），迫使用户主动追踪
+- **重音级别为唯一线索**：所有 click 时间间距相同，仅强拍（更高音高 + 更大音量）区别于普通拍，
+  使「找重音」成为纯节奏听辨任务
+- **重音突出程度随难度递减**：初级鲜明（最易辨）→ 中级适中 → 高级微妙（最难，贴近真实演奏细微重音）
+- **严格进度解析**：partial JSON entry（缺字段）被拒绝而非静默接受，避免错误统计
+
+### Git
+- 分支: feature/accent-recognition-training → merge main（--no-ff）
+- 版本号: v3.26.0 → **v3.27.0** (versionCode 139 → 140)
+- 培训模块总数: **39 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（2517 行新增）
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨等）
+
