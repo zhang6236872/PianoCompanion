@@ -84,6 +84,7 @@ import com.pianocompanion.ui.accentrecognition.AccentRecognitionTrainingScreen
 import com.pianocompanion.ui.voicecounttraining.VoiceCountTrainingScreen
 import com.pianocompanion.ui.subdivisionrecognition.SubdivisionRecognitionTrainingScreen
 import com.pianocompanion.ui.melodiccontour.MelodicContourTrainingScreen
+import com.pianocompanion.ui.swingfeel.SwingFeelTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -148,6 +149,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object VoiceCountTraining : Screen("voice_count_recognition", "声部数量", Icons.Filled.LibraryMusic)
     data object SubdivisionRecognitionTraining : Screen("subdivision_recognition", "节奏细分", Icons.Filled.ViewWeek)
     data object MelodicContourTraining : Screen("melodic_contour_training", "旋律轮廓辨识", Icons.Filled.ShowChart)
+    data object SwingFeelTraining : Screen("swing_feel_training", "摇摆感辨识", Icons.Filled.Waves)
 }
 
 private val screens = listOf(
@@ -430,6 +432,9 @@ fun AppScaffold() {
             }
             composable(Screen.MelodicContourTraining.route) {
                 MelodicContourTrainingScreen()
+            }
+            composable(Screen.SwingFeelTraining.route) {
+                SwingFeelTrainingScreen()
             }
         }
     }
