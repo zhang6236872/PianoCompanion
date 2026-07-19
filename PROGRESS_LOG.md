@@ -6975,3 +6975,91 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 继续扩展听辨训练模块集合（可考虑：节奏型辨识、和声色彩听辨、音程方向听辨、
   音色辨识扩展、调式色彩对比等）
 
+---
+
+## 2026-07-19 v3.29.0 — 节奏细分听辨训练（Beat Subdivision Recognition Training）
+
+### 任务
+新增「节奏细分听辨训练」听辨模块（**第 41 个训练模块**），训练**一拍内细分密度感知**——
+听一拍音频判断该拍被均分为 2（二八分音符）、3（三连音）还是 4（四十六分音符）等份。
+
+填补现有训练集合中节拍细分维度的空白：
+- `meterrecognition` 判断「拍号」（每小节几拍，如 2/3/4 拍）——是**小节层面**的拍分组
+- `polyrhythmtraining` 训练同时冲突的两种节拍——是**多声部**的节拍冲突
+- `accentrecognition` 判断强拍落在第几拍——是**强拍位置**感知
+- 本模块只判断「**单一拍子内部如何细分**」——是感知节奏型颗粒度的前置能力
+
+3 种难度（候选细分类型 + 发音方式 + 速度三维度递进）：
+- **初级**：DUPLE vs TRIPLE（2 vs 3）· 断奏 staccato（起音清晰）· 慢速 80 BPM
+- **中级**：加入 QUADRUPLE（2 vs 3 vs 4）· 断奏 · 中速 100 BPM
+- **高级**：三选一 · 连奏 legato（起音模糊，更难辨）· 快速 120 BPM
+
+### 领域层（纯 Kotlin，无 Android 依赖，包 `com.pianocompanion.subdivisionrecognition`）
+- **SubdivisionRecognitionModels.kt** —
+  - `SubdivisionType` 枚举（DUPLE/TRIPLE/QUADRUPLE，含 noteCount 2/3/4 + displayName 二八/三连音/四十六）
+  - `SubdivisionDifficulty` 枚举（BEGINNER/INTERMEDIATE/ADVANCED + `ALL` 列表），每难度绑定
+    candidateTypes / tempoBpm / useLegato / beatDurationMs
+  - `SubdivisionQuestion` 数据类（含 init 校验：答案须在选项中、选项去重且含答案）+ options 派生属性
+  - `SubdivisionAnswerRecord` 数据类（答题记录）
+- **SubdivisionRecognitionEngine.kt**（`SubdivisionRecognitionEngine`）— 出题引擎：从候选类型随机抽 1 为答案、
+  补齐选项至 3 或 2 个；`withSeed()` 确定性随机便于测试复现
+- **SubdivisionRecognitionSession.kt**（`SubdivisionRecognitionSession`）— 会话状态机：start/submit/next/reset；
+  跟踪 currentQuestion / score / streak / bestStreak / accuracy / history；
+  `history` getter 返回 `_history.toMutableList()` 保证真正的防御性副本
+- **SubdivisionRecognitionProgress.kt**（`SubdivisionProgress` + `SubdivisionProgressEntry`）— 跨会话进度跟踪
+  （每难度累计统计）+ 手动 JSON 序列化；**严格解析**：entry 须包含全部 5 个字段
+  （totalAnswered/totalCorrect/sessionCount/bestStreak/bestAccuracy），缺失任一字段视为不完整；
+  **负数容错**：键存在但值为负时回退 0（coerceAtLeast）
+- **SubdivisionAudioBuilder.kt**（`SubdivisionAudioBuilder`）— PCM Float 渲染（[-1,1]）：
+  - **单拍内等分音符序列**：按 noteCount 等分 beatDuration，每个等分点放一个音符
+  - **拍头重音**：每拍第一个音符用更高音 + 更大振幅，强化「拍」的分组感知
+  - **断奏/连奏 articulation**：BEGINNER/INTERMEDIATE 用 staccato（音符间留间隙，起音清晰）；
+    ADVANCED 用 legato（音符重叠，起音模糊，难度提升）
+  - **加法合成钢琴音色**：基频 + 谐波 + 指数衰减包络
+  - 暴露测试友好方法：`computeOnsets`（起音时间戳，验证等分）/ `renderRaw`（未限幅）
+
+### Android 层
+- **SubdivisionRecognitionPlayer.kt**（`subdivisionrecognition`）— AudioTrack MODE_STATIC 播放器（play/stop/replay/release）
+- **SubdivisionRecognitionViewModel.kt**（`subdivisionrecognition`）— AndroidViewModel + 协程音频准备 +
+  不可变 UiState + SharedPreferences 进度持久化
+- **SubdivisionRecognitionTrainingScreen.kt**（`ui/subdivisionrecognition`）— Material 3 Compose UI：
+  难度选择 / 播放听辨 / 选项作答 / 对错反馈 + 教学说明（细分类型讲解）/
+  连击与准确率统计 / 进度展示
+
+### 集成点
+- **AppNavigation.kt**: import + `Screen.SubdivisionRecognitionTraining` 路由对象
+  （`subdivision_recognition`，标题"节奏细分"，`Icons.Filled.ViewWeek` 图标）+ composable 注册
+- **LibraryScreen.kt**: 新增 `SubdivisionRecognitionEntryCard`（🎵 图标、"节奏细分听辨训练"标题、
+  primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 141→142, versionName 3.28.0→3.29.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin`（仅既有 deprecation 警告）
+- ✅ 模块单元测试通过: `--tests "*.subdivisionrecognition.*"` — **81 用例全部通过**
+  - SubdivisionRecognitionEngineTest: 20 用例（确定性出题/难度缩放/选项去重含答案/种子复现）
+  - SubdivisionRecognitionSessionTest: 19 用例（状态机生命周期/得分/连击/准确率/防御性历史副本）
+  - SubdivisionRecognitionAudioBuilderTest: 22 用例（起音数等于细分数/等分时间戳/断奏比连奏短/PCM 有效性）
+  - SubdivisionRecognitionProgressTest: 20 用例（累计统计/难度隔离/JSON 往返/容错解析/负数回退 0）
+- ✅ APK 构建通过: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 设计要点
+- **与 meterrecognition/polyrhythm/accent 的区别**：本模块不问小节拍号、不问强拍位置、不问多声部冲突，
+  只问「单一拍子内部如何等分」——是节奏型颗粒度的前置感知训练
+- **拍头重音 + 断奏/连奏双维度**：拍头重音帮助感知「拍」的分组；断奏让起音清晰（易辨），
+  连奏让起音模糊（难辨），为难度递进提供独立的发音维度
+- **速度叠加难度**：初级 80 BPM 慢、高级 120 BPM 快，进一步压缩判断时间窗
+- **负数容错解析**：损坏数据中键存在但值为负时回退 0，避免错误统计（测试覆盖）
+
+### Git
+- 分支: feature/beat-subdivision-training → merge main（--no-ff）
+- 版本号: v3.28.0 → **v3.29.0** (versionCode 141 → 142)
+- 培训模块总数: **41 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件（2589 行新增）
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、音色辨识扩展、
+  调式色彩对比、节奏型整体辨识等）
+
+
