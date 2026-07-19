@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.28.0** (声部数量听辨训练 VoiceCountTraining: 和声密度感知/判断block chord同时鸣响音数(1-6) × 3难度(初级1-3音宽间距/中级1-4音中间距/高级1-6音密集间距) × 确定性种子出题引擎withSeed+voicing按间距池向上叠加+超音域平移 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波)+按声部索引确定性失谐(±9cents)防声部融合+block chord对齐叠加 × Material 3 Compose(难度选择+播放/声部数可视化/答题/反馈/进度) × AppNavigation路由voice_count_recognition+LibraryScreen入口卡片)
+- 当前版本: **v3.30.0** (旋律轮廓辨识训练 MelodicContourTraining: 多音符旋律整体轮廓走势辨识(上行/下行/拱形/谷形/波浪) × 3难度(初级4音宽音程慢速/中级5音中音程中速/高级6音窄音程快速含波浪) × 确定性种子出题引擎withSeed+按轮廓类型生成音高+音域校验平移 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波)+等间距排列使轮廓为唯一显著特征 × Material 3 Compose(难度选择+播放/箭头轮廓可视化/5选项作答/反馈/进度) × AppNavigation路由melodic_contour_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -7061,5 +7061,79 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、音色辨识扩展、
   调式色彩对比、节奏型整体辨识等）
+
+
+---
+
+## 2026-07-20 — v3.30.0: 旋律轮廓辨识训练 MelodicContourTraining（模块 #42）
+
+### 概述
+新增第 42 个听辨训练模块——**旋律轮廓辨识训练 (Melodic Contour Recognition Training)**。
+用户听一段多音符旋律，判断其整体**轮廓形状**：上行 / 下行 / 拱形 / 谷形 / 波浪。
+这是对旋律**宏观形态感知**的训练，与既有模块互补区分：
+- `melodicdirectiontraining`（单音程方向：上/下/同）
+- `melodymemory`（听后记忆并复现）
+- `sequencetraining`（模进/重复模式辨识）
+本模块聚焦于**多音符构成的整体线条走势**（5 种宏观轮廓），维度独立。
+
+### 领域层（纯 Kotlin，无 Android 依赖，完全可单元测试）
+- **MelodicContourModels.kt** — `ContourType` 枚举（ASCENDING/DESCENDING/ARCH/VALLEY/WAVE 5 种轮廓，
+  各含中文显示名与 emoji 箭头可视化）、`ContourDifficulty` 枚举（BEGINNER/INTERMEDIATE/ADVANCED，
+  noteCount 4/5/6、stepPool 渐窄、noteDurationMs 渐短）、`ContourQuestion`、`ContourAnswerRecord`、
+  `classifyContour()` 纯函数（根据音高序列推断轮廓类型）
+- **MelodicContourEngine.kt** — `ContourEngine.withSeed(seed)` 确定性出题引擎；
+  按轮廓类型生成音高（上行/下行单调、拱形先升后降、谷形先降后升、波浪交替）；
+  音域 [48, 84] 校验 + 合理平移；答案选项去重并包含正确答案
+- **MelodicContourSession.kt** — 会话状态机：start → submit → next；
+  跟踪 answeredCount / correctCount / currentStreak / bestStreak / history（防御性副本）
+- **MelodicContourProgress.kt** — 跨会话进度：按难度隔离统计 + JSON 手写序列化（容错解析、严格 5 字段校验、负数回退 0）
+- **MelodicContourAudioBuilder.kt** — PCM Float 渲染：加法合成钢琴音色（基频 + 4 谐波 + 指数衰减包络）、
+  等间距音符排列（轮廓形状为唯一显著特征）、音符间微间隙让起音清晰、软限幅 [-1,1]
+
+### Android 层
+- **MelodicContourPlayer.kt** — AudioTrack 播放器（play/stop/replay/release）
+- **ContourViewModel.kt** — AndroidViewModel + 协程音频准备 + 不可变 UiState + SharedPreferences 进度持久化
+- **MelodicContourTrainingScreen.kt**（`ui/melodiccontour`）— Material 3 Compose UI：
+  难度选择 / 播放听辨 / 5 选项作答 / 箭头轮廓形状可视化 / 对错反馈 + 教学说明 /
+  连击与准确率统计 / 会话汇总
+
+### 集成点
+- **AppNavigation.kt**: import + `Screen.MelodicContourTraining` 路由对象
+  （`melodic_contour_training`，标题"旋律轮廓辨识"，`Icons.Filled.ShowChart` 图标）+ composable 注册
+- **LibraryScreen.kt**: 新增 `MelodicContourEntryCard`（📈 图标、"旋律轮廓辨识训练"标题、
+  primaryContainer 配色）到 LazyColumn + 定义
+- **build.gradle.kts**: versionCode 142→143, versionName 3.29.0→3.30.0
+
+### 验证
+- ✅ 编译通过: `gradle :app:compileDebugKotlin`（仅既有 deprecation 警告）
+- ✅ 模块单元测试通过: `--tests "*.melodiccontour.*"` — **102 用例全部通过**
+  - ContourEngineTest: 确定性出题 / 难度缩放 / 轮廓分类正确性 / 音域合法 / 选项去重含答案 / 种子复现
+  - ContourSessionTest: 状态机生命周期 / 得分 / 连击 / 准确率 / 防御性历史副本
+  - ContourAudioBuilderTest: PCM 有效性 / 起音时间戳等间距 / 频率精度 / 能量一致性 / 缓冲区长度
+  - ContourProgressTest: 累计统计 / 难度隔离 / JSON 往返 / 容错解析 / 严格字段校验 / 负数回退 0
+- ✅ 全量单元测试通过: `gradle :app:testDebugUnitTest` BUILD SUCCESSFUL
+- ✅ APK 构建通过: `gradle :app:assembleDebug` BUILD SUCCESSFUL
+
+### 设计要点
+- **5 种宏观轮廓**：ASCENDING（上行 ↗）、DESCENDING（下行 ↘）、ARCH（拱形 ↗↘）、
+  VALLEY（谷形 ↘↗）、WAVE（波浪 ↗↘↗）——选择乐理意义明确的宏观线条形态
+- **3 难度递进**：BEGINNER（4 音符 / 宽音程 3-5 半音 / 慢速 550ms / 4 选项无波浪）、
+  INTERMEDIATE（5 音符 / 中音程 2-4 / 450ms / 4 选项无波浪）、
+  ADVANCED（6 音符 / 窄音程 1-3 / 快速 370ms / 5 选项含波浪）
+- **等间距排列**：所有音符时长相同、间距相同，使「轮廓形状」成为唯一显著特征，而非依赖节奏变化
+- **与既有模块区分**：本模块判断多音符整体走势，而非单音程方向、记忆复现或模进辨识
+
+### Git
+- 分支: feature/melodic-contour-training → merge main（--no-ff）
+- 版本号: v3.29.0 → **v3.30.0** (versionCode 142 → 143)
+- 培训模块总数: **42 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、音色辨识扩展、
+  调式色彩对比、节奏型整体辨识等）
+
 
 
