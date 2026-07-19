@@ -82,6 +82,7 @@ import com.pianocompanion.ui.scaledegreetraining.ScaleDegreeTrainingScreen
 import com.pianocompanion.ui.dynamicsdirectiontraining.DynamicsDirectionTrainingScreen
 import com.pianocompanion.ui.accentrecognition.AccentRecognitionTrainingScreen
 import com.pianocompanion.ui.voicecounttraining.VoiceCountTrainingScreen
+import com.pianocompanion.ui.subdivisionrecognition.SubdivisionRecognitionTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -144,6 +145,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object DynamicsDirectionTraining : Screen("dynamics_direction_training", "力度变化方向", Icons.Filled.TrendingUp)
     data object AccentRecognitionTraining : Screen("accent_recognition", "强拍辨识", Icons.Filled.GraphicEq)
     data object VoiceCountTraining : Screen("voice_count_recognition", "声部数量", Icons.Filled.LibraryMusic)
+    data object SubdivisionRecognitionTraining : Screen("subdivision_recognition", "节奏细分", Icons.Filled.ViewWeek)
 }
 
 private val screens = listOf(
@@ -420,6 +422,9 @@ fun AppScaffold() {
             }
             composable(Screen.VoiceCountTraining.route) {
                 VoiceCountTrainingScreen()
+            }
+            composable(Screen.SubdivisionRecognitionTraining.route) {
+                SubdivisionRecognitionTrainingScreen()
             }
         }
     }

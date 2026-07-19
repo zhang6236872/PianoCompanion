@@ -679,6 +679,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Beat subdivision recognition training entry ===
+            item {
+                SubdivisionRecognitionEntryCard(onClick = {
+                    navController.navigate(Screen.SubdivisionRecognitionTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -3480,6 +3489,46 @@ private fun VoiceCountEntryCard(onClick: () -> Unit) {
             Icon(
                 Icons.Filled.ChevronRight,
                 "声部数量听辨训练",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun SubdivisionRecognitionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎵", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "节奏细分听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    "听一拍判断细分 2/3/4 等分 · 二八/三连音/四十六 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "节奏细分听辨训练",
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
