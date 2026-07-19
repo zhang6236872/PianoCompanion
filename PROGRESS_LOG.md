@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.30.0** (旋律轮廓辨识训练 MelodicContourTraining: 多音符旋律整体轮廓走势辨识(上行/下行/拱形/谷形/波浪) × 3难度(初级4音宽音程慢速/中级5音中音程中速/高级6音窄音程快速含波浪) × 确定性种子出题引擎withSeed+按轮廓类型生成音高+音域校验平移 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波)+等间距排列使轮廓为唯一显著特征 × Material 3 Compose(难度选择+播放/箭头轮廓可视化/5选项作答/反馈/进度) × AppNavigation路由melodic_contour_training+LibraryScreen入口卡片)
+- 当前版本: **v3.31.0** (摇摆感辨识训练 SwingFeelTraining: 一拍内两个八分音符长短律动辨识(等分1:1/轻摇摆3:2/摇摆2:1) × 3难度(初级2选项80BPM/中级3选项100BPM含轻摇摆/高级3选项130BPM) × 确定性种子出题引擎withSeed+按摇摆程度排序选项 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减)+短促断奏+同音高同音量使长短比例为唯一显著特征 × Material 3 Compose(难度选择+播放/起音时间间距可视化/选项作答/反馈/进度) × AppNavigation路由swing_feel_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -7134,6 +7134,67 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、音色辨识扩展、
   调式色彩对比、节奏型整体辨识等）
+
+
+
+---
+
+## 2026-07-20 — v3.31.0: 摇摆感辨识训练 SwingFeelTraining（模块 #43）
+
+新增第 43 个听辨训练模块——**摇摆感辨识训练 (Swing Feel Recognition Training)**，
+填补「律动 / groove 感知」训练的空白。
+
+### 训练概念
+感知一拍内两个八分音符的**时间比例（长短律动）**。所有音符同音高、同音量、同短促断奏，
+唯一变量是第二个音符在一拍中的时间占比（swingFraction）：
+- 等分 (0.50) → 1:1，整齐「直」八分音符（流行/摇滚/古典）
+- 轻摇摆 (0.60) → 3:2，轻微律动（shuffle/轻快爵士）
+- 摇摆 (0.667) → 2:1，经典三连音摇摆（jazz/blues）
+
+与已有节奏模块的区分：
+- 节奏细分：判断一拍**精确均分**成 2/3/4 等份（所有间距相同）
+- 拍号识别：小节层面分组
+- 强拍辨识：重音落点
+- 本模块：每拍固定两音、不问拍号/重音，只问**一拍内长短比例**
+
+### 架构（纯 Kotlin 领域层 + Android 层 + UI 层，与 melodiccontour 模块一致）
+- **SwingFeelModels.kt** — `SwingRatio`(等分/轻摇摆/摇摆, 含 displayName/fraction/ratioLabel/description/hint) / `SwingDifficulty`(BEGINNER/INTERMEDIATE/ADVANCED, candidateRatios+tempoBpm+beatsPerQuestion) / `SwingQuestion`(含 init 校验：fraction∈[0.4,0.7]、ratio∈候选集、correctAnswer∈选项) / `SwingAnswerRecord`
+- **SwingFeelEngine.kt** — 确定性出题引擎（`withSeed(seed)`），随机选 ratio + 按摇摆程度排序生成选项
+- **SwingFeelSession.kt** — 会话状态机（start/submit/next/reset，连击/准确率/防御性历史副本/lastAnswer/isAnswered）
+- **SwingFeelProgress.kt** — 跨会话进度（手写 JSON toJson/fromJson，容错：损坏→空、缺字段→忽略、负数→0，按难度隔离 + 严格 5 字段校验）
+- **SwingFeelAudioBuilder.kt** — 加法合成（基频 C5 + 4 谐波 2f/3f/4f/5f 递减 + 指数衰减包络）；`computeOnsetTimes`/`computeInterOnsetIntervals`/`swingRatio` 暴露时间数学；短促断奏(NOTE_DURATION_RATIO=0.22) + 软限幅；LEAD/TAIL 静音
+- **SwingFeelPlayer.kt** — Android AudioTrack 播放层（prepare/play/stop/release + onComplete 回调）
+- **SwingFeelViewModel.kt** — AndroidViewModel 连接层（SharedPreferences 持久化进度 + Dispatchers.Default 后台渲染音频）
+- **ui/swingfeel/SwingFeelTrainingScreen.kt** — Material 3 Compose UI（难度选择 + 播放 + **起音时间间距可视化**(Canvas drawBehind 绘制长短音符分布) + 选项作答 + 反馈(hint/description) + 进度卡片）
+
+### 难度设计
+| 难度 | 选项 | 速度 | 拍数 |
+|------|------|------|------|
+| 初级 | 等分 / 摇摆（2 选 1，对比最鲜明） | 80 BPM | 4 |
+| 中级 | 等分 / 轻摇摆 / 摇摆（3 选 1） | 100 BPM | 4 |
+| 高级 | 3 选 1（含轻摇摆） | 130 BPM | 4 |
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.SwingFeelTraining`("swing_feel_training", "摇摆感辨识", `Icons.Filled.Waves`) + composable 目标
+- **LibraryScreen.kt**: 新增 `SwingFeelEntryCard`（🎺 图标、"摇摆感辨识训练"标题、"聆听长短律动 · 等分 / 轻摇摆 / 摇摆 · 3 难度"描述）
+
+### 测试（79 个单元测试全部通过）
+- `SwingFeelEngineTest`: 18 个（确定性出题/选项排序/分布覆盖/难度缩放/种子复现）
+- `SwingFeelSessionTest`: 18 个（生命周期/连击/准确率/防御性副本/双击防护）
+- `SwingAudioBuilderTest`: 22 个（起音时间戳/长短比验证 1.0/1.5/2.0/PCM 有效性/缓冲区长度/能量窗口检测）
+- `SwingProgressTest`: 21 个（累计统计/难度隔离/JSON 往返/容错解析/缺字段拒绝/负数回退 0）
+
+### Git
+- 分支: feature/swing-feel-training → merge main（--no-ff）
+- 版本号: v3.30.0 → **v3.31.0** (versionCode 143 → 144)
+- 培训模块总数: **43 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 1 个 UI 文件 + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、音程方向听辨、节奏型整体辨识、
+  调式色彩对比、复调听辨等）
 
 
 
