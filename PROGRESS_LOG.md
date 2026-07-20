@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.31.0** (摇摆感辨识训练 SwingFeelTraining: 一拍内两个八分音符长短律动辨识(等分1:1/轻摇摆3:2/摇摆2:1) × 3难度(初级2选项80BPM/中级3选项100BPM含轻摇摆/高级3选项130BPM) × 确定性种子出题引擎withSeed+按摇摆程度排序选项 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减)+短促断奏+同音高同音量使长短比例为唯一显著特征 × Material 3 Compose(难度选择+播放/起音时间间距可视化/选项作答/反馈/进度) × AppNavigation路由swing_feel_training+LibraryScreen入口卡片)
+- 当前版本: **v3.32.0** (速度变化方向辨识训练 TempoChangeDirectionTraining: 辨识音乐速度走势(渐快accel./渐慢rit./稳定a tempo/渐快渐慢⌒山丘/渐慢渐快⌣山谷) × 3难度(初级2选项/中级3选项+稳定/高级5选项全方向) × 确定性种子出题引擎withSeed+选项打乱 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减)+固定音高固定响度+变化相邻音符起音时间间距(inter-onset interval)使速度变化成为唯一显著特征(与力度变化方向AudioBuilder对称:那里变化增益/这里变化间距) × Material 3 Compose(难度选择+播放/选项作答/反馈+教学提示/进度) × AppNavigation路由tempo_change_direction_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -7198,3 +7198,54 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 
 
 
+
+---
+
+### 2026-07-20 模块 #44: 速度变化方向辨识训练 (TempoChangeDirectionTraining)
+
+**概述**: 新增第 44 个培训模块——辨识音乐的「速度变化方向」。与现有 `tempotraining`
+（静态速度级别辨识）互补，本模块专注于辨识速度随时间变化的「走势」；与 `dynamicsdirectiontraining`
+（力度变化方向）结构完全对称——那里听响度走势，这里听节拍间距走势。
+
+**5 种速度变化方向**:
+- **渐快 Accelerando (accel.)**: 间距从 470ms → 210ms 线性缩小，越走越急
+- **渐慢 Ritardando (rit.)**: 间距从 210ms → 470ms 线性放大，越走越疏
+- **稳定 A tempo (=)**: 间距恒定 340ms，无变化参照
+- **渐快渐慢 Accel.-Rit. (⌒)**: sin 山丘形间距，两端慢中间快（速度山丘）
+- **渐慢渐快 Rit.-Accel. (⌣)**: sin 山谷形间距，两端快中间慢（速度山谷）
+
+**音频设计核心**: 9 个音符（固定旋律步进 [0,2,0,4,0,2,0,4,0] 围绕主音），音高与响度全程恒定
+（MID_GAIN=0.5），唯一变化的是相邻音符的起音时间间距（inter-onset interval），使「速度变化方向」
+成为音频中唯一显著特征。
+
+**3 个难度**:
+| 难度 | 选项 | 候选方向 |
+|------|------|----------|
+| 初级 | 2 选 1 | 渐快 vs 渐慢 |
+| 中级 | 3 选 1 | + 稳定 |
+| 高级 | 5 选 1 | 全部 5 种方向（含双向山丘/山谷）|
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.TempoChangeDirectionTraining`
+  ("tempo_change_direction_training", "速度变化方向", `Icons.Filled.Speed`) + composable 目标
+- **LibraryScreen.kt**: 新增 `TempoChangeEntryCard`（⏩ 图标、"速度变化方向辨识训练"标题、
+  "聆听节拍快慢变化 · 渐快 / 渐慢 / 稳定 / 山丘 / 山谷 · 3 难度"描述）
+
+### 测试（89 个单元测试全部通过）
+- `TempoChangeAudioBuilderTest`: 29 个（intervalAt 轮廓形状验证 5 方向/镜像对称/t 钳位/
+  onset 时序/间距严格单调/间距界值/render 输出有效性/PCM 归一化/midiToFreq）
+- `TempoChangeEngineTest`: 23 个（确定性出题/选项打乱/分布覆盖/难度缩放/种子复现/tonic 范围）
+- `TempoChangeProgressTest`: 19 个（累计统计/难度隔离/JSON 往返/容错解析/缺字段拒绝/负数回退 0）
+- `TempoChangeSessionTest`: 18 个（生命周期/连击/准确率/防御性副本/双击防护）
+
+### Git
+- 分支: feature/tempo-change-direction-training → merge main（--no-ff）
+- 版本号: v3.31.0 → **v3.32.0** (versionCode 144 → 145)
+- 培训模块总数: **44 个**
+
+### 代码统计
+- 新增: 7 个源文件（Models/Engine/Session/AudioBuilder/Progress/Player/ViewModel）
+  + 1 个 UI 文件（TrainingScreen） + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、节奏型整体辨识、调式色彩对比等）
