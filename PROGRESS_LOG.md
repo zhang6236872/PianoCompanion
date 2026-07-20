@@ -3,13 +3,13 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.33.0** (和声色彩听辨训练 HarmonyColorTraining: 辨识三和弦的「情感色彩」家族(大调Major=明亮/小调Minor=暗淡/减三Diminished=紧张/增三Augmented=悬浮) × 3难度(初级大调vs小调2选项/中级+减三3选项/高级全部4种4选项) × 确定性种子出题引擎withSeed+柱式和弦voicing × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减ADSR包络)柱式和弦同时发声 × Material 3 Compose(难度选择+播放/4色彩选项作答/反馈+教学色彩描述/进度) × AppNavigation路由harmony_color_training+LibraryScreen入口卡片)
+- 当前版本: **v3.34.0** (复调运动辨识训练 PolyphonicMotionTraining: 辨识两条同时进行的旋律线之间的相对运动类型(同向Parallel=并肩同行/反向Contrary=擦肩背离/斜向Oblique=一静一动) × 3难度(初级同向vs反向2选项/中级+斜向3选项/高级全部3种3选项) × 确定性种子出题引擎+verifyMotion公开校验(声部不交叉/每步运动不变量/斜向保持声部一致/MAX_ATTEMPTS重试+安全回退) × 双声部分离(高C5-E5/低C3-E3约两个八度)逐音对齐 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+tanh软限幅)两声部叠加 × Material 3 Compose(难度选择+播放/3运动选项作答/双声部轮廓图/反馈+教学运动描述/进度) × AppNavigation路由polyphonic_motion_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
 ## 健康状态 (2026-07-16 核验)
 - ✅ 编译通过: `gradle :app:compileDebugKotlin` BUILD SUCCESSFUL
-- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 5944 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+- ✅ 单元测试通过: `gradle :app:testDebugUnitTest` — 6062 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
 - ✅ APK 构建成功: `gradle :app:assembleDebug` — app-debug.apk
 - ✅ 全部 tag 已打: v1.1.0 → v1.2.0 → ... → v3.0.0 → v3.1.0 → v3.2.0 → v3.3.0
 - Kotlin 文件: 520 个 / 代码行数: 143000+ 行
@@ -7301,3 +7301,63 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、节奏型整体辨识、调式色彩对比等）
+
+### 2026-07-21 模块 #46: 复调运动辨识训练 (PolyphonicMotionTraining)
+
+**概述**: 新增第 46 个培训模块——辨识两条同时进行的旋律线之间的**相对运动**（polyphonic motion）。
+这是对位法 / 复调听觉的核心能力。既有模块中，`melodiccontour` 问「单条旋律的整体轮廓形状」、
+`melodicdirectiontraining` 问「单个音程的方向」、`intervaltraining` 问「单个音程的大小」——
+但没有任何模块训练**两条声部同时进行时的相对运动关系**。本模块填补这一空白，训练能听出两条线条是
+「一起走」（同向）、「相向走」（反向）还是「一静一动」（斜向）。
+
+**3 种复调运动类型**（辨识目标）:
+- **同向运动 Parallel (⇈)**: 两个声部朝同一方向移动（同时上行或下行）。听感齐整协调，和声进行中最常见。
+- **反向运动 Contrary (↕)**: 两个声部朝相反方向移动。听感富有张力与对话感，对位法最受推崇的运动。
+- **斜向运动 Oblique (↑=)**: 一个声部保持同音（像踏板），另一个声部移动。常用于持续音 / 伴奏衬托。
+
+**音频设计核心**: 渲染**两个逐音对齐的声部**——每个节拍点高声部 + 低声部同时鸣响，加法合成
+（基频 + 4 谐波）+ 指数衰减包络 + tanh 软限幅。**声部分离**: 高声部 C5-E5（MIDI 72-76）、
+低声部 C3-E3（MIDI 48-52），约两个八度分离使耳朵能独立追踪每条线条。断奏 + 微间隙使每个节拍点起音清晰。
+
+**3 个难度**:
+| 难度 | 选项 | 候选运动 | 音符数 | 步幅 |
+|------|------|----------|--------|------|
+| 初级 | 2 选 1 | 同向 vs 反向 | 4 | 大音程 (3-5) |
+| 中级 | 3 选 1 | + 斜向 | 4 | 中音程 (2-4) |
+| 高级 | 3 选 1 | 全部 3 种 | 4 | 小音程 (1-3) |
+
+**生成正确性保证（关键设计）**: `MotionEngine.verifyMotion()` 公开校验方法——生成后逐步检查：
+声部不交叉（高声部始终严格高于低声部）、每步运动不变量成立（同向同号非零 / 反向异号非零 / 斜向恰一保持）、
+斜向保持声部全程一致。若校验失败（如反向运动导致声部交叉），同一随机序列上重新生成，
+最多 MAX_ATTEMPTS=100 次后回退到保证安全的发散方向生成。
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.PolyphonicMotionTraining`
+  ("polyphonic_motion_training", "复调运动辨识", `Icons.Filled.SwapHoriz`) + composable 目标
+- **LibraryScreen.kt**: 新增 `PolyphonicMotionEntryCard`（⇈ 图标、"复调运动辨识训练"标题、
+  "聆听两条旋律线的相对运动 · 同向 / 反向 / 斜向 · 3 难度"描述，secondaryContainer 配色）
+
+### 测试（118 个单元测试全部通过）
+- `PolyphonicMotionEngineTest`: 41 个（选项正确性/难度缩放/确定性种子复现/verifyMotion 直接测试
+  · 覆盖同向/反向/斜向合法与非法情形 · 声部交叉预防 · 斜向保持声部一致性 · 空声部/不等长拒绝）
+- `PolyphonicMotionSessionTest`: 19 个（生命周期/连击/准确率/防御性副本/双击防护/历史保序）
+- `PolyphonicMotionProgressTest`: 25 个（累计统计/难度隔离/JSON 往返/容错解析/严格 5 字段校验/
+  缺字段拒绝/负数回退 0/未知键忽略/全局聚合统计）
+- `PolyphonicMotionAudioBuilderTest`: 33 个（渲染非空/FloatArray 输出/确定性/归一化范围/
+  事件构建(每拍 2 事件对齐)/起始时间单调递增/方向序列验证运动类型/midiToFreq 频率换算/
+  时长估算/动态范围/自定义采样率/全部运动类型渲染)
+
+### Git
+- 分支: feature/polyphonic-motion-training → merge main（--no-ff）
+- 版本号: v3.33.0 → **v3.34.0** (versionCode 146 → 147)
+- 培训模块总数: **46 个**
+
+### 代码统计
+- 新增: 8 个源文件（PolyphonicMotionModels/PolyphonicMotionEngine/PolyphonicMotionSession/
+  PolyphonicMotionProgress/PolyphonicMotionAudioBuilder/PolyphonicMotionPlayer/
+  PolyphonicMotionViewModel/PolyphonicMotionTrainingScreen）
+  + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
+  声部进入顺序辨识、动机发展辨识等）

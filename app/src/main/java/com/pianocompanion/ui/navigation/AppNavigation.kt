@@ -87,6 +87,7 @@ import com.pianocompanion.ui.melodiccontour.MelodicContourTrainingScreen
 import com.pianocompanion.ui.swingfeel.SwingFeelTrainingScreen
 import com.pianocompanion.ui.tempochangetraining.TempoChangeTrainingScreen
 import com.pianocompanion.ui.harmonycolor.HarmonyColorTrainingScreen
+import com.pianocompanion.ui.polyphonicmotion.PolyphonicMotionTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -154,6 +155,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object SwingFeelTraining : Screen("swing_feel_training", "摇摆感辨识", Icons.Filled.Waves)
     data object TempoChangeDirectionTraining : Screen("tempo_change_direction_training", "速度变化方向", Icons.Filled.Speed)
     data object HarmonyColorTraining : Screen("harmony_color_training", "和声色彩", Icons.Filled.Palette)
+    data object PolyphonicMotionTraining : Screen("polyphonic_motion_training", "复调运动辨识", Icons.Filled.SwapHoriz)
 }
 
 private val screens = listOf(
@@ -445,6 +447,9 @@ fun AppScaffold() {
             }
             composable(Screen.HarmonyColorTraining.route) {
                 HarmonyColorTrainingScreen()
+            }
+            composable(Screen.PolyphonicMotionTraining.route) {
+                PolyphonicMotionTrainingScreen()
             }
         }
     }
