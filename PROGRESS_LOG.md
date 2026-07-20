@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.32.0** (速度变化方向辨识训练 TempoChangeDirectionTraining: 辨识音乐速度走势(渐快accel./渐慢rit./稳定a tempo/渐快渐慢⌒山丘/渐慢渐快⌣山谷) × 3难度(初级2选项/中级3选项+稳定/高级5选项全方向) × 确定性种子出题引擎withSeed+选项打乱 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减)+固定音高固定响度+变化相邻音符起音时间间距(inter-onset interval)使速度变化成为唯一显著特征(与力度变化方向AudioBuilder对称:那里变化增益/这里变化间距) × Material 3 Compose(难度选择+播放/选项作答/反馈+教学提示/进度) × AppNavigation路由tempo_change_direction_training+LibraryScreen入口卡片)
+- 当前版本: **v3.33.0** (和声色彩听辨训练 HarmonyColorTraining: 辨识三和弦的「情感色彩」家族(大调Major=明亮/小调Minor=暗淡/减三Diminished=紧张/增三Augmented=悬浮) × 3难度(初级大调vs小调2选项/中级+减三3选项/高级全部4种4选项) × 确定性种子出题引擎withSeed+柱式和弦voicing × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+指数衰减ADSR包络)柱式和弦同时发声 × Material 3 Compose(难度选择+播放/4色彩选项作答/反馈+教学色彩描述/进度) × AppNavigation路由harmony_color_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -7246,6 +7246,58 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 代码统计
 - 新增: 7 个源文件（Models/Engine/Session/AudioBuilder/Progress/Player/ViewModel）
   + 1 个 UI 文件（TrainingScreen） + 4 个测试文件 = 12 个文件
+
+
+---
+
+### 2026-07-21 模块 #45: 和声色彩听辨训练 (HarmonyColorTraining)
+
+**概述**: 新增第 45 个培训模块——辨识三和弦的「和声色彩」（harmony color）。填补现有模块空白：
+`chordtraining` 要求精确辨识和弦类型（大三/小三/大七/属七等十几种），`consonancetraining`
+判断协和度光谱——但没有任何模块训练宽泛的「情感色彩」家族感知。本模块作为和弦辨识的前置技能，
+先学会区分大/小/增/减四大色彩家族，再进入精确和弦辨识。
+
+**4 种和声色彩**:
+- **大调色彩 Major (大三)**: 明亮、稳定、开放 — [0,4,7]
+- **小调色彩 Minor (小三)**: 暗淡、柔和、内向 — [0,3,7]
+- **减三色彩 Diminished (°)**: 紧张、不安、收缩 — [0,3,6]
+- **增三色彩 Augmented (+)**: 悬浮、模糊、扩张 — [0,4,8]
+
+**音频设计核心**: 柱式和弦（block chord）—— 3 个和弦音同时发声（无琶音），加法合成（基频 + 4 谐波
+2f/3f/4f/5f 递减 + 指数衰减 ADSR 包络）。同一根音下，四种色彩的差异完全体现在和弦音的半音间距结构
+（三度音和五度音的位置），使「和声色彩」成为音频中唯一显著特征。
+
+**3 个难度**:
+| 难度 | 选项 | 候选色彩 |
+|------|------|----------|
+| 初级 | 2 选 1 | 大调 vs 小调（最根本的明/暗二元对比）|
+| 中级 | 3 选 1 | + 减三（增加紧张色彩）|
+| 高级 | 4 选 1 | 全部 4 种色彩（含悬浮的增三）|
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.HarmonyColorTraining`
+  ("harmony_color_training", "和声色彩", `Icons.Filled.Palette`) + composable 目标
+- **LibraryScreen.kt**: 新增 `HarmonyColorEntryCard`（🎨 图标、"和声色彩听辨训练"标题、
+  "聆听和弦情感色彩 · 大调 / 小调 / 减三 / 增三 · 3 难度"描述）
+
+### 测试（94 个单元测试全部通过）
+- `HarmonyColorEngineTest`: 27 个（确定性出题/选项打乱/分布覆盖/难度缩放/种子复现/voicing 间距正确性）
+- `HarmonyColorSessionTest`: 20 个（生命周期/连击/准确率/防御性副本/双击防护）
+- `HarmonyColorAudioBuilderTest`: 26 个（渲染非空/PCM 有效性/柱式和弦同时发声/波形区分/音程结构验证）
+- `HarmonyColorProgressTest`: 21 个（累计统计/难度隔离/JSON 往返/容错解析/缺字段拒绝/负数回退 0）
+
+### Git
+- 分支: feature/harmony-color-training → merge main（--no-ff）
+- 版本号: v3.32.0 → **v3.33.0** (versionCode 145 → 146)
+- 培训模块总数: **45 个**
+
+### 代码统计
+- 新增: 7 个源文件（Models/Engine/Session/AudioBuilder/Progress/Player/ViewModel）
+  + 1 个 UI 文件（TrainingScreen） + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：复调运动辨识、序列记忆长程扩展、
+  音色+音高联合辨识、泛音列辨识等）
 
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：和声色彩听辨、节奏型整体辨识、调式色彩对比等）
