@@ -86,6 +86,7 @@ import com.pianocompanion.ui.subdivisionrecognition.SubdivisionRecognitionTraini
 import com.pianocompanion.ui.melodiccontour.MelodicContourTrainingScreen
 import com.pianocompanion.ui.swingfeel.SwingFeelTrainingScreen
 import com.pianocompanion.ui.tempochangetraining.TempoChangeTrainingScreen
+import com.pianocompanion.ui.harmonycolor.HarmonyColorTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -152,6 +153,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object MelodicContourTraining : Screen("melodic_contour_training", "旋律轮廓辨识", Icons.Filled.ShowChart)
     data object SwingFeelTraining : Screen("swing_feel_training", "摇摆感辨识", Icons.Filled.Waves)
     data object TempoChangeDirectionTraining : Screen("tempo_change_direction_training", "速度变化方向", Icons.Filled.Speed)
+    data object HarmonyColorTraining : Screen("harmony_color_training", "和声色彩", Icons.Filled.Palette)
 }
 
 private val screens = listOf(
@@ -440,6 +442,9 @@ fun AppScaffold() {
             }
             composable(Screen.TempoChangeDirectionTraining.route) {
                 TempoChangeTrainingScreen()
+            }
+            composable(Screen.HarmonyColorTraining.route) {
+                HarmonyColorTrainingScreen()
             }
         }
     }
