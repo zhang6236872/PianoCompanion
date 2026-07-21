@@ -7518,3 +7518,80 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
   声部进入顺序辨识、和弦转位听辨、织体类型辨识等）
+
+---
+
+## 2026-07-22 — 声部进入顺序辨识训练（模块 #49）✅
+
+### 概述
+新增第 **49** 个听辨训练模块：**声部进入顺序辨识训练**（Voice Entrance Order Recognition）。
+训练耳朵辨识复调织体中各声部进入的时间先后顺序——这是跟踪赋格主题呈现、卡农结构的核心听觉能力。
+
+**核心问题**：播放一段多声部先后进入的短织体（每个声部在其音区演奏 D-F-A 琶音动机，各声部按进入顺序错开起始时间），
+用户聆听各音区出现的时间先后，从选项中选出正确的进入顺序（如「低声部 → 高声部 → 中声部」）。
+
+**与既有模块的区分**：
+- `voicecounttraining` 问「同时有多少个声部」（数量）
+- `polyphonicmotion` 问「两条声部之间的相对运动关系」（运动方向）
+- 本模块问「声部进入的时间先后顺序」——维度完全独立
+
+### 难度设计
+| 难度 | 声部数 | 选项数 | 进入间隔 | 音区 |
+|------|--------|--------|----------|------|
+| 初级 | 2 | 2 | 700ms | 高声部(Soprano D5) + 低声部(Bass D3) |
+| 中级 | 3 | 3 | 520ms | 高/中/低声部 |
+| 高级 | 3 | 4 | 360ms（紧密） | 高/中/低声部 |
+
+**音频设计**: 每个声部在其音区演奏 4 音符 D-F-A 琶音动机（高/中/低相隔约一个八度，使耳朵可区分），
+进入顺序第 k 位的声部起始时间 = k × entryGapMs，声部进入后继续重复动机形成 tutti 合奏。
+加法合成钢琴音色（基频 + 4 谐波 + 指数衰减包络 + tanh 软限幅），断奏 + 音符间间隙确保每个起音清晰。
+
+### 架构（遵循既有模块模式）
+1. **VoiceEntryModels** — 数据模型：`VoiceRegister` 枚举（Soprano/Alto/Bass，含 MIDI 动机）、
+   `EntryDifficulty` 枚举（3 级）、`EntryOrderQuestion`（含 init 不变量校验）、`EntryAnswerRecord`
+2. **VoiceEntryEngine**（纯 Kotlin）— 出题引擎：seed 确定性、音区全排列随机选正确顺序、
+   干扰项从剩余排列中选取、Heap 算法生成全排列（`VoiceEntryEngine.permutations` 公开供测试）
+3. **VoiceEntrySession**（纯 Kotlin）— 会话状态机：start→submit→next 生命周期，
+   连击、准确率、防御性副本、双击防护、历史保序
+4. **VoiceEntryProgress**（纯 Kotlin）— 跨会话进度跟踪：累计统计、难度隔离、
+   手动 JSON 序列化（无外部依赖，容错解析）、5 字段严格校验
+5. **VoiceEntryAudioBuilder**（纯 Kotlin）— PCM 音频构建器：渲染多声部错开进入织体、
+   `entryOnsetsMs` 返回各声部进入时间、加法合成（基频+4 谐波+指数衰减+tanh 软限幅）、前导/尾部静音
+6. **VoiceEntryPlayer** — Android AudioTrack MODE_STATIC 播放器
+7. **VoiceEntryViewModel** — AndroidViewModel，连接领域层与 UI
+8. **VoiceEntryTrainingScreen** — Material 3 Compose 界面（难度选择 + 进入顺序时间线可视化 + 选项 + 反馈 + 统计）
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.VoiceEntryOrderTraining`
+  ("voice_entry_order_training", "声部进入顺序辨识", `Icons.Filled.Queue`) + composable 目标
+- **LibraryScreen.kt**: 新增 `VoiceEntryOrderEntryCard`（🎶 图标、"声部进入顺序辨识训练"标题、
+  "辨识声部进入先后 · 高/中/低音区 · 3 难度"描述，tertiaryContainer 配色）
+
+### 测试（全部通过）
+- `VoiceEntryEngineTest`: 26 个（选项数量匹配难度/无重复选项/正确答案总在选项中/
+  所有选项均为合法排列/确定性种子复现/不同种子产生不同序列/beginner 仅用高+低声部/
+  intermediate+advanced 用全 3 声部/进入顺序为音区全排列/无重复音区/
+  beginner 2 种排列全覆盖/intermediate 6 种排列全覆盖/标签与顺序一致/permutations 正确性）
+- `VoiceEntrySessionTest`: 21 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/答题记录正确性）
+- `VoiceEntryProgressTest`: 25 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/多难度序列化/负数回退）
+- `VoiceEntryAudioBuilderTest`: 30 个（渲染非空/确定性/FloatArray 输出/值域[-1,1]/
+  事件数=声部数×音符数/音符 MIDI 匹配音区动机/各声部首音起音=进入时间/
+  声部内音符间距=noteDuration+GAP/进入起音计数/起音单调/进入间距=entryGapMs/
+  频率换算(A4=440/A5=880/A3=220)/时长公式验证/自定义采样率/全难度渲染）
+
+### Git
+- 分支: feature/voice-entry-order-training → merge main（--no-ff）
+- 版本号: v3.36.0 → **v3.37.0** (versionCode 149 → 150)
+- 培训模块总数: **49 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 总计 15 个文件变更
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
+  和弦转位听辨、织体类型辨识、节奏型记忆、音程序列记忆等）
+
