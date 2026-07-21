@@ -733,6 +733,15 @@ fun LibraryScreen(
                 })
             }
 
+            // === Timbre brightness recognition training entry ===
+            item {
+                TimbreBrightnessEntryCard(onClick = {
+                    navController.navigate(Screen.TimbreBrightnessTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
+
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -3775,6 +3784,46 @@ fun PolyphonicMotionEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "复调运动辨识训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun TimbreBrightnessEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🔆", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "音色亮度辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "聆听泛音丰富度 · 纯净 / 柔和 / 明亮 / 辉煌 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "音色亮度辨识训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
