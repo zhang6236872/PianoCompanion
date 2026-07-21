@@ -7436,3 +7436,85 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
   声部进入顺序辨识、动机发展辨识等）
+
+---
+
+## v3.36.0 — 动机发展辨识训练（Motif Transformation Recognition Training）(2026-07-22)
+
+### 目标
+新增一个训练**辨识动机变换手法**的听辨训练模块。用户聆听原始动机与变换后动机，
+判断变换类型（重复/模进/倒影/逆行/节奏扩张/节奏紧缩）。这是音乐分析中最核心的能力——
+理解作曲家如何从一个短小动机发展出丰富的音乐材料。
+
+与既有模块的区分：
+- `sequencerecognition` 问「旋律中是否有重复/模进模式」
+- `melodiccontour` 问「单条旋律的整体轮廓形状」
+- 本模块问「动机被做了**哪种变换**」——对比两段旋律，判断变换类型
+
+### 设计
+**6 种动机变换类型**:
+| 变换 | 中文名 | 符号 | 核心特征 |
+|------|--------|------|----------|
+| REPETITION | 重复 | ⟳ | 音高+节奏完全相同 |
+| SEQUENCE | 模进 | ↗ | 整体移高/移低，轮廓不变 |
+| INVERSION | 倒影 | ⇅ | 音程方向反转，第一音不变 |
+| RETROGRADE | 逆行 | ↔ | 音符倒序 |
+| AUGMENTATION | 节奏扩张 | ⊕ | 时值加倍（变慢） |
+| DIMINUTION | 节奏紧缩 | ⊖ | 时值减半（变快） |
+
+**三级难度**:
+| 难度 | 选项数 | 候选集 | 基础音符时值 |
+|------|--------|--------|-------------|
+| 初级 | 2 | 重复 vs 模进 | 380ms |
+| 中级 | 4 | + 倒影/逆行 | 320ms |
+| 高级 | 6 | 全部 6 种 | 280ms |
+
+**音频设计**: 播放原始动机 → 500ms 静音间隔 → 播放变换后动机，用户对比辨识。
+4 音符动机，小音程步进（±2/±3 半音），主音池 C4-A4 白键，模进移位 ±5/±7 半音。
+
+### 架构（遵循既有模块模式）
+1. **MotifTransformationModels** — 数据模型：`MotifTransformation` 枚举（6 级）、
+   `MotifTransformationDifficulty` 枚举、`MotifTransformationQuestion`、`MotifTransformationAnswerRecord`
+2. **MotifTransformationEngine**（纯 Kotlin）— 出题引擎：seed 确定性、随机主音+音程步进生成 4 音符动机、
+   6 种变换实现（`applyTransformation` 顶层函数）、模进移位安全性检查（pickSequenceShift 确保 MIDI 范围）
+3. **MotifTransformationSession**（纯 Kotlin）— 会话状态机：start→submit→next 生命周期，
+   连击、准确率、防御性副本、双击防护、历史保序
+4. **MotifTransformationProgress**（纯 Kotlin）— 跨会话进度跟踪：累计统计、难度隔离、
+   手动 JSON 序列化（无外部依赖，容错解析）、5 字段严格校验
+5. **MotifTransformationAudioBuilder**（纯 Kotlin）— PCM 音频构建器：渲染原始+变换两段旋律，
+   加法合成（基频+4 谐波+指数衰减包络+tanh 软限幅）、段间 500ms 间隔、前导/尾部静音
+6. **MotifTransformationPlayer** — Android AudioTrack MODE_STATIC 播放器
+7. **MotifTransformationViewModel** — AndroidViewModel，连接领域层与 UI
+8. **MotifTransformationTrainingScreen** — Material 3 Compose 界面
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.MotifTransformationTraining`
+  ("motif_transformation_training", "动机发展辨识", `Icons.Filled.Loop`) + composable 目标
+- **LibraryScreen.kt**: 新增 `MotifTransformationEntryCard`（🔄 图标、"动机发展辨识训练"标题、
+  "辨识动机变换 · 重复/模进/倒影/逆行/扩张/紧缩 · 3 难度"描述，secondaryContainer 配色）
+
+### 测试（全部通过）
+- `MotifTransformationEngineTest`: 30 个（选项正确性/难度缩放(2→4→6选项)/确定性种子复现/
+  6 种变换正确性验证/空列表处理/MIDI 范围约束/模进等距移位/倒影第一音不变/逆行倒序/
+  扩张2倍/紧缩0.5倍/500 种子全覆盖 6 种变换）
+- `MotifTransformationSessionTest`: 21 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空）
+- `MotifTransformationProgressTest`: 25 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/多难度序列化）
+- `MotifTransformationAudioBuilderTest`: 36 个（渲染非空/确定性/FloatArray 输出/
+  音高变换验证(重复一致/模进移位/倒影第一音/逆行倒序/扩张加倍/紧缩减半)/
+  段间间隔验证/起音单调/MIDI→频率转换/时长估算/自定义采样率/6 种变换全部渲染）
+
+### Git
+- 分支: feature/motif-transformation-training → merge main（--no-ff）
+- 版本号: v3.35.0 → **v3.36.0** (versionCode 148 → 149)
+- 培训模块总数: **48 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 总计 15 个文件变更，2931 行新增
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
+  声部进入顺序辨识、和弦转位听辨、织体类型辨识等）
