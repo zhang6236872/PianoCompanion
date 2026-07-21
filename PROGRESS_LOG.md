@@ -7361,3 +7361,78 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
   声部进入顺序辨识、动机发展辨识等）
+
+---
+
+## v3.35.0 — 音色亮度辨识训练（Timbre Brightness Recognition Training）(2026-07-21)
+
+### 目标
+新增一个训练**感知音色亮度/谐波丰富度**的听辨训练模块。与既有的 `timbretraining`
+（通过音色识别**乐器**种类）截然不同——本模块将**谐波数量**作为唯一变量进行隔离训练，
+帮助用户建立"谐波越丰富→音色越明亮/辉煌"的感知映射。这是音色感知维度上一个独立的
+训练方向（亮度维度 vs 乐器身份维度）。
+
+### 设计
+**四级亮度**（唯一变量 = 谐波数量）:
+| 亮度级别 | 中文名 | 谐波数 | 音色特征 |
+|----------|--------|--------|----------|
+| PURE | 纯净 | 1 | 仅基频，纯正弦，暗淡/纯净 |
+| DARK | 柔和 | 3 | 基频+2阶谐波，温暖/柔和 |
+| BRIGHT | 明亮 | 6 | +更高阶谐波，清晰/明亮 |
+| BRILLIANT | 辉煌 | 10 | 全谐波列，尖锐/辉煌 |
+
+谐波幅度按 1/n 衰减（n=谐波阶数），模拟真实乐器的泛音结构。所有亮度级别使用同一基频
+（A4=440Hz），消除音高干扰，使训练纯粹聚焦于音色亮度维度。
+
+**三级难度**:
+| 难度 | 选项数 | 候选集 |
+|------|--------|--------|
+| 初级 | 2 选 1 | PURE vs BRILLIANT（极端对比） |
+| 中级 | 3 选 1 | + BRIGHT |
+| 高级 | 4 选 1 | 全部 4 种 |
+
+### 架构（7 层，遵循既有模块模式）
+1. **TimbreBrightnessModels** — 数据模型：`TimbreBrightness` 枚举（4级）、
+   `TimbreBrightnessDifficulty` 枚举、`TimbreBrightnessQuestion`、`TimbreBrightnessAnswerRecord`
+2. **TimbreBrightnessEngine**（纯 Kotlin）— 出题引擎：seed 确定性、难度缩放（选项数递增）、
+   选项去重打乱、正确答案分布均匀
+3. **TimbreBrightnessSession**（纯 Kotlin）— 会话状态机：start→submit→nextQuestion 生命周期，
+   连击、准确率、防御性副本、双击防护、历史保序
+4. **TimbreBrightnessProgress**（纯 Kotlin）— 跨会话进度跟踪：累计统计、难度隔离、
+   手动 JSON 序列化（无外部依赖，容错解析）、5 字段严格校验
+5. **TimbreBrightnessAudioBuilder**（纯 Kotlin）— PCM 音频构建器：渲染不同谐波数量的波形，
+   1/n 谐波衰减、短淡入淡出防爆音、FloatArray 输出、确定性
+6. **TimbreBrightnessPlayer** — Android AudioTrack PCM 流播放器
+7. **TimbreBrightnessViewModel** — AndroidViewModel，连接领域层与 UI
+8. **TimbreBrightnessTrainingScreen** — Material 3 Compose 界面
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.TimbreBrightnessTraining`
+  ("timbre_brightness_training", "音色亮度辨识", `Icons.Filled.Tune`) + composable 目标
+- **LibraryScreen.kt**: 新增 `TimbreBrightnessEntryCard`（🔆 图标、"音色亮度辨识训练"标题、
+  "聆听不同谐波丰富度的音色 · 纯净 / 柔和 / 明亮 / 辉煌 · 3 难度"描述，tertiaryContainer 配色）
+
+### 测试（84 个新单元测试全部通过）
+- `TimbreBrightnessEngineTest`: 19 个（选项正确性/难度缩放(2→3→4选项)/确定性种子复现/
+  选项唯一性/正确答案在选项中/全部亮度级别覆盖）
+- `TimbreBrightnessSessionTest`: 18 个（生命周期/连击/准确率/防御性副本/双击防护/历史保序）
+- `TimbreBrightnessProgressTest`: 21 个（累计统计/难度隔离/JSON 往返/容错解析/严格 5 字段校验/
+  缺字段拒绝/负数回退 0/未知键忽略/全局聚合统计）
+- `TimbreBrightnessAudioBuilderTest`: 26 个（渲染非空/FloatArray 输出/确定性/归一化范围/
+  谐波数差异验证(PURE无谐波/DARK3阶/BRIGHT6阶/BRILLIANT10阶)/短淡入淡出/
+  1/n谐波衰减/自定义采样率/全部亮度级别渲染）
+
+### Git
+- 分支: feature/timbre-brightness-training → merge main（--no-ff）
+- 版本号: v3.34.0 → **v3.35.0** (versionCode 147 → 148)
+- 培训模块总数: **47 个**
+
+### 代码统计
+- 新增: 8 个源文件（TimbreBrightnessModels/TimbreBrightnessEngine/TimbreBrightnessSession/
+  TimbreBrightnessProgress/TimbreBrightnessAudioBuilder/TimbreBrightnessPlayer/
+  TimbreBrightnessViewModel/TimbreBrightnessTrainingScreen）
+  + 4 个测试文件 = 12 个文件
+
+### 下一步计划
+- 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
+  声部进入顺序辨识、动机发展辨识等）
