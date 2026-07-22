@@ -782,6 +782,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Chord inversion recognition training entry ===
+            item {
+                ChordInversionEntryCard(onClick = {
+                    navController.navigate(Screen.ChordInversionTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -4064,6 +4072,46 @@ fun CompoundMeterEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "复合节拍听辨训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun ChordInversionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎹", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "和弦转位听辨训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "辨识和弦的原位与转位 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "和弦转位听辨训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
