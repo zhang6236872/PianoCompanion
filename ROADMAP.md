@@ -1,143 +1,47 @@
-# 🎹 Piano Companion — 开发路线图
+# Piano Companion — 听辨训练模块开发路线图
 
-> 最后更新: 全部路线图 Phase 1-4 完成 + 后续增强 离线同步引擎 (v2.2.0) + 真实 OMR 识谱引擎 (v2.3.0) + OMR 节奏分析 (v2.4.0) + OMR 连梁组切分 (v2.5.0) + OMR 谱号/调号/拍号识别 (v2.6.0) + OMR 中音/次中音谱号识别 (v2.7.0) + OMR 附点音符识别 (v2.8.0) + OMR 符尾精细层数识别 (v2.9.0) + OMR 休止符识别 (v2.10.0) + OMR 倾斜校正 (v2.12.0) + OMR 自适应二值化 (v2.13.0) + OMR 二值图像降噪 (v2.14.0) + OMR 透视变形校正 (v2.15.0) + OMR 多系统页面时间轴排序修复 (v2.16.0) + OMR 高大旗形休止符与四分休止符区分 (v2.20.0) + OMR 延音线(tie)检测 (v2.25.0) + OMR 琶音(arpeggio)检测 (v2.41.0) + 成就徽章系统 (v2.56.0) + 练习目标追踪系统 GoalTracker (v2.57.0) + 成就解锁持久化与通知 AchievementStore (v2.59.0) + 乐谱难度评估引擎 DifficultyEstimator (v2.60.0) + 导入乐谱难度评估接入 ImportedScoreInfo.from 工厂 (v2.61.0) + 练习日历热力图 PracticeCalendarHeatmap (v2.62.0) + 调号识别训练 KeySigTrainer (v2.79.0) + 节奏视读训练 RhythmReading (v2.80.0) + 训练数据汇总仪表盘 TrainingSummary (v2.81.0) + 综合练习模式 MixedPractice (v2.82.0) + 节拍器细分模式 Subdivision (v2.83.0) + 节拍器预设管理 MetronomePresetStore (v2.84.0) + 乐谱收藏 FavoriteStore (v2.85.0) + 乐谱展示放大+设置整合 (v2.86.0) + 节拍器定时自动停止 AutoStopEngine (v2.87.0) + OMR 高级流程总结 (v2.88.0) + 音乐术语词典 MusicalTerms (v2.89.0) + 和弦听辨训练 ChordTraining (v2.90.0) + 节奏型听辨训练 RhythmPatternEarTraining (v2.91.0) + 旋律记忆训练 MelodyMemoryTraining (v2.92.0) + 音阶听辨训练 ScaleTraining (v2.96.0) + 和弦转位听辨训练 InversionTraining (v2.97.0)
-> GitHub: https://github.com/zhang6236872/PianoCompanion
+## 当前状态
+- 已完成模块: 49 个 (v3.37.0)
+- 本路线图模块: 7 个
+- **完成全部 7 个后，暂停自主开发**
 
----
+## 待开发模块（按顺序）
 
-## ✅ 已完成 (v1.0.0 → v1.2.0)
+### #50 — 泛音列辨识 (Harmonic Series Recognition)
+- 版本: v3.38.0
+- 训练目标: 辨识基频上方泛音列的音高位置
+- 维度: 谐波感知
 
-### v1.0.0 — MVP 核心
-- [x] YIN 音高检测算法
-- [x] 音符起始检测 + 切分
-- [x] 在线 DTW 实时对齐
-- [x] ScoreFollower 全链路协调
-- [x] MusicXML 解析器
-- [x] Android 麦克风采集 (44.1kHz)
-- [x] 5 页面导航 (乐谱库/练习/节拍器/统计/设置)
-- [x] 19 个单元测试全部通过
+### #51 — 调式音阶色彩对比 (Mode Scale Color Comparison)
+- 版本: v3.39.0
+- 训练目标: 辨别不同调式（大调/小调/多利亚/混合利底亚等）的色彩差异
+- 维度: 调式色彩
 
-### v1.1.0 — 功能增强
-- [x] 五线谱渲染引擎 (Canvas 手绘)
-- [x] 4 首内置乐谱 (欢乐颂/小星星/铃儿响叮当/C大调音阶)
-- [x] 练习会话持久化 (SharedPreferences + Gson)
-- [x] 节拍器 (BPM/拍号/预设/节拍灯)
-- [x] 练习统计 (趋势图/连续天数/会话历史)
-- [x] 乐谱选择器
+### #52 — 复合节拍听辨 (Compound Meter Recognition)
+- 版本: v3.40.0
+- 训练目标: 辨识 6/8、9/8、12/8 等复合节拍
+- 维度: 节拍感知
 
-### v1.2.0 — UI 打磨
-- [x] Material Design 3 配色系统
-- [x] 暗色主题 + Android 12+ 动态色彩
-- [x] 统一字体/圆角/间距规范
-- [x] 6 个可复用 UI 组件库
-- [x] 页面切换滑动动画
-- [x] 练习页：准确率环形进度、录制脉冲、动画反馈
-- [x] 统计页：渐变卡片、趋势折线图、会话列表
-- [x] 节拍器：弹跳动画节拍灯、速度名称
-- [x] 乐谱库：难度徽章、分区标题
+### #53 — 和弦转位听辨 (Chord Inversion Recognition)
+- 版本: v3.41.0
+- 训练目标: 辨识三和弦/七和弦的原位/第一转位/第二转位
+- 维度: 和弦结构
 
----
+### #54 — 织体类型辨识 (Texture Type Recognition)
+- 版本: v3.42.0
+- 训练目标: 区分单声部/主调/复调/支声复调等织体类型
+- 维度: 织体感知
 
-## 🔜 下一阶段规划 / 后续增强
+### #55 — 节奏型记忆 (Rhythm Pattern Memory)
+- 版本: v3.43.0
+- 训练目标: 听后回忆并复现节奏型
+- 维度: 节奏记忆
 
-### 后续增强 (v2.2.0+): 超出原路线图 — 部分完成
-> 目标：补齐占位功能的真实实现
+### #56 — 音程序列记忆 (Interval Sequence Memory)
+- 版本: v3.44.0
+- 训练目标: 听后回忆并按顺序排列音程序列
+- 维度: 旋律记忆
 
-| # | 任务 | 优先级 | 说明 |
-|---|------|--------|------|
-| 1 | **离线优先同步引擎** | 🟡 P1 | SyncEngine: LWW 冲突解决 + schema 迁移 + 校验和 ✅ (v2.2.0) |
-| 2 | **OMR 引擎真实模型** | 🟡 P1 | 本地 CV 管线: Otsu→谱线检测/去除→音符定位→音高映射 ✅ (v2.3.0) |
-| 2b | **OMR 节奏分析** | 🟡 P1 | 符干/横梁/符尾 → 真实时值 (全/二/四/八/十六分) ✅ (v2.4.0) |
-| 2c | **OMR 连梁组切分** | 🟡 P1 | 多符头+横梁融合块 → 列投影切分独立符头 ✅ (v2.5.0) |
-| 2d | **OMR 谱号/调号/拍号识别** | 🟡 P1 | SignatureDetector: 几何特征判谱号 + 竖直笔画数判升降号 + 5×7 网格模板匹配拍号；调号感知音高映射；签名区符头过滤 ✅ (v2.6.0) |
-| 2e | **OMR 中音/次中音谱号(C clef)** | 🟡 P1 | classifyCClef: 竖直质心 + 谱线横跨判定区分中音(中央线)/次中音(第2线)谱号；PitchMapper 新增 C 谱表底线 GDC ✅ (v2.7.0) |
-| 2f | **OMR 附点音符识别** | 🟡 P1 | countAugmentationDots: 符头右侧三态墨块分类(紧凑/高窄/宽)检测单/双附点；toMillis dotCount 倍率 ×1.5/×1.75 ✅ (v2.8.0) |
-| 2g | **OMR 符尾(flag)精细层数** | 🟡 P1 | detectFlags 重写: 符干方向感知 + 逐行水平墨迹投影计数八/十六/三十二分符尾；移除有害纵向容差 ✅ (v2.9.0) |
-| 2h | **OMR 休止符识别** | 🟡 P1 | RestDetector: 全/二分(中央间位置判别)/四分(锯齿形)/八分(旗形)休止符几何分类；OmrPipeline TimelineItem 时间轴合并；recoverNotehead 均匀窄带守卫 ✅ (v2.10.0) |
-| 2i | **OMR 十六分/三十二分休止符** | 🟡 P1 | flaggedRest 旗钩层数计数区分八/十六/三十二分休止符 ✅ (v2.11.0) |
-| 2j | **OMR 倾斜校正 (deskew)** | 🟡 P1 | Deskewer: 投影峰值最大化估计倾斜角(±12°) + 最近邻逆映射旋转；OmrPipeline 步骤 0 预处理；附带修复 SignatureDetector 空列表崩溃 ✅ (v2.12.0) |
-| 2k | **OMR 自适应二值化** | 🟡 P1 | AdaptiveBinarizer: 局部 Otsu 瓦片网格(默认 40px) + 双线性插值跨瓦片过渡 + 类均值中点阈值保持双边余量 + 退化瓦片回退全局；RealOmrEngine 默认管线替换 ✅ (v2.13.0) |
-| 2l | **OMR 二值图像降噪** | 🟡 P1 | BinaryDenoiser: 连通块面积阈值去椒噪声(不破坏 1px 谱线) + 8 邻域阈值填盐噪声(不误填谱线间隙)；OmrPipeline 步骤 0.5 预处理；降噪统计驱动用户提示 ✅ (v2.14.0) |
-| 2m | **OMR 透视变形校正 (keystone)** | 🟡 P1 | KeystoneCorrector: 逐列百分位法(P60/P40)检测谱线收敛(系统高度左右差异≥8%) + 逐列垂直仿射重映射(rubber sheet)拉直谱线恢复等距；近似正面拍摄不校正无回归；OmrPipeline 降噪后预处理 ✅ (v2.15.0) |
-| 2n | **OMR 多系统页面时间轴排序** | 🟡 P1 | TimelineItem 新增 systemIdx + compareBy(systemIdx,x) 排序(替代纯 x 排序) + 休止符 forEachIndexed 配对系统索引 + 和弦分组 systemIdx 守卫(修复跨系统泄漏)；单系统无回归 ✅ (v2.16.0) |
-| 2o | **OMR 小节线检测** | 🟡 P1 | BarlineDetector: 竖直列投影检测 SINGLE/DOUBLE/FINAL/REPEAT_START/REPEAT_END/DASHED 小节线 + 反复圆点连通性过滤；measureIndex 从视觉小节线位置计算 ✅ (v2.17.0/v2.18.0) |
-| 2p | **OMR 反复跳房子(volta)检测** | 🟡 P1 | VoltaDetector: 顶线上方方括号 + 左右竖钩验证 + 序号连通块识别；修复 SignatureDetector 误判序号数字为拍号的 bug ✅ (v2.19.0) |
-| 2q | **OMR 高大旗形休止符与四分休止符区分** | 🟡 P1 | tallFlaggedRest: 在四分休止符前拦截高度≥1.5间距的旗形休止符 + countStrongFlags 强对比旗钩计数(中位数基线+高对比阈值)区分旗形结构与锯齿笔画 ✅ (v2.20.0) |
-| 2r | **OMR 延音线(tie)检测** | 🟡 P1 | TieDetector: 列投影覆盖率法(≥75%)检测同音高符头间连续弧线 + 音高判别(Y差异≤0.5间距排除slur) + 延音线链(A→B→C)支持；OmrPipeline 被 tie 的第二个音符时值合并到第一个 ✅ (v2.25.0) |
-| 2s | **调号识别训练 (KeySigTrainer)** | 🟡 P1 | keysig/: 五度圈调号出题引擎(KeySigEngine 30 种调性) + 纯 Kotlin 会话/进度(JSON) + AudioTrack 音阶试听 + Compose 五线谱 Canvas 渲染(高低音谱号升降号) + 3 难度(初级0-3/中级0-5/高级大调+小调) + 4 选项选择题 + LibraryScreen 入口卡片；53 单元测试通过 ✅ (v2.79.0) |
-| 2t | **旋律记忆训练 (MelodyMemory)** | 🟡 P1 | melodymemory/: 确定性出题引擎(MelodyMemoryEngine withSeed) — 随机起始音C4-G4 + 按难度音程步进(初级二度/中级三度/高级四五度) + 旋律走向(上行↑/下行↓/同音→)生成 + 4选项含干扰项 + 穷举回退保证选项数; MelodyMemorySession 状态机(出题→听辨→答题→判定→下一题 + 连击追踪); MelodyMemoryProgress 手动JSON序列化容错持久化; MelodyMemoryAudioBuilder 复用PianoToneSynthesizer依次渲染旋律PCM + SLOW/NORMAL速度控制; MelodyMemoryPlayer AudioTrack播放; MelodyMemoryViewModel 协程管理; Material 3 Compose UI(难度/速度选择→播放→箭头答题→反馈→下一题); 3难度(BEGINNER 3音/INTERMEDIATE 4音/ADVANCED 5音) + 2速度; AppNavigation路由 + LibraryScreen入口卡片；81 单元测试通过 ✅ (v2.92.0) |
-| 2u | **节奏听写训练 (RhythmDictation)** | 🟡 P1 | rhythmdictation/: 确定性出题引擎(RhythmDictationEngine withSeed) — 8种2拍节奏单元(♩♩/♩♪♪/♩.♪/♪♪♪♪/𝅗𝅥/♩𝄽/𝄽♪♪/♪♩♪) + 3难度(初级2选1/中级4选1/高级6选1) + 3速度(慢60/中90/快120BPM) + computeOnsetTimes onset时间序列计算; RhythmDictationSession 状态机(start→answer→next + 连击追踪); RhythmDictationProgress 手动JSON序列化容错持久化; RhythmDictationAudioBuilder 等高click正弦波包络PCM合成(880Hz/10ms衰减常数) + per-cell/per-question渲染; RhythmDictationPlayer AudioTrack播放; RhythmDictationViewModel 协程管理; Material 3 Compose UI(难度+速度选择→播放→符号选项答题→反馈→进度统计); AppNavigation路由rhythm_dictation + LibraryScreen入口卡片(🥁); 4902 单元测试通过(含45+新用例) ✅ (v3.7.0) |
-| 3 | **云端同步传输层** | 🟢 P2 | 接入 Firebase/Google Drive, 复用已就绪的 SyncEngine |
-| 4 | **真机端到端测试** | 🔴 P0 | 需物理设备验证音频全链路 |
-
-### Phase 2: 乐谱增强 (v1.4.0) — ✅ 完成
-> 目标：更丰富的乐谱支持和显示
-
-| # | 任务 | 优先级 | 说明 |
-|---|------|--------|------|
-| 1 | **MIDI 文件导入** | 🔴 P0 | 解析 MIDI → Score 对象 ✅ |
-| 2 | **五线谱增强** | 🟡 P1 | 升降号、休止符、连音线、力度标记 ✅ |
-| 3 | **自动翻页优化** | 🟡 P1 | 智能预判 + 平滑滚动替代跳页 ✅ |
-| 4 | **多页面乐谱** | 🟡 P1 | 支持超过一页的长曲 ✅ |
-| 5 | **乐谱标签/搜索** | 🟢 P2 | 按作曲家/难度/标签分类 ✅ |
-
-### Phase 3: 高级功能 (v2.0.0) — ✅ 完成
-> 目标：拍照识谱 + 社区功能
-
-| # | 任务 | 优先级 | 说明 |
-|---|------|--------|------|
-| 1 | **OMR 拍照识谱** | 🔴 P0 | TFLite/Audiverris 集成，拍照→MusicXML (框架占位) ✅ |
-| 2 | **左右手分离** | 🟡 P1 | 分别跟踪高音/低音谱表 ✅ |
-| 3 | **练习报告导出** | 🟡 P1 | 分享练习统计到社交平台 ✅ |
-| 4 | **节拍器与练习联动** | 🟡 P1 | 练习时同步节拍器 ✅ |
-| 5 | **云端同步** | 🟢 P2 | 练习记录跨设备同步 (本地备份占位) ✅ |
-
-### Phase 4: 打磨发布 (v2.1.0+) — ✅ 完成
-> 目标：准备 Google Play 上架
-
-| # | 任务 | 优先级 |
-|---|------|--------|
-| 1 | App 图标 + 启动页 ✅ | 🔴 P0 |
-| 2 | 多语言支持 (英/中/日) ✅ | 🟡 P1 |
-| 3 | Widget 桌面快捷练习 ✅ | 🟢 P2 |
-| 4 | Wear OS 节拍器 ✅ | 🟢 P2 |
-| 5 | Google Play 上架 ✅ | 🔴 P0 |
-
----
-
-## 📐 技术架构
-
-```
-┌─────────────────────────────────────────┐
-│              Compose UI                  │
-│  Library │ Practice │ Metronome │ Stats  │
-├─────────────────────────────────────────┤
-│            ViewModel Layer               │
-│  PracticeVM │ StatsVM │ MetronomeVM     │
-├─────────────────────────────────────────┤
-│            Domain Layer                  │
-│  ScoreFollower │ OnlineDTW │ MatchLogic │
-├─────────────────────────────────────────┤
-│           Audio Engine                   │
-│  AudioRecorder │ PitchDetector(YIN)     │
-│  NoteDetector  │ Metronome               │
-├─────────────────────────────────────────┤
-│            Data Layer                    │
-│  ScoreRepository │ StatsRepository       │
-│  MusicXmlParser  │ DemoScores            │
-└─────────────────────────────────────────┘
-```
-
-## 📊 代码统计
-- Kotlin 文件: 460 个
-- 代码行数: 125000+ 行
-- 单元测试: 4902 个 (100% 通过)
-- 版本标签: v1.0.0 → v3.7.0 (全部完成)
-
-## 🔀 分支策略
-```
-main          ← 稳定版本，打 tag
-├── ui-polish ← UI 优化分支 (已合并)
-├── develop   ← 下一步开发分支
-└── feature/* ← 各功能分支
-```
+## ⛔ 完成标志
+当 versionCode 达到 157 (v3.44.0) 时，本路线图全部完成。
+届时应暂停自主开发 cron 任务。
