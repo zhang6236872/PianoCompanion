@@ -7670,3 +7670,70 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 模块 #51: 调式音阶色彩对比 (Mode Scale Color Comparison)
 - 路线图 7 个模块已完成 1/7，继续自主开发
 
+---
+
+## 2026-07-23 (自主开发)
+- **模块 #51 (v3.39.0): 调式音阶色彩对比训练 (Mode Scale Color Comparison) — ✅ 完成**
+  - 训练目标：辨别 7 种教会调式（伊奥尼亚/多利亚/弗里几亚/利底亚/混合利底亚/伊奥利亚/洛克利亚）
+    的「明暗色彩」差异。不同调式的色彩由其与标准大调/小调的差异音决定——升高的大三度/大六度/
+    大七度使调式更明亮，降低的小二度/小五度/小六度使调式更暗淡。
+  - 新增纯 Kotlin 领域层 `modescale/`（无 Android 依赖，完全可单元测试）：
+    - `ModeType` 枚举：7 种教会调式 × 精确半音间距 `semitones`（相对主音）× 色彩标签 ×
+      特征音程名称 × 亮度指数（-3 最暗 ~ +3 最亮）× 教学描述
+    - `ModeScaleDifficulty` 枚举：3 难度
+      （初级：大调 vs 小调 · 2 选项 / 中级：4 种调式 · 4 选项 / 高级：7 种教会调式 · 7 选项）
+    - `ModeScaleEngine`：确定性种子出题引擎（随机选目标调式 + 构建干扰项 + 打乱选项）
+    - `ModeScaleSession`：会话状态机（连击/准确率/防御性副本/答题历史）
+    - `ModeScaleAudioBuilder`：PCM 音频渲染器
+      （主音参照 → 上行音阶 → 下行音阶三段式播放结构）
+    - `ModeScaleProgress`：跨会话进度跟踪 × 手动 JSON 序列化（容错解析 + 严格 5 字段校验）
+  - **音频设计**：
+    - 主音参照段（复合音色，1.5 倍音符时长）帮助用户锚定调式中心
+    - 上行音阶（主音 → 八度）+ 下行音阶（八度 → 主音）完整呈现调式的音程结构
+    - 复合音色（基频 + 3 阶谐波 + 指数衰减包络 + tanh 软限幅）接近真实乐器听感
+    - 特征音程在上下行中与邻音形成鲜明对比（如利底亚增四度、弗里几亚小二度）
+  - **调式色彩光谱可视化**：答题后展示 7 种调式按亮度排列的色彩柱（从暗蓝到亮黄），
+    目标调式高亮
+  - 新增 Android 层 `ModeScalePlayer`（AudioTrack MODE_STATIC 播放器）+ `ModeScaleViewModel`
+  - 新增 Material 3 Compose UI `ModeScaleTrainingScreen`（难度选择 + 播放/选项作答/反馈 +
+    色彩可视化 + 统计 + 听辨技巧说明）
+  - AppNavigation 路由 `mode_scale_training` + LibraryScreen 入口卡片（🎨 图标）
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.ModeScaleTraining`
+  ("mode_scale_training", "调式色彩对比", `Icons.Filled.Palette`) + composable 目标
+- **LibraryScreen.kt**: 新增 `ModeScaleEntryCard`（🎨 图标、"调式音阶色彩对比训练"标题、
+  "辨别7种教会调式的明暗色彩 · 3 难度"描述，secondaryContainer 配色）
+
+### 测试（全部通过）
+- `ModeScaleEngineTest`: 15 个（选项数量匹配难度/无重复/正确答案在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 仅用大调小调/intermediate 用4调式/
+  advanced 用7调式/大样本覆盖验证/选项合法/displayName 匹配/tonicMidi 匹配）
+- `ModeScaleSessionTest`: 18 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/lastAnswer/难度返回）
+- `ModeScaleProgressTest`: 20 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/负数回退）
+- `ModeScaleAudioBuilderTest`: 16 个（参照音/上行音阶 MIDI 精确匹配/下行音阶逆序/
+  利底亚增四度/多利亚大六度/弗里几亚小二度/洛克利亚减五度/混合利底亚小七度/
+  伊奥利亚小调特征/事件无重叠/渲染非空/值域[-1,1]/MIDI转频率/MIDI 60=C4/MIDI 69=A4/
+  空事件处理/预估时长）
+- 全部单元测试: 7549 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+
+### 修复
+- 初次测试中 2 个断言失败（利底亚增四度索引 4→3、多利亚大六度索引 6→5），
+  原因是音阶级数 1-indexed 与数组索引 0-indexed 混淆，修正后全部通过
+
+### Git
+- 分支: feature/mode-scale-color-comparison → merge main（--no-ff）
+- 版本号: v3.38.0 → **v3.39.0** (versionCode 151 → 152)
+- 培训模块总数: **51 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 4 个测试文件 = 11 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 路线图 7 个模块已完成 2/7
+
+### 下一步计划
+- 模块 #52: 复合节拍听辨 (Compound Meter Recognition)
+- 路线图 7 个模块已完成 2/7，继续自主开发
+
