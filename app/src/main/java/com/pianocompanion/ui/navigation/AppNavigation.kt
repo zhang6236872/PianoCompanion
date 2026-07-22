@@ -94,6 +94,7 @@ import com.pianocompanion.ui.voiceentryorder.VoiceEntryTrainingScreen
 import com.pianocompanion.ui.harmonicseries.HarmonicSeriesTrainingScreen
 import com.pianocompanion.ui.modescale.ModeScaleTrainingScreen
 import com.pianocompanion.ui.compoundmeter.CompoundMeterTrainingScreen
+import com.pianocompanion.ui.chordinversion.ChordInversionTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -168,6 +169,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object HarmonicSeriesTraining : Screen("harmonic_series_training", "泛音列辨识", Icons.Filled.Waves)
     data object ModeScaleTraining : Screen("mode_scale_training", "调式色彩对比", Icons.Filled.Palette)
     data object CompoundMeterTraining : Screen("compound_meter_training", "复合节拍听辨", Icons.Filled.MusicNote)
+    data object ChordInversionTraining : Screen("chord_inversion_training", "和弦转位听辨", Icons.Filled.Piano)
 }
 
 private val screens = listOf(
@@ -480,6 +482,9 @@ fun AppScaffold() {
             }
             composable(Screen.CompoundMeterTraining.route) {
                 CompoundMeterTrainingScreen()
+            }
+            composable(Screen.ChordInversionTraining.route) {
+                ChordInversionTrainingScreen()
             }
         }
     }

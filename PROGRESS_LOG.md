@@ -7803,3 +7803,82 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 模块 #53: 和弦转位听辨 (Chord Inversion Recognition)
 - 路线图 7 个模块已完成 3/7，继续自主开发
 
+---
+
+## 2026-07-23 (自主开发) — 模块 #53: 和弦转位听辨 (Chord Inversion Recognition)
+
+### 概述
+新增「和弦转位听辨」训练模块（第 4/7 个路线图模块）。训练用户听辨三和弦（大三/小三/增三/减三）
+和七和弦（大七/属七/小七/减七）的原位及各转位（第一/第二/第三转位），提升对和弦低音排列的
+听觉敏感度。完全复刻 compoundmeter 模块架构。
+
+### 新增文件（纯 Kotlin 逻辑层 `com.pianocompanion.chordinversion`）
+- **ChordInversionModels.kt** — 数据模型：
+  - `ChordType` 枚举（MAJOR/MINOR/AUGMENTED/DIMINISHED/MAJOR7/DOMINANT7/MINOR7/DIMINISHED7），
+    每种含 MIDI 音程偏移（根音、三音、五音、七音）
+  - `ChordInversion` 枚举（ROOT_POSITION/FIRST_INVERSION/SECOND_INVERSION/THIRD_INVERSION）
+  - `ChordInversionDifficulty` 枚举（BEGINNER 2选项三和弦原位vs第一转位 /
+    INTERMEDIATE 3选项三和弦全转位 / ADVANCED 4选项七和弦全转位）
+  - `ChordInversionQuestion` / `ChordInversionAnswer` / `ChordInversionAnswerRecord`
+- **ChordInversionEngine.kt** — 确定性种子出题引擎：
+  - 按难度生成题（随机根音 MIDI + 随机和弦类型 + 随机转位）
+  - 干扰选项从合法转位中选取，保证正确答案唯一
+  - 种子化随机保证可复现
+- **ChordInversionSession.kt** — 会话状态机：
+  - start/submit/next 生命周期，连击(streak/bestStreak)、准确率、防御性副本、答题历史
+- **ChordInversionProgress.kt** — 跨会话进度跟踪：
+  - 手动 JSON 序列化，容错解析（逐字符扫描），严格 5 字段校验
+  - 按难度隔离统计（每难度独立 attempts/correct/streak/bestAccuracy）
+- **ChordInversionAudioBuilder.kt** — PCM 音频渲染器：
+  - 将和弦各音按转位排列计算 MIDI 音高（转位 = 将和弦最低音上移八度）
+  - 加法合成渲染柱式和弦（基频 + 7 谐波 + 指数衰减包络 + tanh 软限幅）
+  - 各音同时发声（block chord），采样率 44100
+- **ChordInversionPlayer.kt** — Android AudioTrack (MODE_STATIC) 播放器
+- **ChordInversionViewModel.kt** — AndroidViewModel 状态管理
+
+### 新增文件（UI 层 `com.pianocompanion.ui.chordinversion`）
+- **ChordInversionTrainingScreen.kt** — Material 3 Compose UI：
+  - 难度选择（初级/中级/高级）
+  - 播放按钮（重新播放）+ 转位选项作答（2-4 个 OutlinedButton）
+  - 答题反馈（正确/错误 + 教学描述：和弦名称 + 转位 + 低音成员）
+  - 和弦成员可视化（Canvas 柱状图：根音深橙/三音紫/五音绿/七音蓝 + 音名标注）
+  - 统计卡片（连击/准确率/总题数）+ 听辨技巧说明
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.ChordInversionTraining`
+  ("chord_inversion_training", "和弦转位听辨", `Icons.Filled.Piano`) + composable 目标
+- **LibraryScreen.kt**: 新增 `ChordInversionEntryCard`（🎹 图标、"和弦转位听辨训练"标题、
+  "辨识和弦的原位与转位 · 3 难度"描述，tertiaryContainer 配色）
+
+### 测试（全部通过）
+- `ChordInversionEngineTest`: 22 个（选项数量匹配难度/无重复/正确答案在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 仅三和弦原位和第一转位/
+  intermediate 全转位/advanced 七和弦/大样本覆盖验证/displayName 合法/根音范围合法）
+- `ChordInversionSessionTest`: 17 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/lastAnswer/难度返回）
+- `ChordInversionProgressTest`: 18 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/负数回退）
+- `ChordInversionAudioBuilderTest`: 34 个（原位 MIDI 排列正确/第一转位低音上移八度/
+  第二转位/第三转位/七和弦4音/三和弦3音/采样率/时长>0/值域[-1,1]/
+  转位后最低音 = 转位成员/大样本覆盖验证/不同和弦类型不同音数）
+- 全部单元测试: 7726 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+
+### 编译与构建
+- `gradle :app:compileDebugKotlin` — BUILD SUCCESSFUL
+- `gradle :app:testDebugUnitTest` — BUILD SUCCESSFUL
+- `gradle :app:assembleDebug` — BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/chord-inversion-recognition → merge main（--no-ff）
+- 版本号: v3.40.0 → **v3.41.0** (versionCode 153 → 154)
+- 培训模块总数: **53 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 路线图 7 个模块已完成 4/7
+
+### 下一步计划
+- 模块 #54: 织体类型辨识 (Texture Type Recognition)
+- 路线图 7 个模块已完成 4/7，继续自主开发
+
