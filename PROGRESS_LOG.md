@@ -7737,3 +7737,69 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 模块 #52: 复合节拍听辨 (Compound Meter Recognition)
 - 路线图 7 个模块已完成 2/7，继续自主开发
 
+---
+
+## 2026-07-23 (自主开发)
+- **模块 #52 (v3.40.0): 复合节拍听辨训练 (Compound Meter Recognition) — ✅ 完成**
+  - 训练目标：辨识 6/8、9/8、12/8 等复合节拍与 3/4、4/4 等简单节拍的区别。
+    复合拍子的每拍可均分为三个等分（3个一组），简单拍子的每拍均分为两个等分（2个一组）。
+    最经典的听辨挑战是 6/8 vs 3/4——两者都有 6 个八分音符，但分组模式完全不同
+    （6/8 = 3+3 分组 / 3/4 = 2+2+2 分组）。
+  - 新增纯 Kotlin 领域层 `compoundmeter/`（无 Android 依赖，完全可单元测试）：
+    - `MeterType` 枚举：5 种拍子
+      （3/4 简单三拍子 / 4/4 简单四拍子 / 6/8 复合二拍子 / 9/8 复合三拍子 / 12/8 复合四拍子）
+      × 每拍的细分数（简单=2 / 复合=3）× 每小节八分音符数 × 精确的重音模式列表
+    - `CompoundMeterDifficulty` 枚举：3 难度
+      （初级：6/8 vs 3/4 · 2选项 / 中级：6/8, 9/8, 12/8 · 3选项 / 高级：5种拍子全部混合 · 5选项）
+    - `CompoundMeterEngine`：确定性种子出题引擎
+    - `CompoundMeterSession`：会话状态机（连击/准确率/防御性副本/答题历史）
+    - `CompoundMeterAudioBuilder`：PCM 音频渲染器（重音模式 × 2小节播放）
+    - `CompoundMeterProgress`：跨会话进度跟踪 × 手动 JSON 序列化（容错解析 + 严格 5 字段校验）
+  - **音频设计**：
+    - 重音通过音高+音量双重区分：强拍 880Hz(A5) / 拍点 660Hz(E5) / 细分音 440Hz(A4)
+    - 打击乐式短促音色（快速攻击+指数衰减+基频+1谐波），类似节拍器/木鱼
+    - 八分音符间距恒定（不同难度 160-200ms），确保节拍差异纯来自重音分组
+    - 2 小节播放 + 小节间隔（60-80ms）
+  - **重音模式可视化**：答题后展示小节内八分音符的柱状图
+    （柱高度 = 重音级别，柱颜色 = 强拍深橙/拍点中橙/细分浅灰），
+    强拍间距直观揭示分组模式（3+3 vs 2+2+2）
+  - 新增 Android 层 `CompoundMeterPlayer`（AudioTrack MODE_STATIC 播放器）+ `CompoundMeterViewModel`
+  - 新增 Material 3 Compose UI `CompoundMeterTrainingScreen`（难度选择 + 播放/选项作答/反馈 +
+    重音可视化 + 统计 + 听辨技巧说明）
+  - AppNavigation 路由 `compound_meter_training` + LibraryScreen 入口卡片（🥁 图标）
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.CompoundMeterTraining`
+  ("compound_meter_training", "复合节拍听辨", `Icons.Filled.MusicNote`) + composable 目标
+- **LibraryScreen.kt**: 新增 `CompoundMeterEntryCard`（🥁 图标、"复合节拍听辨训练"标题、
+  "辨识6/8、9/8、12/8等复合节拍 · 3 难度"描述，secondaryContainer 配色）
+
+### 测试（全部通过）
+- `CompoundMeterEngineTest`: 16 个（选项数量匹配难度/无重复/正确答案在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 仅用6/8和3/4/intermediate 仅用复合拍子/
+  advanced 用5种拍子/大样本覆盖验证/选项合法/displayName 匹配/复合vs简单混合验证）
+- `CompoundMeterSessionTest`: 17 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/lastAnswer/难度返回）
+- `CompoundMeterProgressTest`: 18 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/负数回退）
+- `CompoundMeterAudioBuilderTest`: 35 个（6/8=2拍/9/8=3拍/12/8=4拍/3/4=3拍/4/4=4拍/
+  6/8和3/4同八分音符数不同拍数/6/8拍间距3 vs 3/4拍间距2/事件数验证/
+  强拍位置/频率区分880/660/440/时间线无重叠/2小节验证/渲染非空/值域[-1,1]/
+  复合拍子三元细分/简单拍子二元细分/重音模式起始强拍/不同拍子不同事件数）
+- 全部单元测试: 7635 个用例 (含 Paparazzi 截图测试), 0 失败, 0 错误
+
+### Git
+- 分支: feature/compound-meter-recognition → merge main（--no-ff）
+- 版本号: v3.39.0 → **v3.40.0** (versionCode 152 → 153)
+- 培训模块总数: **52 个**
+
+### 代码统计
+- 新增: 7 个源文件 + 4 个测试文件 = 11 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 总计 15 个文件变更，2851 行新增
+- 路线图 7 个模块已完成 3/7
+
+### 下一步计划
+- 模块 #53: 和弦转位听辨 (Chord Inversion Recognition)
+- 路线图 7 个模块已完成 3/7，继续自主开发
+
