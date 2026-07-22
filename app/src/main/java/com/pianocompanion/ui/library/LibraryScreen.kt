@@ -758,6 +758,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Harmonic series recognition training entry ===
+            item {
+                HarmonicSeriesEntryCard(onClick = {
+                    navController.navigate(Screen.HarmonicSeriesTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -3920,6 +3928,46 @@ fun VoiceEntryOrderEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "声部进入顺序辨识训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun HarmonicSeriesEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🌊", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "泛音列辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "辨识泛音列中各泛音位置 · 第2-8泛音 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "泛音列辨识训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }

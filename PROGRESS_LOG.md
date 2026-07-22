@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.34.0** (复调运动辨识训练 PolyphonicMotionTraining: 辨识两条同时进行的旋律线之间的相对运动类型(同向Parallel=并肩同行/反向Contrary=擦肩背离/斜向Oblique=一静一动) × 3难度(初级同向vs反向2选项/中级+斜向3选项/高级全部3种3选项) × 确定性种子出题引擎+verifyMotion公开校验(声部不交叉/每步运动不变量/斜向保持声部一致/MAX_ATTEMPTS重试+安全回退) × 双声部分离(高C5-E5/低C3-E3约两个八度)逐音对齐 × 会话状态机(连击/准确率/防御性历史副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × 加法合成钢琴音色(基频+4谐波+tanh软限幅)两声部叠加 × Material 3 Compose(难度选择+播放/3运动选项作答/双声部轮廓图/反馈+教学运动描述/进度) × AppNavigation路由polyphonic_motion_training+LibraryScreen入口卡片)
+- 当前版本: **v3.38.0** (泛音列辨识训练 HarmonicSeriesTraining: 辨识基频上方泛音列中各泛音的音高位置(第2-8泛音: 八度/纯五度/纯四度/大三度/小三度/小七度/趋于半音) × 3难度(初级第2-3泛音2选项/中级第2-5泛音3选项/高级第2-8泛音4选项) × 确定性种子出题引擎 × 复合基频音(加法合成C3+7谐波+指数衰减+tanh软限幅)+纯音泛音(正弦波)双段播放 × 会话状态机(连击/准确率/防御性副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × Material 3 Compose(难度选择+播放/泛音选项作答/反馈+教学描述/统计) × AppNavigation路由harmonic_series_training+LibraryScreen入口卡片)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -7592,6 +7592,81 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 总计 15 个文件变更
 
 ### 下一步计划
-- 继续扩展听辨训练模块集合（可考虑：泛音列辨识、调式音阶色彩对比、复合节拍听辨、
+- 继续扩展听辨训练模块集合（可考虑：调式音阶色彩对比、复合节拍听辨、
   和弦转位听辨、织体类型辨识、节奏型记忆、音程序列记忆等）
+
+---
+
+## 2026-07-22 — 泛音列辨识训练（模块 #50）✅
+
+### 概述
+新增第 **50** 个听辨训练模块：**泛音列辨识训练**（Harmonic Series Recognition Training）。
+训练耳朵辨识基频上方泛音列中各泛音的音高位置——这是理解音色构成、和声结构与调性感知的核心听觉能力。
+
+**核心问题**：先播放一段含泛音的复合基频音（C3，模拟自然乐器音色），短暂静默后播放一个纯音泛音
+（该基频的某一阶整数倍频率），用户判断这个纯音是基频的第几泛音（第2-8泛音，对应八度→纯五度→纯四度→大三度→小三度→小七度→…）。
+
+**与既有模块的区分**：
+- `timbrebrightness` 问「音色有多少泛音」（数量/丰富度）
+- 本模块问「这个泛音在泛音列中排第几」——定位泛音的位置（频率比感知）
+
+### 难度设计
+| 难度 | 泛音范围 | 选项数 | 基频时长 | 间隔 | 音程跨度 |
+|------|----------|--------|----------|------|----------|
+| 初级 | 第2-3泛音 | 2 | 900ms | 400ms | 八度+纯五度（最易区分） |
+| 中级 | 第2-5泛音 | 3 | 800ms | 350ms | +纯四度+大三度 |
+| 高级 | 第2-8泛音 | 4 | 700ms | 300ms | +小三度+小七度+趋于半音（最难） |
+
+**音频设计**:
+- 基频用加法合成（C3 基频 + 7 谐波 + 指数衰减包络 + tanh 软限幅），模拟自然乐器音色
+- 目标泛音为纯正弦波（单一频率，便于辨识其在泛音列中的位置）
+- 两者间有静默间隔，确保耳朵可分离基频与泛音
+
+### 架构（遵循既有模块模式）
+1. **HarmonicSeriesModels** — 数据模型：`HarmonicNumber` 枚举（第2-8泛音，含中英文名/音程名/频率比）、
+   `HarmonicDifficulty` 枚举（3级，含泛音集合/选项数/基频参数）、`HarmonicSeriesQuestion`（含 init 不变量校验）、`HarmonicAnswerRecord`
+2. **HarmonicSeriesEngine**（纯 Kotlin）— 出题引擎：seed 确定性、从泛音集合随机选目标、
+   从剩余泛音选干扰项、打乱选项
+3. **HarmonicSeriesSession**（纯 Kotlin）— 会话状态机：start→submit→next 生命周期，
+   连击、准确率、防御性副本、双击防护、历史保序
+4. **HarmonicSeriesProgress**（纯 Kotlin）— 跨会话进度跟踪：累计统计、难度隔离、
+   手动 JSON 序列化（无外部依赖，容错解析）、5 字段严格校验
+5. **HarmonicSeriesAudioBuilder**（纯 Kotlin）— PCM 音频构建器：渲染复合基频+纯音泛音、
+   加法合成（基频+7谐波+指数衰减+tanh 软限幅）、纯音正弦波、前导/间隔/尾部静音
+6. **HarmonicSeriesPlayer** — Android AudioTrack MODE_STATIC 播放器
+7. **HarmonicSeriesViewModel** — AndroidViewModel，连接领域层与 UI
+8. **HarmonicSeriesTrainingScreen** — Material 3 Compose 界面（难度选择 + 播放/泛音选项作答 + 反馈+教学描述 + 连击统计）
+
+### 集成
+- **AppNavigation.kt**: 新增路由 `Screen.HarmonicSeriesTraining`
+  ("harmonic_series_training", "泛音列辨识", `Icons.Filled.Waves`) + composable 目标
+- **LibraryScreen.kt**: 新增 `HarmonicSeriesEntryCard`（🌊 图标、"泛音列辨识训练"标题、
+  "辨识泛音在音列中的位置 · 谐波感知 · 3 难度"描述，primaryContainer 配色）
+
+### 测试（全部通过）
+- `HarmonicSeriesEngineTest`: 15 个（选项数量匹配难度/无重复选项/正确答案总在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 仅用2-3泛音/intermediate 用2-5泛音/
+  advanced 用2-8泛音/所有选项均为合法泛音/target 在选项中/distinct 选项数=choiceCount/
+  正确答案 = target.displayName/各难度生成不抛异常/种子复现/大样本统计）
+- `HarmonicSeriesSessionTest`: 19 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/答题记录正确性/currentQuestion 状态）
+- `HarmonicSeriesProgressTest`: 15 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/cumulativeAccuracy/多难度序列化/负数回退）
+- `HarmonicSeriesAudioBuilderTest`: 24 个（渲染非空/确定性/FloatArray 输出/值域[-1,1]/
+  时长公式验证/自定义采样率/全难度渲染/纯音泛音验证/基频与泛音间静默验证/
+  泛音频率 = 基频 × ratio/振幅正确性/复合音色验证）
+
+### Git
+- 分支: feature/harmonic-series-training → merge main（--no-ff）
+- 版本号: v3.37.0 → **v3.38.0** (versionCode 150 → 151)
+- 培训模块总数: **50 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 总计 15 个文件变更，2573 行新增（源 1660 行 + 测试 913 行）
+
+### 下一步计划
+- 模块 #51: 调式音阶色彩对比 (Mode Scale Color Comparison)
+- 路线图 7 个模块已完成 1/7，继续自主开发
 
