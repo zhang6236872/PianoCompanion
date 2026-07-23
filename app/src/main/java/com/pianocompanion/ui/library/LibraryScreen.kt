@@ -806,6 +806,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Interval sequence memory training entry ===
+            item {
+                IntervalSequenceMemoryEntryCard(onClick = {
+                    navController.navigate(Screen.IntervalSequenceMemoryTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -4208,6 +4216,46 @@ fun RhythmPatternMemoryEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "节奏型记忆训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun IntervalSequenceMemoryEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎵", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "音程序列记忆训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "听辨连续音程序列并回忆各音程 · 12 种音程 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "音程序列记忆训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }

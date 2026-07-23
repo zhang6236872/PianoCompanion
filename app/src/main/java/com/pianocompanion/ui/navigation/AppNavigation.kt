@@ -97,6 +97,7 @@ import com.pianocompanion.ui.compoundmeter.CompoundMeterTrainingScreen
 import com.pianocompanion.ui.chordinversion.ChordInversionTrainingScreen
 import com.pianocompanion.ui.texturerecognition.TextureTypeRecognitionTrainingScreen
 import com.pianocompanion.ui.rhythmmemory.RhythmPatternMemoryTrainingScreen
+import com.pianocompanion.ui.intervalsequence.IntervalSequenceMemoryTrainingScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Library : Screen("library", "乐谱", Icons.Filled.LibraryMusic)
@@ -174,6 +175,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ChordInversionTraining : Screen("chord_inversion_training", "和弦转位听辨", Icons.Filled.Piano)
     data object TextureTypeRecognitionTraining : Screen("texture_type_recognition_training", "织体类型辨识", Icons.Filled.Layers)
     data object RhythmPatternMemoryTraining : Screen("rhythm_pattern_memory_training", "节奏型记忆", Icons.Filled.Equalizer)
+    data object IntervalSequenceMemoryTraining : Screen("interval_sequence_memory_training", "音程序列记忆", Icons.Filled.GraphicEq)
 }
 
 private val screens = listOf(
@@ -495,6 +497,9 @@ fun AppScaffold() {
             }
             composable(Screen.RhythmPatternMemoryTraining.route) {
                 RhythmPatternMemoryTrainingScreen()
+            }
+            composable(Screen.IntervalSequenceMemoryTraining.route) {
+                IntervalSequenceMemoryTrainingScreen()
             }
         }
     }
