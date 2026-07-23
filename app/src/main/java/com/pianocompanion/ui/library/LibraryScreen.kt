@@ -798,6 +798,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Rhythm pattern memory training entry ===
+            item {
+                RhythmPatternMemoryEntryCard(onClick = {
+                    navController.navigate(Screen.RhythmPatternMemoryTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -4160,6 +4168,46 @@ fun TextureTypeRecognitionEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "织体类型辨识训练",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun RhythmPatternMemoryEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🥁", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "节奏型记忆训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "听后回忆并复现节奏型 · 7 种拍内细分 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "节奏型记忆训练",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
