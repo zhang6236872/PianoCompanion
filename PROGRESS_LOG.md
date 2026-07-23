@@ -7955,3 +7955,85 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 模块 #55: 节奏型记忆 (Rhythm Pattern Memory)
 - 路线图 7 个模块已完成 5/7，继续自主开发
 
+---
+
+## 2026-07-24 (自主开发) — 模块 #55: 节奏型记忆 (Rhythm Pattern Memory)
+
+新增「节奏型记忆」训练模块（第 6/7 个路线图模块）。用户听到一段短节奏型（由 7 种节奏细分拍组合而成）后，
+需从多个相似选项中识别出正确的节奏型。训练节奏短期记忆与时序编码能力。
+
+### 模块特点
+- **7 种节奏细分型**（每拍可包含的细分模式）：
+  QUARTER 四分音符 / TWO_EIGHTHS 两个八分 / TRIPLET 三连音 /
+  SIXTEENTH 四个十六分 / SYNCOPATION 切分（八分-四分-八分）/
+  REST 休止 / DOTTED 附点八分+十六分
+- **3 个难度级别**：
+  初级（3 拍、2 选项、100 BPM）/ 中级（4 拍、3 选项、112 BPM）/ 高级（4 拍、4 选项、120 BPM）
+- **节奏型重复播放两次**，中间留 250ms 间隔，巩固短期记忆
+- **三级力度层次**：小节首拍重音（0.62）/ 每拍首击（0.46）/ 拍内细分击打（0.40），
+  帮助建立拍点参照
+- **单一固定音高合成音色**（880Hz 木琴式，基频 + 1 谐波 + 快速攻击 + 指数衰减），
+  使注意力完全集中在节奏时序上
+- **节奏网格可视化**：答题后以 ⬛/🔲 网格展示目标节奏型的每拍细分结构
+
+### 新增文件（纯 Kotlin 领域层 `com.pianocompanion.rhythmmemory`）
+- **RhythmPatternModels.kt** — 数据模型：
+  - `RhythmCellType` 枚举：7 种节奏细分型 × 细分位置列表 `subdivisions` × 显示字符 × 中文名 × 时值数
+  - `RhythmPattern`：节奏型（cell 列表 × displayString 拼接 × beats 属性）
+  - `RhythmMemoryDifficulty` 枚举：3 难度（beats / choiceCount / tempoBpm / displayName）
+  - `RhythmMemoryQuestion`：题目（含 init 校验 choiceCount 匹配 + correctAnswer 在选项中）
+- **RhythmMemoryEngine.kt** — 确定性种子出题引擎（withSeed 工厂方法，干扰项从全集中选取）
+- **RhythmMemorySession.kt** — 会话状态机（start/submit/next/reset，连击/准确率/防御性副本/答题历史）
+- **RhythmMemoryProgress.kt** — 跨会话进度跟踪（手动 JSON 序列化，容错解析，严格 5 字段校验）
+- **RhythmMemoryAudioBuilder.kt** — PCM 音频渲染器（节奏型 → 击打事件列表 → FloatArray 渲染）
+- **RhythmMemoryPlayer.kt** — Android AudioTrack (MODE_STATIC) 播放器
+- **RhythmMemoryViewModel.kt** — AndroidViewModel 状态管理（StateFlow）
+
+### 新增文件（UI 层）
+- **RhythmPatternMemoryTrainingScreen.kt** — Material 3 Compose UI
+  （难度选择 + 播放/选项作答/反馈 + 节奏网格可视化 + 统计 + 听辨技巧说明）
+
+### 修改文件
+- **AppNavigation.kt**: 新增路由 `Screen.RhythmPatternMemoryTraining`
+  ("rhythm_pattern_memory_training", "节奏型记忆", `Icons.Filled.Equalizer`) + composable 目标
+- **LibraryScreen.kt**: 新增 `RhythmPatternMemoryEntryCard`（🥁 图标、tertiaryContainer 配色）
+- **build.gradle.kts**: versionCode 155 → 156, versionName 3.42.0 → 3.43.0
+
+### 单元测试（4 个测试文件，共 76 个用例，全部通过）
+- `RhythmMemoryEngineTest`: 18 个（选项数匹配难度/无重复/正确答案在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 3拍2选/intermediate 4拍3选/
+  advanced 4拍4选/大样本覆盖验证/displayString 合法/节拍数匹配/beats+choiceCount 继承难度）
+- `RhythmMemorySessionTest`: 16 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/lastAnswer/难度返回）
+- `RhythmMemoryProgressTest`: 15 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/overallAccuracy/负数回退/total=0 不更新）
+- `RhythmMemoryAudioBuilderTest`: 27 个（四分音符击打位置/双八分两击/三连音三击/
+  十六分四击/切分三击/休止无击/附点两击/击打数公式/拍首重音/拍内细分弱于拍首/
+  重复播放两次/间隔验证/时长公式/渲染非空/值域[-1,1]/自定义采样率/
+  全难度渲染/midiToFrequency/空题目处理）
+
+### 编译与构建
+- `gradle :app:compileDebugKotlin` — BUILD SUCCESSFUL
+- `gradle :app:testDebugUnitTest --tests "com.pianocompanion.rhythmmemory.*"` — BUILD SUCCESSFUL
+- `gradle :app:assembleDebug` — BUILD SUCCESSFUL
+
+### 修复
+- 初次测试中 3 个问题：
+  1. AudioBuilderTest 测试辅助方法 question() 未按 difficulty.choiceCount 生成足够选项 → 修正为动态生成
+  2. ProgressTest overallAccuracy 断言 18/20 算术错误（5+8=13≠18）→ 修正为 13/20
+  3. AudioBuilderTest「拍内细分击打弱于拍首」用单拍节奏型导致首击为 ACCENT 而非 BEAT → 改用双拍节奏型
+
+### Git
+- 分支: feature/rhythm-pattern-memory → merge main（--no-ff）
+- 版本号: v3.42.0 → **v3.43.0** (versionCode 155 → 156)
+- 培训模块总数: **55 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 路线图 7 个模块已完成 **6/7**
+
+### 下一步计划
+- 模块 #56: 音程序列记忆 (Interval Sequence Memory) — 路线图最后一个模块
+- 完成后路线图全部 7/7，建议暂停自主开发
+
