@@ -3,7 +3,7 @@
 ## 基本信息
 - 项目路径: /home/agentuser/projects/PianoCompanion
 - GitHub: https://github.com/zhang6236872/PianoCompanion
-- 当前版本: **v3.38.0** (泛音列辨识训练 HarmonicSeriesTraining: 辨识基频上方泛音列中各泛音的音高位置(第2-8泛音: 八度/纯五度/纯四度/大三度/小三度/小七度/趋于半音) × 3难度(初级第2-3泛音2选项/中级第2-5泛音3选项/高级第2-8泛音4选项) × 确定性种子出题引擎 × 复合基频音(加法合成C3+7谐波+指数衰减+tanh软限幅)+纯音泛音(正弦波)双段播放 × 会话状态机(连击/准确率/防御性副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × Material 3 Compose(难度选择+播放/泛音选项作答/反馈+教学描述/统计) × AppNavigation路由harmonic_series_training+LibraryScreen入口卡片)
+- 当前版本: **v3.44.0** (音程序列记忆训练 IntervalSequenceMemory: 听后回忆并按顺序排列由 12 种音程串联而成的旋律线 × 3难度(初级3音程2选项仅大/纯音程/中级4音程3选项+小音程与三全音/高级4音程4选项全12种音程) × 音程支持上行/下行方向 × 确定性种子出题引擎 × 复合音色旋律线(N音程→N+1音符,加法合成基频+3谐波+指数衰减+tanh软限幅)+重复播放两次 × 会话状态机(连击/准确率/防御性副本) × 跨会话进度JSON容错序列化按难度隔离+严格5字段校验 × Material 3 Compose(难度选择+播放/选项作答/反馈+序列方向可视化/统计) × AppNavigation路由interval_sequence_memory_training+LibraryScreen入口卡片) — **【路线图 7/7 全部完成, versionCode 157 达到停止条件】**)
 - 当前分支: main
 - 最新 tag: v3.9.0 (音色辨识完成后打 v3.10.0)
 
@@ -8036,4 +8036,89 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 ### 下一步计划
 - 模块 #56: 音程序列记忆 (Interval Sequence Memory) — 路线图最后一个模块
 - 完成后路线图全部 7/7，建议暂停自主开发
+
+---
+
+## 2026-07-24 (自主开发) — 模块 #56: 音程序列记忆 (Interval Sequence Memory) ✅【路线图最终模块】
+
+新增「音程序列记忆」训练模块（第 **7/7** 个、也是最后一个路线图模块）。用户听到一条由若干音程串联而成的旋律线后，
+需按顺序回忆出各段音程的类型（如「大三度↑ → 小三度↑ → 纯五度↑」）。训练旋律短期记忆与音程序列时序编码能力——
+这是听写、视唱练耳和即兴演奏的核心基础。
+
+### 模块特点
+- **12 种音程**（纯一度 P1 ~ 纯八度 P8，含 m2/M2/m3/M3/P4/三全音/P5/m6/M6/m7/M7），
+  每种含半音数 / 简称 / 中文名 / 英文名
+- **音程方向**：每个音程可上行↑或下行↓（后音 = 前音 ± 半音数），增强方向辨识
+- **旋律线渲染**：一条 N 音程序列 → N+1 个音符的旋律线（从 startMidi 起逐音累加偏移）
+- **3 个难度级别**：
+  - 初级：3 音程序列 · 2 选项 · 仅大/纯音程（M2/M3/P4/P5） · C4 起 · 音符 600ms
+  - 中级：4 音程序列 · 3 选项 · 加入小音程与三全音（7 种） · 音符 550ms
+  - 高级：4 音程序列 · 4 选项 · 全部 12 种音程 · 音符 500ms
+- **旋律重复播放两次**，中间留 300ms 间隔，巩固短期记忆
+- **复合音色**（基频 + 3 阶谐波 + 5ms 攻击 + 指数衰减 + tanh 软限幅），接近真实乐器听感
+- **序列可视化**：答题后以方向箭头展示目标序列各音程（如 M3↑ m3↓ P5↑）
+
+### 新增文件（纯 Kotlin 领域层 `com.pianocompanion.intervalsequence`）
+- **IntervalSequenceModels.kt** — 数据模型：
+  - `IntervalType` 枚举：12 种音程 × semitones/shortName/fullName/englishName × fromSemitones 查找
+  - `IntervalEntry`：序列音程条目（interval + ascending）× signedSemitones × displayString（带方向箭头）
+  - `IntervalSequence`：完整序列（entries 列表 × length × noteCount × displayString × toMidiSequence 渲染旋律线）
+  - `IntervalSequenceDifficulty` 枚举：3 难度（sequenceLength / choiceCount / availableIntervals / startMidi / 音符时长 / 间隔）
+  - `IntervalSequenceQuestion`：题目（含 init 不变量校验：选项数匹配 / 正确答案在选项中 / 选项无重复）
+- **IntervalSequenceEngine.kt** — 确定性种子出题引擎（withSeed 工厂方法，从可用音程集随机生成序列 + 方向 + 干扰项 + 打乱）
+- **IntervalSequenceSession.kt** — 会话状态机（start/submit/next/reset，连击/准确率/防御性副本/答题历史）
+- **IntervalSequenceProgress.kt** — 跨会话进度跟踪（手动 JSON 序列化，容错解析，按难度隔离，严格 5 字段校验）
+- **IntervalSequenceAudioBuilder.kt** — PCM 音频渲染器（音程序列 → 旋律线音符事件 → 加法合成 FloatArray）
+- **IntervalSequencePlayer.kt** — Android AudioTrack (MODE_STATIC) 播放器
+- **IntervalSequenceViewModel.kt** — AndroidViewModel 状态管理（StateFlow）
+
+### 新增文件（UI 层）
+- **IntervalSequenceMemoryTrainingScreen.kt** — Material 3 Compose UI
+  （难度选择 + 播放/选项作答/反馈 + 序列方向可视化 + 统计 + 听辨技巧说明）
+
+### 修改文件
+- **AppNavigation.kt**: 新增路由 `Screen.IntervalSequenceMemoryTraining`
+  ("interval_sequence_memory_training", "音程序列记忆", `Icons.Filled.GraphicEq`) + composable 目标
+- **LibraryScreen.kt**: 新增 `IntervalSequenceMemoryEntryCard`（🎵 图标、secondaryContainer 配色）
+- **build.gradle.kts**: versionCode 156 → 157, versionName 3.43.0 → 3.44.0
+
+### 单元测试（4 个测试文件，共 82 个用例，全部通过）
+- `IntervalSequenceEngineTest`: 18 个（选项数匹配难度/无重复/正确答案在选项中/
+  确定性种子复现/不同种子产生不同序列/beginner 仅4种音程/intermediate 7种/
+  advanced 12种/大样本覆盖验证/序列长度匹配/方向合法/displayString 合法/
+  起始音一致/音程来自有效集合/选项数等于choiceCount）
+- `IntervalSequenceSessionTest`: 17 个（生命周期/连击/准确率/防御性副本/双击防护/
+  bestStreak 跟踪/历史保序/reset 清空/lastAnswer/难度返回）
+- `IntervalSequenceProgressTest`: 19 个（累计统计/难度隔离/JSON 往返/容错解析/
+  严格 5 字段校验/缺字段拒绝/bestAccuracy 只增不减/overallAccuracy/负数回退/total=0 不更新）
+- `IntervalSequenceAudioBuilderTest`: 28 个（MIDI→频率 A4/C4/A5/渲染非空/值域[-1,1]/
+  音符事件数=序列音数×重复/重复播放两次/间隔验证/时长公式/渲染时长与预估一致/
+  noteCount 公式/上行序列频率递增/全难度渲染/自定义采样率/midiToFrequency/空列表处理）
+- 全部单元测试: **7934 个用例** (含 Paparazzi 截图测试), 0 失败, 0 错误
+
+### 编译与构建
+- `gradle :app:compileDebugKotlin` — BUILD SUCCESSFUL
+- `gradle :app:testDebugUnitTest` — BUILD SUCCESSFUL
+- `gradle :app:assembleDebug` — BUILD SUCCESSFUL
+
+### 修复（继承自上次未提交工作，本次验证并修复）
+1. 测试方法名 `` `midiToFrequency MIDI 60 = C4 261.63Hz` `` 含点号 → Kotlin 反引号标识符
+   不允许点号，编译报 "Name contains illegal characters" → 改为无点号命名（对齐既有模块惯例）
+2. `estimateDurationMs` 未计入 `NOTE_TAIL_DECAY_MS`(200ms) → 与 `renderNotes` 实际输出相差
+   约 8820 采样，超出 ±500 容差 → 补入尾部衰减项使预估与渲染一致
+
+### Git
+- 分支: feature/interval-sequence-memory → merge main（--no-ff）
+- 版本号: v3.43.0 → **v3.44.0** (versionCode 156 → 157)
+- 培训模块总数: **56 个**
+
+### 代码统计
+- 新增: 7 个领域源文件 + 1 个 UI 源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 路线图 7 个模块已完成 **7/7 ✅**
+
+### ⛔ 路线图终结
+- ROADMAP.md 全部 7 个模块（#50-#56）均已标记 ✅ 完成
+- versionCode 达到 157 (v3.44.0)，触发停止条件
+- **建议暂停自主开发 cron 任务，不再自行发明新模块**
 
