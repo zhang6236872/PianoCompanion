@@ -7879,6 +7879,79 @@ pp/p/mf/f）与 `tempotraining`（仅覆盖静态速度类别）的空白。
 - 路线图 7 个模块已完成 4/7
 
 ### 下一步计划
-- 模块 #54: 织体类型辨识 (Texture Type Recognition)
+- 模块 #55: 节奏型记忆 (Rhythm Pattern Memory)
 - 路线图 7 个模块已完成 4/7，继续自主开发
+
+---
+
+## 2026-07-23 (自主开发) — 模块 #54: 织体类型辨识 (Texture Type Recognition)
+
+新增「织体类型辨识」训练模块（第 5/7 个路线图模块）。训练用户听辨 4 类基础织体（单声部/主调/复调/支声复调）
+× 3 难度（初级 3 选项单声部/主调/复调 · 中级 4 选项加入支声复调 · 高级 4 选项更快更复杂）
+× 确定性种子出题引擎 × 4 类织体各异的 PCM 音频合成（加法合成 4 阶谐波 + 指数衰减 + tanh 软限幅）
+× 会话状态机（连击/准确率/防御性副本）× 跨会话进度 JSON 容错序列化按难度隔离
+× Material 3 Compose（难度选择/播放/选项作答/反馈+教学描述/统计）
+
+### 与模块 #27（织体辨识训练）的区别
+- #27（`texturerecognitiontraining`，v3.15.0）采用 **5 类细分** 模型，将主调拆分为柱式和弦/分解和弦
+- 本模块 #54 采用 **4 类基础** 模型，对应乐理教科书对织体的根本性分类
+- #54 核心难点在区分**复调 vs 支声复调**：前者两线旋律素材**不同**（独立性），后者两线**同源**（一条加装饰）
+
+### 新增文件（10 个）
+- **TextureCategoryModels.kt** — 数据模型：
+  - `MusicTextureType` 枚举（MONOPHONIC 单声部 / HOMOPHONIC 主调 / POLYPHONIC 复调 / HETEROPHONIC 支声复调）
+    含 displayName/englishName/emoji/description/listenHint
+  - `MusicTextureDifficulty` 枚举（BEGINNER 3选项96BPM复杂度1 / INTERMEDIATE 4选项108BPM复杂度2 / ADVANCED 4选项128BPM复杂度3）
+  - `TextureCategoryQuestion` / `TextureCategoryAnswerRecord`
+- **TextureCategoryEngine.kt** — 确定性种子出题引擎（withSeed 工厂方法）
+- **TextureCategoryAudioBuilder.kt** — PCM 音频渲染器：
+  - 单声部：单一旋律线（五声/自然音阶骨架），一次一个音
+  - 主调：高音旋律（voice 0，振幅 0.40）+ 低音块状和弦伴奏（voice 1，振幅 0.30，I/V 和弦）
+  - 复调：上方长音线（2 拍/音，素材 A）+ 下方独立短音线（1 拍/音，素材 B），两线音高素材不重合
+  - 支声复调：朴素声部（voice 0，C4 骨架）+ 装饰声部（voice 1，C5 高八度同源 + 每拍回音 mordent 骨架→上邻音→骨架）
+  - 音色：加法合成（基频 + 3 阶谐波）+ 指数衰减包络 + tanh 软限幅
+- **TextureCategorySession.kt** — 会话状态机（start/submit/next/reset，连击/准确率/防御性副本）
+- **TextureCategoryProgress.kt** — 跨会话进度跟踪（手动 JSON 序列化，容错解析，按难度隔离，严格 5 字段校验）
+- **TextureCategoryPlayer.kt** — Android AudioTrack (MODE_STATIC) 播放器
+- **TextureCategoryViewModel.kt** — AndroidViewModel 状态管理（StateFlow）
+- **TextureTypeRecognitionTrainingScreen.kt** — Material 3 Compose UI
+
+### 修改文件
+- **AppNavigation.kt**: 新增路由 `Screen.TextureTypeRecognitionTraining`
+  ("texture_type_recognition_training", "织体类型辨识", `Icons.Filled.Layers`) + composable 目标
+- **LibraryScreen.kt**: 新增 `TextureTypeRecognitionEntryCard`（🎭 图标入口卡片）
+- **build.gradle.kts**: versionCode 154 → 155, versionName 3.41.0 → 3.42.0
+
+### 单元测试（3 个测试文件，共 50 个用例）
+- `TextureCategoryEngineTest`: 10 个（选项数匹配难度/无重复/正确答案在选项中/
+  BEGINNER 不含支声复调/确定性/选项来自有效集合/不同种子不同题/tempo+complexity 继承）
+- `TextureCategorySessionTest`: 15 个（生命周期/连击/准确率/防御性副本/双击防护/
+  reset/未开始 null/最大连击保留）
+- `TextureCategoryAudioBuilderTest`: 15 个（单声部纯 voice 0 不重叠/主调旋律+和弦分层/
+  主调每拍 1 旋律+3 和弦/主调旋律高于伴奏/复调两线节奏不同/复调两线素材不重合/
+  支声复调两线骨架同源/支声复调装饰声部 3 倍音符/复调 vs 支声重合度对比/
+  高级片段更长/主调高级 6 拍/render 非空且值域[-1,1]/render 空列表/midiToFrequency/
+  单声部与主调结构可区分）
+- `TextureCategoryProgressTest`: 10 个（空进度 JSON/累计统计/难度隔离/bestStreak 最大值/
+  bestAccuracy 只增不减/JSON 往返/损坏 JSON/缺失字段/负数回退/total=0 不更新）
+- 全部织体模块单元测试: 50 个用例, 0 失败, 0 错误
+
+### 编译与构建
+- `gradle :app:compileDebugKotlin` — BUILD SUCCESSFUL
+- `gradle :app:testDebugUnitTest --tests "com.pianocompanion.texturerecognition.*"` — BUILD SUCCESSFUL
+- `gradle :app:assembleDebug` — BUILD SUCCESSFUL
+
+### Git
+- 分支: feature/texture-type-recognition → merge main（--no-ff）
+- 版本号: v3.41.0 → **v3.42.0** (versionCode 154 → 155)
+- 培训模块总数: **54 个**
+
+### 代码统计
+- 新增: 8 个源文件 + 4 个测试文件 = 12 个文件
+- 修改: AppNavigation.kt + LibraryScreen.kt + build.gradle.kts
+- 路线图 7 个模块已完成 5/7
+
+### 下一步计划
+- 模块 #55: 节奏型记忆 (Rhythm Pattern Memory)
+- 路线图 7 个模块已完成 5/7，继续自主开发
 

@@ -790,6 +790,14 @@ fun LibraryScreen(
                     }
                 })
             }
+            // === Texture type recognition training entry ===
+            item {
+                TextureTypeRecognitionEntryCard(onClick = {
+                    navController.navigate(Screen.TextureTypeRecognitionTraining.route) {
+                        launchSingleTop = true
+                    }
+                })
+            }
             // === Built-in scores ===
             if (filteredBuiltIn.isNotEmpty()) {
                 item {
@@ -4112,6 +4120,46 @@ fun ChordInversionEntryCard(onClick: () -> Unit) {
                 Icons.Filled.ChevronRight,
                 "和弦转位听辨训练",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun TextureTypeRecognitionEntryCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("🎼", fontSize = 32.sp)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "织体类型辨识训练",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "辨识单声部/主调/复调/支声复调 · 4 类基础织体 · 3 难度",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Filled.ChevronRight,
+                "织体类型辨识训练",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }
